@@ -1,0 +1,14 @@
+##base _AVC1394Base
+##bias 30
+##public
+AVC1394_FreeServerMsg()(sysv)
+AVC1394_GetUnitInfo()(sysv)
+AVC1394_GetSubUnitInfo()(sysv)
+AVC1394_CheckSubUnitType()(sysv)
+AVC1394_VCR_Eject()(sysv)
+AVC1394_VCR_Stop()(sysv)
+AVC1394_VCR_IsPlaying()(sysv)
+AVC1394_VCR_Play()(sysv)
+AVC1394_VCR_IsRecording()(sysv)
+AVC1394_VCR_Reverse()(sysv)
+AVC1394_VCR_Pause()(sysv)

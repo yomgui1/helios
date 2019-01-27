@@ -1,0 +1,15 @@
+include/clib/*
+include/proto/*
+include/ppcinline/*
+include/inline/*
+*.[oda]
+*.py[com]
+*~
+*.db
+*.sym
+*.map
+*.library
+*.device
+mapfile.txt
+helios_rom_start
+helios_remove

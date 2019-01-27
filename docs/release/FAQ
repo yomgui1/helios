@@ -1,0 +1,41 @@
+Q: Is my Pegasos 1 also supported?
+
+A: Yes, as well any Pegasos released! All have the same OHCI1394 chip inside: a VIA-6306.
+   This chip provides 3 physical ports: 2 external on the back of the mother board and 1 internal.
+
+--------------------------------------------------------------------------------
+
+Q: And my Mac under MorphOS?
+
+A: I've developped Helios on a Peg2 and a MacMini, so I'm sure that both are supported!
+   Now some people have also tested it on PowerMac, even with the FW800 connection
+   (but limited to S400).
+
+--------------------------------------------------------------------------------
+
+Q: In the readme it's written that Helios requiers MorphOS >= 2.x, Doesn't work for 1.4x?
+
+A: I'm developping and testing Helios on a 2.x MorphOS.
+    Helios should work also on 1.4.x, it only depends on the pcix.library.
+
+--------------------------------------------------------------------------------
+
+Q: Does Helios handle my Firewire PCI card that i've just plugged?
+
+A: Yes, it should if the chipset is an OHCI one.
+
+--------------------------------------------------------------------------------
+
+Q: I've mounted some partitions on my external Firewire HD, using sbp2.device.
+    When I connect another FW device (like my dv-cam), my partition is unmounted!
+
+A: It's normal, annoying, but normal. Connecting, or disconnecting another FW device
+    causes the bus to trigs a Bus-Reset event. If your FW HD device is also the root
+    device on the bus (the one that handles this Bus-Reset), Helios should not re-uses
+    the root units because device may have changed something inside its ROM configuration,
+    so its units configuration.
+    This units removal causes sbp2 to release units, so unmount all associated partitions.
+    It's not possible to fix that because it's the normal process described by norms.
+    But we have a chance to forbid your HD device to become root when I'll implement
+    the serial bus handler task and force the computer to become the root.
+    But it's not a strict rule and your HD may not want to release its root state...

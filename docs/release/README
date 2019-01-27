@@ -1,0 +1,112 @@
+Short:        OHCI-IEEE1394 (Firewire) driver, tools and SDK for MorphOS.
+Uploader:     yomgui1@gmail.com (Guillaume Roguez)
+Author:       yomgui1+at+gmail-dot-com (Guillaume Roguez)
+Type:         driver/other
+Version:      @RELVER@
+Replaces:     driver/other/Helios_*
+Architecture: ppc-morphos >= 2.0
+Distribution: NoCD
+
+This is Helios, the first Firewire stack for the PPC/MorphOS system.
+
+If you want to develop some applications using the helios.library,
+I've put in the package everything you need to to that in the SDK directory.
+
+*****************
+*** ATTENTION ***
+*****************
+
+Helios is in Beta stage.
+
+SBP2 permits TD_FORMAT and TD_WRITE and all SCSI commands!
+The author (Guillaume ROGUEZ) declines any responsabilities in usage of Helios.
+Your data may be lost...
+
+Current SDK is in testing stage, API may changes at any moments.
+
+*****************
+
+
+Helios package description
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- README                          : this file!
+- Libs/helios.library             : High level API and core of Helios.
+- Devs/Helios/ohci1394_pci.device : MorphOS device to handle OHCI-1394 complient hardwares.
+- Classes/Helios/*                : Helios classes.
+- SDK/                            : All files needed to develop applications using Helios.
+    include/                      : C header files (.h).
+    lib/libhelios.a               : gluelib if you don't use inlines.
+    examples/                     : some API usage examples written in C
+- C                               : helios start/stop tools.
+
+Installation and usage
+~~~~~~~~~~~~~~~~~~~~~~
+
+1) Copy contents of libs/* in LIBS:, devs/* in DEVS: and Classes/* in SYS:Classes.
+2) Then run in a shell, as first program (important!), helios_rom_start (in C/ directory).
+=> this program shall be run only one time, running twice causes troubles as it install
+many tasks and load classes each time.
+
+=> Helios and others parties send some debug output throught the serial line.
+If your computer has been run with RamDebug option you can see also them using
+the program LogTool.
+
+3) Now each time a device is connected you can see bus reset and enumeration steps
+by looking serial line debug ouput.
+If a compatible SBP2 device is connected and recognized, SBP2 class auto-mount all partitions.
+
+- Normally Helios should not be removed of the system after run.
+But if you're know what you do, unmount all SBP2 partitions and run program helios_remove.
+Finish the removal by running shell command "Flushlib sbp2* helios* ohci*".
+You may launch it many time because the internal Helios GarbageCollector task is trigged
+only each 3 seconds.
+
+
+Known issues and limitations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Only isochrone RX contexts are supported.
+- Asynchrone modes limitations:
+    * Stream request not supported.
+- No SerialBusManager task yet.
+- No GUI, no prefs, no localisation...
+
+
+Changes
+~~~~~~~
+
+v0.5:
+ -> new versions:
+    -> helios.library (API major changes): V52.0
+    -> ohci1394_pci.device: V50.2
+    -> sbp2.device: V50.1
+    
+details:
+
+[SBP2]
+ -> mount.library support (auto mount/dismount).
+ -> fixed various defaults configuration values for CD-ROM and WriteOnly media (WORM)
+ -> better system compatibility.
+ -> Max transfer limited to 1MB.
+ -> many others optimizations.
+
+[HELIOS]
+ -> Isochronous RX supported by the ohci1394_pci.device.
+ -> Better device ROM parsing and handling.
+ -> fixed various API bugs and crashes.
+
+[OHCI1394_PCI]
+ -> Fixed OHCI init (bug was discovered on Powermac).
+
+[OTHER]
+ -> Moved Classes into 'Helios' subdirectory.
+ -> Fixed Helios rom startup to be the first app called.
+ -> OpenLibrary() fails if helios_rom_start has not been called in first.
+
+-----
+v0.4:
+ -> Helios re-design with HW devices and classes: SBP2 is the first class implemented.
+-----
+v0.3 and older:
+ -> outdated.

@@ -1,0 +1,5 @@
+##base _HeliosClassBase
+##bias 30
+##public
+HeliosClass_DoMethodA()(base,sysv)
+##end

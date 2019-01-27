@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,8 +17,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** Public common header file for Helios devices.
 */

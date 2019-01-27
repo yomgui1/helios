@@ -1,4 +1,4 @@
-## Copyright 2008-2013, 2018 Guillaume Roguez
+## Copyright 2008-2013,2019 Guillaume Roguez
 ##
 ## This file is part of Helios.
 ##

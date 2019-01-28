@@ -24,10 +24,17 @@ Current SDK is in testing stage, API may changes at any moments.
 ### Pre-requierements
 
 - You must have MorphOS SDK installed on your machine.
+- Be sure to have selected gcc 4 or better (gcc --version should return a 4.x release or better).
 
 ### Build
 
-In a shell, go into helios root directory and type ```make```.
+In a shell, go into helios root directory and type:
+
+1. ```make -s -C src/stack/libs/Helios sdk```
+2. ```make -s all```
+3. ```make -s release```
+
+You will obtain in T: the Helios LHA package. Install from it following instructions below.
 
 ## Binary form distribution
 

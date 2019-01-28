@@ -23,6 +23,10 @@
 export
 unexport SUBDIRS
 
+# Mercurial stuff
+SCM_REV := $(shell git describe --always --long --dirty)
+
+# Paths stuff
 LIBS_DIR := $(PRJROOT)/libs
 DEVS_DIR := $(PRJROOT)/devs
 CLS_DIR  := $(PRJROOT)/classes/Helios
@@ -46,15 +50,11 @@ endif
 
 RELVERSION  = 0
 RELREVISION = 0
-RELVER = $(RELVERSION).$(RELREVISION)-svn_r$(SVN_REV)
+RELVER = $(RELVERSION).$(RELREVISION)-$(SCM_REV)
 RELARC_NAME = Helios_$(RELVER)
 RELARC_DIR  = $(TMPDIR)/Helios
 RELARC_CLS_DIR = $(RELARC_DIR)/Classes/Helios
 RELARC_C = $(RELARC_DIR)/C
-
-# SVN stuff
-SVN_REV  := $(shell svnversion $(PRJROOT))
-SVN_ROOT := $(shell svn info $(PRJROOT) | grep "Repository Root:" | cut -d ":" -f "2-")
 
 #--- MorphOS dev tools framework ---
 
@@ -72,7 +72,7 @@ DEFINES := $(CCDEFINES) \
 	-DUSE_INLINE_STDARG \
 	-DAROS_ALMOST_COMPATIBLE \
 	-DDATE='"$(shell /bin/date +%d.%m.%y)"' \
-	-DCOPYRIGHTS='"\xa9\x20Guillaume\x20ROGUEZ\x20[SVN:\x20r$(SVN_REV)]"'
+	-DCOPYRIGHTS='"\xa9\x20Guillaume\x20ROGUEZ\x20[$(SCM_REV)]"'
 CCWARNS = -Wall
 
 ifeq ("$(shell $(CC) -dumpversion | cut -d. -f1)", "4")
@@ -89,8 +89,8 @@ CFLAGS = -noixemul -g
 CPPFLAGS = $(CFLAGS) $(OPT) $(CCWARNS) $(INCDIRS:%=-I%) $(DEFINES)
 LIBS = -L$(PRJROOT)/lib -lhelios -ldebug -lsyscall -lauto
 
-CCLDFLAGS = -noixemul -g -Wl,--traditional-format -Wl,--cref -Wl,--stats -Wl,-Map=$@.map -L$(PRJROOT)/lib
-LDFLAGS = --traditional-format --cref --stats -fl libnix -Map=mapfile.txt -L$(PRJROOT)/lib
+CCLDFLAGS = -noixemul -g -Wl,--traditional-format -Wl,--cref -Wl,--stats -Wl,-Map=$@.map -L$(PRJROOT)/lib -L/usr/lib -L/usr/local/lib
+LDFLAGS = --traditional-format --cref --stats -fl libnix -Map=mapfile.txt -L$(PRJROOT)/lib -L/usr/lib -L/usr/local/lib
 LDLIBS = -labox -ldebug -lsyscall -lc
 
 ifneq ("$(OS)", "MorphOS")
@@ -159,8 +159,8 @@ mkdeps: $(ALL_SRCS:.c=.d)
 	$(CC) -c $(CPPFLAGS) $< -o $@
 
 .c.d:
-	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_BOLD)" : "$(COLOR_HIGHLIGHT2)"$^"$(COLOR_NORMAL)
-	$(SHELL) -ec '$(CC) -MM $(CPPFLAGS) $< | sed -e '\''s%\($(notdir $*)\)\.o[ :]*%\1.o $@ : %g'\'' > $@;'
+	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
+	$(SHELL) -ec '$(CC) -MM $(CPPFLAGS) $< | sed -e '\''s%\($(notdir $*)\)\.o[ :]*%\1.o $@ : %g'\'' > $@; [ -s $@ ] || rm -fv $@'
 
 %.library: %.library.db
 	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
@@ -180,15 +180,9 @@ mkdeps: $(ALL_SRCS:.c=.d)
 %.sym: %.db
 	$(NM) -n $^ >$@
 
-#--- SVN help targets ---
-
-.PHONY: svn-release rel-lha rel-tbz release
-
-svn-release:
-	svn copy --parents -m "Making release $(RELVERSION).$(RELREVISION)" \
-		$(PRJROOT) $(SVN_ROOT)/tags/release-$(RELVERSION).$(RELREVISION)
-
 #--- Archive and Release help targets ---
+
+.PHONY: rel-lha rel-tbz release
 
 rel-lha:
 	-delete force $(RELARC_DIR)//$(RELARC_NAME).lha

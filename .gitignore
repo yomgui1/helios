@@ -1,7 +1,6 @@
-include/clib/*
-include/proto/*
-include/ppcinline/*
-include/inline/*
+include/proto/*.h
+include/ppcinline/*.h
+include/inline/*.h
 *.[oda]
 *.py[com]
 *~

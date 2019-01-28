@@ -37,11 +37,11 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <proto/exec.h>
 #include <proto/mount.h>
 
-static struct DiskPort *devCreateDiskPort(void);
-static void devDeleteDiskPort(void);
-static ULONG devInquiry(void);
-static ULONG devMount(void);
-static void devDisMount(void);
+//static struct DiskPort *devCreateDiskPort(void);
+//static void devDeleteDiskPort(void);
+//static ULONG devInquiry(void);
+//static ULONG devMount(void);
+//static void devDisMount(void);
 
 struct Library *MountBase=NULL;
 
@@ -261,14 +261,14 @@ on_return:
 ENDFUNC
 DEVCLOSE(SBP2Device, base, ioreq)
 {
-	SBP2Unit *sbp2_unit = (APTR)ioreq->io_Unit;
+	//SBP2Unit *sbp2_unit = (APTR)ioreq->io_Unit;
 
 	/* In case if re-user */
 	ioreq->io_Unit = (APTR) 0;
 	ioreq->io_Device = (APTR) 0;
 
 	--base->dv_Library.lib_OpenCnt;
-	return NULL;
+	return 0;
 }
 ENDFUNC
 DEVEXPUNGE(SBP2Device, base)
@@ -280,7 +280,7 @@ DEVEXPUNGE(SBP2Device, base)
 ENDFUNC
 DEVBEGINIO(SBP2Device, base, ioreq)
 {
-	SBP2Unit *sbp2_unit = (APTR)ioreq->io_Unit;
+	//SBP2Unit *sbp2_unit = (APTR)ioreq->io_Unit;
 	LONG ret;
 
 	ioreq->io_Error = 0;
@@ -390,7 +390,7 @@ DEVBEGINIO(SBP2Device, base, ioreq)
 ENDFUNC
 DEVABORTIO(SBP2Device, base, ioreq)
 {
-	SBP2Unit *sbp2_unit = (APTR)ioreq->io_Unit;
+	//SBP2Unit *sbp2_unit = (APTR)ioreq->io_Unit;
 
 	/* We suppose that caller design is such
 	 * this function will not be called in a concurent way.

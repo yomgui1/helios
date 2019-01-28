@@ -312,9 +312,9 @@ static inline void utils_ReportMissingLibrary(CONST_STRPTR libname, ULONG versio
 		static CONST struct EasyStruct easy = {
 			.es_StructSize		= sizeof(struct EasyStruct),
 			.es_Flags			= 0,
-			.es_Title			= "Helios Error",
-			.es_TextFormat		= "Missing library: %s V%lu (or better)",
-			.es_GadgetFormat	= "Ok",
+			.es_Title			= (UBYTE*) "Helios Error",
+			.es_TextFormat		= (UBYTE*) "Missing library: %s V%lu (or better)",
+			.es_GadgetFormat	= (UBYTE*) "Ok",
 		};
 		ULONG args[] = {(ULONG)libname, version};
 

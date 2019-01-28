@@ -1343,9 +1343,9 @@ try_inquiry:
 	_DBG_UNIT(unit, "INQUIRY: done, %lu bytes\n", inquirydata[4]+4);
 
 	/* Read ASCII VendorID, ProductID and ProductVersion fields  */
-	sbp2_read_ascii_field(&inquirydata[8], unit->u_VendorID, SBP2_VENDORID_LEN+1);
-	sbp2_read_ascii_field(&inquirydata[16], unit->u_ProductID, SBP2_PRODUCTID_LEN+1);
-	sbp2_read_ascii_field(&inquirydata[32], unit->u_ProductVersion, SBP2_PRODUCTVERSION_LEN+1);
+	sbp2_read_ascii_field((STRPTR)&inquirydata[8], (STRPTR)unit->u_VendorID, SBP2_VENDORID_LEN+1);
+	sbp2_read_ascii_field((STRPTR)&inquirydata[16], (STRPTR)unit->u_ProductID, SBP2_PRODUCTID_LEN+1);
+	sbp2_read_ascii_field((STRPTR)&inquirydata[32], (STRPTR)unit->u_ProductVersion, SBP2_PRODUCTVERSION_LEN+1);
 
 	_INF_UNIT(unit, "Unit #%u, Vendor: %s, Product: %s, Version: %s\n",
 		unit->u_UnitNo, unit->u_VendorID, unit->u_ProductID, unit->u_ProductVersion);
@@ -1803,12 +1803,14 @@ sbp2_update(SBP2Unit *unit)
 	return FALSE;
 }
 
+#if 0
 static void
 sbp2_freemem(APTR p, ULONG s, APTR udata)
 {
 	struct ExecBase *SysBase = udata;
 	FreeMem(p, s);
 }
+#endif
 
 static HeliosResponse *
 sbp2_fifo_status_rh(HeliosPacket *request, APTR udata)
@@ -1944,7 +1946,7 @@ sbp2_read_unit_name(SBP2Unit *unit, const QUADLET *dir)
 	UBYTE buf[60];
 	LONG len;
 
-	len = Helios_ReadTextualDescriptor(dir, buf, sizeof(buf));
+	len = Helios_ReadTextualDescriptor(dir, (STRPTR)buf, sizeof(buf));
 	if (len > 0)
 	{
 		STRPTR name;
@@ -2059,12 +2061,15 @@ sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 	HeliosEventMsg sbp2_dev_listener;
 	HeliosEventMsg sbp2_hw_listener;
 	struct MsgPort *evt_port=NULL;
-	struct timerequest *removable_tr=NULL;
-	struct timerequest *reconnect_tr=NULL;
+	//struct timerequest *removable_tr=NULL;
+	//struct timerequest *reconnect_tr=NULL;
 	HeliosEventMsg *evt;
-	ULONG sigs, gen=0, ioreq_signal, timer_signal;
+	ULONG sigs;
+	//ULONG gen=0;
+	//ULONG ioreq_signal;
+	//ULONG timer_signal;
 	BYTE io_sigbit=-1;
-	STRPTR task_name;
+	//STRPTR task_name;
 	BOOL run;
 
 	bzero(&sbp2_hw_listener, sizeof(sbp2_hw_listener));
@@ -2400,8 +2405,8 @@ sbp2_scsi_setup(SBP2Unit *unit, SBP2SCSICmdReq *req)
 	}
 	else
 	{
-		orb->desc_hi = NULL;
-		orb->desc_lo = NULL;
+		orb->desc_hi = 0;
+		orb->desc_lo = 0;
 		orb->datalen = 0;
 	}
 
@@ -2837,7 +2842,7 @@ sbp2_AttemptUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 LONG
 sbp2_ForceUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 {
-	HeliosHardware *hh=NULL;
+	//HeliosHardware *hh=NULL;
 	HeliosDevice *hd=NULL;
 	SBP2Unit *sbp2_unit=NULL;
 	UWORD nodeid=-1;

@@ -52,7 +52,7 @@ my_lib_expunge(struct SBP2ClassLib *base)
 	{
 		_DBG_LIB("Set LIBF_DELEXP\n");
 		base->hc_Lib.lib_Flags |= LIBF_DELEXP;
-		return NULL;
+		return 0;
 	}
 
 	/* Cleanup underlayered device */

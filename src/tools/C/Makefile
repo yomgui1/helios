@@ -16,14 +16,13 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## C tools Makefile
 ##
 ##
 
-PRJROOT := $(shell (cd ../../..; pwd))
-
+PRJROOT := ../../..
 PROGRAMS := helios_remove helios_rom_start
 ALL_SRCS := $(PROGRAMS:%=%.c)
 

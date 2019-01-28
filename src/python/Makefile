@@ -16,13 +16,13 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## Makefile for building the Python Helios binding module.
 ##
 ##
 
-PRJROOT := $(shell (cd ../..; pwd))
+PRJROOT  := ../..
 
 SRCS := helios.c
 OBJS := $(SRCS:.c=.o)

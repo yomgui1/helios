@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,43 +17,47 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
+**
 */
 
 #include "proto/helios.h"
-
-#include <exec/execbase.h>
-
 #include <proto/exec.h>
 #include <proto/dos.h>
 
-#include <string.h>
+#define HELIOS_LIBNAME "helios.library"
 
 int main(int argc, char **argv)
 {
-	struct Library *HeliosBase;
+    struct Library *HeliosBase;
 
-	HeliosBase = OpenLibrary(HELIOS_LIBNAME, HELIOS_LIBVERSION);
-	if (NULL != HeliosBase)
-	{
-		Forbid();
-		{
-			struct MsgPort *port, *next;
-			CONST_STRPTR portName = "HELIOS.";
-			
-			ForeachNodeSafe(&SysBase->PortList, port, next)
-			{
-				if (!strncmp(port->mp_Node.ln_Name, portName, sizeof(portName)))
-					Signal(port->mp_SigTask, SIGBREAKF_CTRL_C);
-			}
-			/* Expunge library if possible */
-			HeliosBase->lib_Flags |= LIBF_DELEXP;
-		}
-		Permit();
+    HeliosBase = OpenLibrary(HELIOS_LIBNAME, 52);
+    if (NULL != HeliosBase)
+    {
+        HeliosClass *hc;
+        HeliosHardware *hw;
+        APTR next;
 
-		CloseLibrary(HeliosBase);
-	}
+        hc = Helios_GetNextClass(NULL);
+        while (NULL != hc)
+        {
+            next = Helios_GetNextClass(hc);
+            Helios_ReleaseClass(hc);
+            Helios_RemoveClass(hc);
+            hc = next;
+        }
 
-	return 0;
+        hw = Helios_GetNextHardware(NULL);
+        while (NULL != hw)
+        {
+            next = Helios_GetNextHardware(hw);
+            Helios_ReleaseHardware(hw);
+            Helios_RemoveHardware(hw);
+            hw = next;
+        }
+
+        CloseLibrary(HeliosBase);
+    }
+
+    return 0;
 }

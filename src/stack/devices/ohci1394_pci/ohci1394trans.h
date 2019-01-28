@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,13 +17,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** Header file for transaction API
 **
 ** Follow the "1394 Open Host Controller Interface Specifications",
 ** Release 1.1, Junary 6, 2000.
+**
 */
 
 #ifndef OHCI1394_TRANS_H
@@ -31,24 +31,43 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "ohci1394core.h"
 
-/*============================================================================*/
-/*--- PROTOTYPES -------------------------------------------------------------*/
-/*============================================================================*/
+extern LONG ohci_TL_Register(OHCI1394Unit *unit,
+                             HeliosTransaction *t,
+                             OHCI1394ATCompleteCallback cb,
+                             APTR cb_udata);
+extern void ohci_TL_FlushAll(OHCI1394Unit *unit);
+extern void ohci_TL_Finish(OHCI1394Unit *unit, HeliosTransaction *t, BYTE rcode);
+extern void ohci_TL_Cancel(OHCI1394Unit *unit, HeliosTransaction *t);
 
-extern void ohci_TL_Init(OHCI1394Unit *unit, OHCI1394TLayer *tl);
-extern OHCI1394Transaction * ohci_TL_Register(
-	OHCI1394TLayer *				tl,
-	HeliosPacket *					packet,
-	OHCI1394TransactionCompleteFunc	func,
-	APTR							udata);
-extern void ohci_TL_FlushAll(OHCI1394TLayer *tl);
-extern void ohci_TL_Finish(OHCI1394TLayer *tl, OHCI1394Transaction *t, BYTE rcode);
-extern LONG ohci_TL_SendRequest(OHCI1394Unit *unit, OHCI1394Transaction *t);
-extern LONG ohci_TL_DoPHYPacket(OHCI1394Unit *unit, UBYTE sigbit, QUADLET value);
-extern void ohci_TL_CancelPacket(OHCI1394TLayer *tl, HeliosPacket *packet);
-extern void ohci_TL_HandleResponse(OHCI1394TLayer *tl, HeliosPacket *resp);
-extern void ohci_TL_HandleRequest(OHCI1394TLayer *tl, HeliosPacket *req);
-extern LONG ohci_TL_AddReqHandler(OHCI1394TLayer *tl, HeliosRequestHandler *reqh);
-extern LONG ohci_TL_RemReqHandler(OHCI1394TLayer *tl, HeliosRequestHandler *reqh);
+extern void ohci_TL_HandleResponse(OHCI1394Unit *unit, HeliosAPacket *resp);
+extern void ohci_TL_HandleRequest(OHCI1394Unit *unit,
+                                  HeliosAPacket *req,
+                                  UBYTE generation);
+
+extern LONG ohci_TL_SendRequest(OHCI1394Unit *unit,
+                                HeliosTransaction *t,
+                                UWORD destid,
+                                HeliosSpeed speed,
+                                UBYTE generation,
+                                UBYTE tcode,
+                                UWORD extcode,
+                                HeliosOffset offset,
+                                QUADLET *payload,
+                                ULONG length);
+extern LONG ohci_TL_DoRequest(OHCI1394Unit *unit,
+                              UBYTE sigbit,
+                              UWORD destid,
+                              HeliosSpeed speed,
+                              UBYTE generation,
+                              UBYTE tcode,
+                              UWORD extcode,
+                              HeliosOffset offset,
+                              QUADLET *payload,
+                              ULONG length);
+extern LONG ohci_TL_DoPHYPacket(OHCI1394Unit *unit,
+                                UBYTE sigbit,
+                                QUADLET value);
+extern LONG ohci_TL_AddReqHandler(OHCI1394Unit *unit, HeliosHWReqHandler *reqh);
+extern LONG ohci_TL_RemReqHandler(OHCI1394Unit *unit, HeliosHWReqHandler *reqh);
 
 #endif /* OHCI1394_TRANS_H */

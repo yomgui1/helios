@@ -16,14 +16,13 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## Makefile for building FWCamController for Helios.
 ##
 ##
 
-PRJROOT := $(shell (cd ../../..; pwd))
-
+PRJROOT  := ../..
 ALL_SRCS := mcc_ringbuffer.c mcc_decoder.c mcc_videopreview.c mcc_app.c main.c
 
 include $(PRJROOT)/common.mk

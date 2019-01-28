@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,8 +17,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
+**
 */
 
 #include "proto/helios.h"
@@ -31,101 +31,121 @@ static const UBYTE template[] = "HW_ID/N,NODE_ID/N";
 
 static struct
 {
-	LONG *hwno;
-	LONG *nodeid;
+    LONG *hwno;
+    LONG *nodeid;
 } args;
 
 LONG write_reset(HeliosDevice *dev)
 {
-	struct MsgPort port;
-	IOHeliosHWSendRequest ioreq;
-	HeliosAPacket *p;
-	LONG err;
+    struct MsgPort port;
+    IOHeliosHWSendRequest ioreq;
+    HeliosAPacket *p;
+    LONG err;
 
-	/* Init temporary msg port */
-	port.mp_Flags   = PA_SIGNAL;
-	port.mp_SigBit  = SIGB_SINGLE;
-	port.mp_SigTask = FindTask(NULL);
-	NEWLIST(&port.mp_MsgList);
+    /* Init temporary msg port */
+    port.mp_Flags   = PA_SIGNAL;
+    port.mp_SigBit  = SIGB_SINGLE;
+    port.mp_SigTask = FindTask(NULL);
+    NEWLIST(&port.mp_MsgList);
 
-	/* Fill iorequest */
-	bzero(&ioreq, sizeof(ioreq));
+    /* Fill iorequest */
+    bzero(&ioreq, sizeof(ioreq));
 
-	ioreq.iohhe_Req.iohh_Req.io_Message.mn_Length = sizeof(ioreq);
-	ioreq.iohhe_Req.iohh_Req.io_Message.mn_ReplyPort = &port;
-	ioreq.iohhe_Req.iohh_Req.io_Message.mn_Node.ln_Type = NT_MESSAGE;
-	ioreq.iohhe_Req.iohh_Req.io_Command = HHIOCMD_SENDREQUEST;
-	ioreq.iohhe_Device = dev;
+    ioreq.iohhe_Req.iohh_Req.io_Message.mn_Length = sizeof(ioreq);
+    ioreq.iohhe_Req.iohh_Req.io_Message.mn_ReplyPort = &port;
+    ioreq.iohhe_Req.iohh_Req.io_Message.mn_Node.ln_Type = NT_MESSAGE;
+    ioreq.iohhe_Req.iohh_Req.io_Command = HHIOCMD_SENDREQUEST;
+    ioreq.iohhe_Device = dev;
 
-	/* No payload with writes */
-	ioreq.iohhe_Req.iohh_Data = NULL;
+    /* No payload with writes */
+    ioreq.iohhe_Req.iohh_Data = NULL;
 
-	/* Fill packet */
-	p = &ioreq.iohhe_Transaction.htr_Packet;
-	Helios_FillWriteQuadletPacket(p, S100, CSR_BASE_LO + 0x00C, 0);
+    /* Fill packet */
+    p = &ioreq.iohhe_Transaction.htr_Packet;
+    Helios_FillWriteQuadletPacket(p, S100, CSR_BASE_LO + 0x00C, 0);
 
-	err = Helios_DoIO(HGA_DEVICE, dev, &ioreq.iohhe_Req);
-	if (err)
-	{
-		Printf("Failed, io err=%ld, RCode=%ld\n", err, p->RCode);
-		return TRUE;
-	}
+    err = Helios_DoIO(HGA_DEVICE, dev, &ioreq.iohhe_Req);
+    if (err)
+    {
+        Printf("Failed, io err=%ld, RCode=%ld\n", err, p->RCode);
+        return TRUE;
+    }
 
-	return FALSE;
+    return FALSE;
 }
 
 int main(int argc, char **argv)
 {
-	APTR rdargs;
-	LONG res=RETURN_FAIL, hwno=0;
-	UWORD nodeid=HELIOS_LOCAL_BUS;
+    APTR rdargs;
+    LONG res=RETURN_FAIL, hwno=0;
+    UWORD nodeid=HELIOS_LOCAL_BUS;
 
-	rdargs = ReadArgs(template, (APTR) &args, NULL);
-	if (NULL != rdargs)
-	{
-		if (NULL != args.hwno)
-			hwno = *args.hwno;
-		if (NULL != args.nodeid)
-			nodeid = *args.nodeid;
-	}
-	else
-	{
-		PrintFault(IoErr(), NULL);
-		return RETURN_ERROR;
-	}
+    rdargs = ReadArgs(template, (APTR) &args, NULL);
+    if (NULL != rdargs)
+    {
+        if (NULL != args.hwno)
+            hwno = *args.hwno;
+        if (NULL != args.nodeid)
+            nodeid = *args.nodeid;
+    }
+    else
+    {
+        PrintFault(IoErr(), NULL);
+        return RETURN_ERROR;
+    }
 
-	/* Opening the library before calling its API */
-	HeliosBase = OpenLibrary(HELIOS_LIBNAME, HELIOS_LIBVERSION);
-	if (HeliosBase)
-	{
-		HeliosHardware *hh = NULL;
-		
-		hh = Helios_FindObject(HGA_HARDWARE, NULL,
-			HA_UnitNo, unitno,
-			TAG_DONE);
+    HeliosBase = OpenLibrary("helios.library", 52);
+    if (NULL != HeliosBase)
+    {
+        ULONG cnt=0;
+        HeliosHardware *hw = NULL;
+        HeliosDevice *dev=NULL;
 
-		if (hh)
-		{
-			struct IOStdReq ioreq;
-	
-			ioreq.io_Message.mn_Length = sizeof(ioreq);
-			ioreq.io_Command = HHIOCMD_BUSRESET;
-			ioreq.io_Data = (APTR)!args.lbr;
-			
-			Helios_DoIO(hh, (struct IORequest *)&ioreq);
-			
-			/* Returned hardware object has been incref'ed for our usage.
-			 * As we don't need anymore, we need to release it.
-			 */
-			Helios_ReleaseObject(hh);
-		}
+        Helios_WriteLockBase();
+        {
+            while (NULL != (hw = Helios_GetNextHardware(hw)))
+            {
+                if (hwno == cnt++)
+                {
+                    while (NULL != (dev = Helios_GetNextDevice(dev,
+                                                               HA_Hardware, (ULONG)hw,
+                                                               TAG_DONE)))
+                    {
+                        ULONG value;
 
-		CloseLibrary(HeliosBase);
-	}
-	else
-		return RETURN_FAIL;
+                        if (1 == Helios_GetAttrs(HGA_DEVICE, dev,
+                                                 HA_NodeID, (ULONG)&value,
+                                                 TAG_DONE))
+                        {
+                            if (value == nodeid)
+                                break;
+                        }
 
-	return RETURN_OK;
+                        Helios_ReleaseDevice(dev);
+                    }
 
-	return res;
+                    break;
+                }
+
+                Helios_ReleaseHardware(hw);
+            }
+        }
+        Helios_UnlockBase();
+
+        if (NULL != dev)
+        {
+            Printf("Reset node %04lx\n", nodeid);
+            res = write_reset(dev) ? RETURN_ERROR:RETURN_OK;
+            Helios_ReleaseDevice(dev);
+        }
+        else
+            res = RETURN_FAIL;
+
+        if (NULL != hw)
+            Helios_ReleaseHardware(hw);
+
+        CloseLibrary(HeliosBase);
+    }
+
+    return res;
 }

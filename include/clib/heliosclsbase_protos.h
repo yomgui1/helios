@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -20,13 +20,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef CLIB_HELIOSCLSBASE_PROTOS_H
 #define CLIB_HELIOSCLSBASE_PROTOS_H
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** C prototypes for Helios Classes.
+**
 */
 
-#include <exec/types.h>
+#include <libraries/helios.h>
 
 #ifdef __cplusplus
 extern "C" {

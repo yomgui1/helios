@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,13 +17,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** Header file to define public OHCI global definitions.
 **
 ** Follow the "1394 Open Host Controller Interface Specifications",
 ** Release 1.1, Junary 6, 2000.
+**
 */
 
 #ifndef OHCI1394_CORE_H
@@ -35,7 +35,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #define OHCI1394_REGISTERS_SPACE_SIZE 2048
 
-/* OHCI Register Mapping */
+//+ OHCI Register Mapping
 #define OHCI1394_REG_VERSION                     (0x000)
 #define OHCI1394_REG_GUID_ROM                    (0x004)
 #define OHCI1394_REG_AT_RETRIES                  (0x008)
@@ -252,8 +252,9 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define OHCI1394_INTF_SOFTINTERRUPT         (1<<OHCI1394_INTB_SOFTINTERRUPT)
 #define OHCI1394_INTF_VENDORSPECIFIC        (1<<OHCI1394_INTB_VENDORSPECIFIC)
 #define OHCI1394_INTF_MASTERINTENABLE       (1<<OHCI1394_INTB_MASTERINTENABLE)
+//-
 
-/* LinkControl register bits */
+//+ LinkControl register bits
 #define OHCI1394_LCB_TAG1SYNCFILTERLOCK  6
 #define OHCI1394_LCB_RCVSELFID           9
 #define OHCI1394_LCB_RCVPHYPKT          10
@@ -267,8 +268,9 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define OHCI1394_LCF_CYCLETIMERENABLE   (1<<OHCI1394_LCB_CYCLETIMERENABLE)
 #define OHCI1394_LCF_CYCLEMASTER        (1<<OHCI1394_LCB_CYCLEMASTER)
 #define OHCI1394_LCF_CYCLESOURCE        (1<<OHCI1394_LCB_CYCLESOURCE)
+//-
 
-/* Phy Control register bits */
+//+ Phy Control register bits
 #define OHCI1394_PCB_WR_DATA     0
 #define OHCI1394_PCB_REG_ADDR    8
 #define OHCI1394_PCB_WR_REG     14
@@ -285,8 +287,9 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #define OHCI1394_PC_READ_DATA(r)    (((r) >> OHCI1394_PCB_RD_DATA) & 0xff)
 #define OHCI1394_PC_READ_ADDR(r)    (((r) >> OHCI1394_PCB_RD_ADDR) & 0x0f)
+//-
 
-/* NodeID register bits */
+//+ NodeID register bits
 #define OHCI1394_NODEIDB_NODENUMBER          0
 #define OHCI1394_NODEIDB_BUSNUMBER           6
 #define OHCI1394_NODEIDB_CABLEPOWERSTATUS   27
@@ -304,6 +307,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define OHCI1394_NODEID_BUSNUMBER(r)        (((r) & OHCI1394_NODEID_BUSNUMBER_MASK) >> OHCI1394_NODEIDB_BUSNUMBER)
 
 #define OHCI1394_LOCAL_BUS                  OHCI1394_NODEID_BUSNUMBER_MASK
+//-
 
 /* SelfID Count register bits */
 #define OHCI1394_SELFIDCOUNTB_SELFIDSIZE             2
@@ -413,330 +417,300 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define OHCI1394_PKTF_REQUEST (1<<0)
 #define OHCI1394_PKTF_4QH     (1<<1)
 
-#define LOCK_CTX(c) EXCLUSIVE_PROTECT_BEGIN((OHCI1394Context *)(c))
-#define UNLOCK_CTX(c) EXCLUSIVE_PROTECT_END((OHCI1394Context *)(c))
+#define LOCK_CTX(c) LOCK_REGION((OHCI1394Context *)(c))
+#define UNLOCK_CTX(c) UNLOCK_REGION((OHCI1394Context *)(c))
 
 #include "debug.h"
 
-#define DH_UNIT "<ohci-%d> "
+#define _INFO_UNIT(unit, fmt, args...) _INFO("[unit %lu] " fmt, (unit)->hu_UnitNo ,##args)
+#define _ERR_UNIT(unit, fmt, args...)  _ERR("[unit %lu] " fmt, (unit)->hu_UnitNo ,##args)
 
-#define _ERR_UNIT(_unit, _fmt, _a...) _ERR(DH_UNIT _fmt, (_unit)->hu_UnitNo, ##_a)
-#define _WRN_UNIT(_unit, _fmt, _a...) _WRN(DH_UNIT _fmt, (_unit)->hu_UnitNo, ##_a)
-#define _INF_UNIT(_unit, _fmt, _a...) _INF(DH_UNIT _fmt, (_unit)->hu_UnitNo, ##_a)
-#define _DBG_UNIT(_unit, _fmt, _a...) _DBG(DH_UNIT _fmt, (_unit)->hu_UnitNo, ##_a)
 
-/*============================================================================*/
-/*--- STRUCTURES -------------------------------------------------------------*/
-/*============================================================================*/
+/*----------------------------------------------------------------------------*/
+/*--- STRUCTURES SECTION -----------------------------------------------------*/
 
+//+ Structures
 struct OHCI1394Unit;
-struct OHCI1394Transaction;
-struct OHCI1394ATCtx;
-struct OHCI1394ATData;
-struct OHCI1394ATBuffer;
-struct OHCI1394IRBuffer;
-struct OHCI1394Context;
-struct OHCI1394TLayer;
 
-typedef void (*OHCI1394ATCompleteCallback)(
-	struct OHCI1394TLayer *tl,
-	BYTE ack, UWORD timestamp,
-	struct OHCI1394ATData *pd);
-	
-typedef void (*OHCI1394TransactionCompleteFunc)(
-	HeliosPacket *request,
-	HeliosPacket *response,
-	APTR udata);
-
-typedef union HCC {
-	QUADLET value;
-
-	/* Keep following structure as it */
-	struct {
-		/* bits from 31 to 0 */
-		QUADLET BIBimageValid	: 1;
-		QUADLET NoByteSwapData	: 1;
-		QUADLET AckTardyEnable	: 1;
-		QUADLET Reserved0		: 5;
-		QUADLET PrgPhyEnable	: 1;
-		QUADLET APhyEhcEnable	: 1;
-		QUADLET Reserved1		: 2;
-		QUADLET LinkPowerStatus	: 1;
-		QUADLET PWriteEnable	: 1;
-		QUADLET LinkEnable		: 1;
-		QUADLET SoftReset		: 1;
-		QUADLET Reserved2		: 16;
-	};
-} HCC;
-
-typedef struct OHCI1394ATData
-{
-	struct OHCI1394ATCtx *		atd_Ctx;
-	struct OHCI1394ATBuffer *	atd_Buffer;
-	OHCI1394ATCompleteCallback	atd_AckCallback;
-	APTR						atd_UData;
-} OHCI1394ATData;
-
-/* Packet TLabel field is encoded on 6 bits, this gives 64 differents packets
- * handled on one bus in same time (TLABEL_MAX).
- * Following structure is used in unit structure as entries of array limited
- * to 64 items.
- * Each transaction is fully re-usable. When the system run out of items
- * the Transaction Layer issues an error to user.
- */
-typedef struct OHCI1394Transaction {
-	struct timerequest				t_TReq;				/* Base: used for timeout */
-	LOCK_PROTO;
-	OHCI1394ATData					t_ATData;			/* Data used by AT Ack phase */
-	HeliosPacket *					t_Packet;			/* Given by user */
-	OHCI1394TransactionCompleteFunc	t_CompleteFunc;		/* Called when transaction is complet */
-	APTR							t_UserData;
-} OHCI1394Transaction;
-
-typedef struct OHCI1394TLayer {
-	LOCK_PROTO;
-	struct OHCI1394Unit *	tl_Unit;						/* Up link */
-	OHCI1394Transaction		tl_Transactions[TLABEL_MAX];	/* Async transactions array */
-	UQUAD					tl_TLabelMap;					/* Transactions array usage mapping */
-	struct
-	{
-		ULONG tl_LastTLabel:6;	/* Last used TLabel */
-	};
-	LOCKED_MINLIST_PROTO(tl_ReqHandlerList);
-} OHCI1394TLayer;
+typedef struct OHCI1394SplitTimeReq {
+    struct timerequest req;
+    HeliosTransaction *transaction;
+} OHCI1394SplitTimeReq;
 
 typedef struct OHCI1394Descriptor {
-	u_int16_t	d_ReqCount;
-	u_int16_t	d_Control;
-	u_int32_t	d_DataAddress;
-	u_int32_t	d_BranchAddress;
-	u_int16_t	d_ResCount;
-	u_int16_t	d_TransferStatus;
+    u_int16_t   d_ReqCount;
+    u_int16_t   d_Control;
+    u_int32_t   d_DataAddress;
+    u_int32_t   d_BranchAddress;
+    u_int16_t   d_ResCount;
+    u_int16_t   d_TransferStatus;
 } OHCI1394Descriptor __attribute__((aligned(16)));
 
 #define d_TimeStamp d_ResCount
 
+typedef union {
+    QUADLET value;
+
+    struct {
+        /* bits from 31 to 0 */
+        QUADLET BIBimageValid   : 1;
+        QUADLET NoByteSwapData  : 1;
+        QUADLET AckTardyEnable  : 1;
+        QUADLET Reserved0       : 5;
+        QUADLET PrgPhyEnable    : 1;
+        QUADLET APhyEhcEnable   : 1;
+        QUADLET Reserved1       : 2;
+        QUADLET LinkPowerStatus : 1;
+        QUADLET PWriteEnable    : 1;
+        QUADLET LinkEnable      : 1;
+        QUADLET SoftReset       : 1;
+        QUADLET Reserved2       : 16;
+    } r;
+} HCC;
+
+/* Keep following structure as it */
+
+struct OHCI1394ATCtx;
+struct OHCI1394ATPacketData;
+typedef void (*OHCI1394ATCompleteCallback)(struct OHCI1394Unit *unit,
+                                           BYTE status, UWORD timestamp,
+                                           struct OHCI1394ATPacketData *pdata);
+
+struct OHCI1394ATBuffer;
+typedef struct OHCI1394ATPacketData
+{
+    OHCI1394ATCompleteCallback pd_AckCallback;
+    APTR                       pd_UData;
+    struct OHCI1394ATBuffer *  pd_Buffer;
+} OHCI1394ATPacketData;
+
 typedef struct OHCI1394ATBuffer
 {
-	struct MinNode				atb_Node;
-	OHCI1394ATData *			atb_PacketData;
-	OHCI1394Descriptor			atb_Descriptors[3];
-	OHCI1394Descriptor *		atb_LastDescriptor;
+    struct MinNode             atb_Node;
+    OHCI1394ATPacketData *     atb_PacketData;
+    OHCI1394Descriptor         atb_Descriptors[3];
+    OHCI1394Descriptor *       atb_LastDescriptor;
 } OHCI1394ATBuffer __attribute__((aligned(16)));
 
 /* The real size of this buffer is known only after the OHCI init */
-typedef struct OHCI1394ARBuffer {
-	struct MinNode				arb_Node;
-	QUADLET *					arb_Page;
-	ULONG						arb_Pad0;
-	OHCI1394Descriptor			arb_Descriptor; /* DMA INPUT_MORE descriptor */
+typedef struct OHCI1394ARBuffer
+{
+    struct MinNode          arb_Node;
+    QUADLET *               arb_Page;
+    ULONG                   arb_Pad0;
+    OHCI1394Descriptor      arb_Descriptor; /* DMA INPUT_MORE descriptor */
 } OHCI1394ARBuffer __attribute__((aligned(16)));
 
-
-typedef struct OHCI1394IRBuffer {
-	OHCI1394Descriptor			irb_Descriptors[2];
-	struct OHCI1394IRBuffer *	irb_Next;
-	HeliosIRBuffer				irb_BufferData;
+struct OHCI1394IRBuffer;
+typedef struct OHCI1394IRBuffer
+{
+    OHCI1394Descriptor        irb_Descriptors[2];
+    struct OHCI1394IRBuffer * irb_Next;
+    HeliosIRBuffer            irb_BufferData;
 } OHCI1394IRBuffer __attribute__((aligned(16)));
 
 /* Common Context structure */
+struct OHCI1394Context;
 typedef void (*OHCI1394CtxHandler) (struct OHCI1394Context *ctx);
 
-typedef struct OHCI1394Context {
-	struct MinNode			ctx_SysNode;
-	LOCK_PROTO;
+typedef struct OHCI1394Context
+{
+    struct MinNode          ctx_SysNode;
+    LOCK_VARIABLE;
 
-	struct OHCI1394Unit *	ctx_Unit;
-	ULONG					ctx_RegOffset;
-	OHCI1394CtxHandler		ctx_Handler;
-	HeliosSubTask *			ctx_SubTask;
-	ULONG					ctx_Signal;
+    struct OHCI1394Unit *   ctx_Unit;
+    ULONG                   ctx_RegOffset;
+    OHCI1394CtxHandler      ctx_Handler;
+    HeliosSubTask *         ctx_SubTask;
+    ULONG                   ctx_Signal;
 } OHCI1394Context;
 
 typedef struct OHCI1394ATCtx {
-	OHCI1394Context		atc_Context;
-	ULONG				atc_CommandPtr;
+    OHCI1394Context         atc_Context;
+    ULONG                   atc_CommandPtr;
 
-	APTR				atc_AllocDMABuffers;
-	OHCI1394ATBuffer *	atc_CpuDMABuffers;
-	ULONG				atc_PhyDMABuffers;
-	struct MinList		atc_BufferList;
-	ULONG				atc_BufferUsage;
-	struct MinList		atc_UsedBufferList;
-	struct MinList		atc_DeadBufferList;
-	OHCI1394ATBuffer *	atc_LastBuffer;
+    APTR                    atc_AllocDMABuffers;
+    OHCI1394ATBuffer *      atc_CpuDMABuffers;
+    ULONG                   atc_PhyDMABuffers;
+    struct MinList          atc_BufferList;
+    ULONG                   atc_BufferUsage;
+    struct MinList          atc_UsedBufferList;
+    struct MinList          atc_DeadBufferList;
+    OHCI1394ATBuffer *      atc_LastBuffer;
 } OHCI1394ATCtx;
 
 typedef struct OHCI1394ARCtx {
-	OHCI1394Context		arc_Context;
+    OHCI1394Context     arc_Context;
 
-	APTR				arc_AllocDMABuffers;
-	OHCI1394ARBuffer *	arc_CpuDMABuffers;
-	ULONG				arc_PhyDMABuffers;
-	OHCI1394ARBuffer *	arc_RealLastBuffer;		// Last buffer in the block of ARBuffer.
+    APTR                arc_AllocDMABuffers;
+    OHCI1394ARBuffer *  arc_CpuDMABuffers;
+    ULONG               arc_PhyDMABuffers;
+    OHCI1394ARBuffer *  arc_RealLastBuffer; // Last buffer in the block of ARBuffer.
 
-	OHCI1394ARBuffer *	arc_FirstBuffer;		// First DMA block that contains the first AR DMA descriptors of the AR DMA program
-	OHCI1394ARBuffer *	arc_LastBuffer;			// Last buffer that contains the last AR DMA descriptors of the AR DMA program (Z=0)
+    OHCI1394ARBuffer *  arc_FirstBuffer;    // First DMA block that contains the first AR DMA descriptors of the AR DMA program
+    OHCI1394ARBuffer *  arc_LastBuffer;     // Last buffer that contains the last AR DMA descriptors of the AR DMA program (Z=0)
 
-	QUADLET *			arc_Pages;
-	QUADLET *			arc_FirstQuadlet;		// first quadlet to read inside the first page of the current DMA block
+    QUADLET *           arc_Pages;
+    QUADLET *           arc_FirstQuadlet;   // first quadlet to read inside the first page of the current DMA block
 } OHCI1394ARCtx;
 
 typedef struct OHCI1394IsoCtxBase {
-	OHCI1394Context		ic_Context;
-	ULONG				ic_Index;
+    OHCI1394Context     ic_Context;
+    ULONG               ic_Index;
 } OHCI1394IsoCtxBase;
 
-typedef struct OHCI1394IRCtxFlags {
-	ULONG DropEmpty:1;
+typedef struct {
+    ULONG DropEmpty:1;
 } OHCI1394IRCtxFlags;
 
 typedef struct OHCI1394IRCtx {
-	OHCI1394IsoCtxBase		irc_Base;
-	UBYTE					irc_HeaderPadding;
-	UBYTE					irc_Channel;
-	UBYTE					irc_Reserved[2];
+    OHCI1394IsoCtxBase  irc_Base;
+    UBYTE               irc_HeaderPadding;
+    UBYTE               irc_Channel;
+    UBYTE               irc_Reserved[2];
 
-	OHCI1394IRCtxFlags		irc_Flags;
-	HeliosIRCallback		irc_Callback;
-	APTR					irc_UserData;
-	ULONG					irc_HeaderLength;
-	ULONG					irc_PayloadLength;
+    OHCI1394IRCtxFlags  irc_Flags;
+    HeliosIRCallback    irc_Callback;
+    APTR                irc_UserData;
+    ULONG               irc_HeaderLength;
+    ULONG               irc_PayloadLength;
 
-	ULONG					irc_DMABufferCount;
-	APTR					irc_DMABuffer;
-	OHCI1394IRBuffer *		irc_AlignedDMABuffer;
-	OHCI1394IRBuffer *		irc_FirstDMABuffer;
-	OHCI1394IRBuffer *		irc_LastDMABuffer;
-	OHCI1394IRBuffer *		irc_RealLastDMABuffer;
+    ULONG               irc_DMABufferCount;
+    APTR                irc_DMABuffer;
+    OHCI1394IRBuffer *  irc_AlignedDMABuffer;
+    OHCI1394IRBuffer *  irc_FirstDMABuffer;
+    OHCI1394IRBuffer *  irc_LastDMABuffer;
+    OHCI1394IRBuffer *  irc_RealLastDMABuffer;
 
-	APTR					irc_PageBuffer;
-	APTR					irc_AlignedPageBuffer;
+    APTR                irc_PageBuffer;
+    APTR                irc_AlignedPageBuffer;
 } OHCI1394IRCtx;
 
 typedef struct OHCI1394ITCtx {
-	OHCI1394IsoCtxBase itc_Base;
+    OHCI1394IsoCtxBase  itc_Base;
 } OHCI1394ITCtx;
 
-typedef struct OHCI1394Flags {
-	ULONG Initialized		:1;
-	ULONG Enabled			:1;
-	ULONG UnrecoverableError:1;
+typedef struct {
+    ULONG Initialized:1;
+    ULONG Enabled:1;
+    ULONG UnrecoverableError:1;
 } OHCI1394Flags;
 
-typedef struct OHCI1394Unit {
-	struct Unit				hu_Unit;					/* Base */
-	LONG					hu_UnitNo;					/* Unit logical number */
-	struct Device *			hu_Device;					/* Owner device */
-	LOCK_PROTO;
+//-
+//+ OHCI1394Unit
+typedef struct OHCI1394Unit
+{
+    HELIOS_HW_HEAD
 
-	/* PCI data */
-	APTR					hu_PCI_BoardObject;			/* PCIX BoardObject */
-	APTR					hu_PCI_IRQHandlerObject;	/* PCIX IRQ object */
-	UWORD					hu_PCI_VID;					/* PCI bridge VendorID */
-	UWORD					hu_PCI_DID;					/* PCI bridge DeviceID */
-	UBYTE *					hu_PCI_RegBase;				/* PCI Base address of OHCI registers (size >= 2048) */
+    /* PCI data */
+    APTR                  hu_PCI_BoardObject;         /* PCIX BoardObject */
+    UWORD                 hu_PCI_VID;                 /* PCI bridge VendorID */
+    UWORD                 hu_PCI_DID;                 /* PCI bridge DeviceID */
+    UBYTE *               hu_PCI_RegBase;             /* PCI Base address of OHCI registers (size >= 2048) */
+    APTR                  hu_PCI_IRQHandlerObject;    /* PCI IRQ object */
 
-	/* Everything are zero'ed from this point during ohci_Term() */
-	APTR					hu_MemPool;					/* Unit private memory pool */
-	OHCI1394Flags			hu_Flags;
-	HeliosEventListenerList hu_Listeners;
+    /* everything are erased from this point by ohci_Term() */
+    APTR                  hu_MemPool; /* Unit private memory pool */
 
-	/* 1394 variables */
-	UQUAD					hu_GUID;
-	QUADLET *				hu_ROMData;					/* Current ROM configuration */
-	QUADLET *				hu_NextROMData;				/* Next ROM config to use, set to NULL after the BusReset process */
-	ULONG					hu_BusSeconds;				/* Counter of bus second events */
-	HeliosBusOptions		hu_BusOptions;				/* Simple register copy */
+    /* Unit data */
+    OHCI1394Flags         hu_Flags;
 
-	/* Transaction Layer */
-	OHCI1394TLayer			hu_TL;
-	HeliosSubTask *			hu_SplitTimeoutTask;			/* Task to flush transactions in timeout */
-	struct timerequest *	hu_SplitTimeoutIOReq;			/* Base timerequest for copy */
-	ULONG					hu_SplitTimeoutCSR;				/* SPLIT-TIMEOUT CSR register value */
+    /* 1394 variables */
+    UQUAD                 hu_GUID;
+    QUADLET *             hu_ROMData;                 /* Current ROM configuration */
+    QUADLET *             hu_NextROMData;             /* Next ROM config to use, set to NULL after the BusReset process */
+    ULONG                 hu_BusSeconds;              /* Counter of bus second events */
+    HeliosBusOptions      hu_BusOptions;              /* Simple register copy */
 
-	/* OHCI static stuff (never change) */
-	ULONG					hu_OHCI_Version;			/* Implemented OHCI version */
-	ULONG					hu_OHCI_VendorID;
-	UBYTE					hu_OHCI_LastGeneration;		/* Last generation from SelfID packets */
-	UBYTE					hu_OHCI_LastBRGeneration;	/* Last generation from BusReset response packet */
-	UWORD					hu_Reserved1;
 
-	/* BusReset and Self-ID fields */
-	HeliosSubTask *			hu_BusResetTask;			/* This task handles BusReset/SelfID events */
-	ULONG					hu_BusResetSignal;
-	QUADLET *				hu_SelfIdBufferAlloc;		/* Non-aligned buffer pointer for SelfId stream, directly from OS alloc functions */
-	QUADLET *				hu_SelfIdBufferCpu;			/* Aligned version of hu_SelfIdBufferAlloc */
-	QUADLET *				hu_SelfIdBufferPhy;			/* hu_SelfIdBufferCpu seen from DMA */
-	QUADLET					hu_SelfIdArray[HELIOS_SELFID_LENGHT]; /* Then self-id data will be copied in this one after a bus reset */
-	ULONG					hu_SelfIdPktCnt;			/* Number of QUADLET really filled in hu_SelfIdArray */
-	UWORD 					hu_LocalNodeId;
-	UWORD					hu_Reserved2;
+    /* Transactions handling */
+    HeliosTransaction *   hu_Transactions[TLABEL_MAX];
+    OHCI1394ATPacketData  hu_PacketData[TLABEL_MAX];
+    UQUAD                 hu_TLabelMap;
+    UBYTE                 hu_LastTLabel;
+    UBYTE                 hu_Reserved0[3];
+    ULONG                 hu_SplitTimeout;            /* SPLIT-TIMEOUT CSR register value */
+    HeliosSubTask *       hu_SplitTimeoutTask;
+    struct MsgPort *      hu_TimerPort;
+    struct timerequest *  hu_SplitTimeoutIOReq;
+    struct {
+        LOCK_VARIABLE;
+        struct MinList    rhd_List;
+    }                     hu_ReqHandlerData;
 
-	/* Devices management */
-	HeliosSubTask *			hu_GCTask;
+    /* OHCI static stuff (never change) */
+    ULONG                 hu_OHCI_Version;            /* Implemented OHCI version */
+    ULONG                 hu_OHCI_VendorID;
+    UBYTE                 hu_OHCI_LastGeneration;     /* Last generation from SelfID packets */
+    UBYTE                 hu_OHCI_LastBRGeneration;   /* Last generation from BusReset response packet */
+    UWORD                 hu_Reserved1;
 
-	/* Isochronous stuffs */
-	struct MinList			hu_IRCtxList;				/* List of created Iso Receive contexts */
-	struct MinList			hu_ITCtxList;				/* List of created Iso Transmit contexts */
-	ULONG					hu_ITCtxMask;
-	ULONG					hu_IRCtxMask;
-	UBYTE					hu_MaxIsoReceiveCtx;
-	UBYTE					hu_MaxIsoTransmitCtx;
-	UWORD					hu_Reserved3;
+    /* BusReset and Self-ID fields */
+    HeliosSubTask *       hu_BusResetTask;            /* This task handles BusReset/SelfID events */
+    ULONG                 hu_BusResetSignal;
+    QUADLET *             hu_SelfIdBufferAlloc;       /* Non-aligned buffer pointer for SelfId stream, directly from OS alloc functions */
+    QUADLET *             hu_SelfIdBufferCpu;         /* Aligned version of hu_SelfIdBufferAlloc */
+    QUADLET *             hu_SelfIdBufferPhy;         /* hu_SelfIdBufferCpu seen from DMA */
+    QUADLET               hu_SelfIdArray[504];        /* Then self-id data will be copied in this one after a bus reset */
+    ULONG                 hu_SelfIdPktCnt;            /* Number of QUADLET filled in hu_SelfIdArray */
+    HeliosTopology *      hu_OldTopology;             /* Previous valid topology (NULL if never existed) */
+    HeliosTopology *      hu_Topology;                /* Current valid topology (NULL if no valid or after a bus-reset) */
+    ULONG                 hu_BadTopo;
 
-	/* Asynchronous stuffs */
-	OHCI1394ATCtx			hu_ATRequestCtx;
-	OHCI1394ATCtx			hu_ATResponseCtx;
-	OHCI1394ARCtx			hu_ARRequestCtx;
-	OHCI1394ARCtx			hu_ARResponseCtx;
+    /* Devices management */
+    HeliosSubTask *       hu_GCTask;
+
+    /* Isochronous stuffs */
+    struct MinList        hu_IRCtxList;               /* List of created Iso Receive contexts */
+    struct MinList        hu_ITCtxList;               /* List of created Iso Transmit contexts */
+    ULONG                 hu_ITCtxMask;
+    ULONG                 hu_IRCtxMask;
+    UBYTE                 hu_MaxIsoReceiveCtx;
+    UBYTE                 hu_MaxIsoTransmitCtx;
+    UWORD                 hu_Reserved2;
+
+    /* Asynchronous stuffs */
+    OHCI1394ATCtx         hu_ATRequestCtx;
+    OHCI1394ATCtx         hu_ATResponseCtx;
+    OHCI1394ARCtx         hu_ARRequestCtx;
+    OHCI1394ARCtx         hu_ARResponseCtx;
 } OHCI1394Unit;
+//-
 
 /*----------------------------------------------------------------------------*/
 /*--- EXPORTED API -----------------------------------------------------------*/
 
 extern LONG ohci_ScanPCI(OHCI1394Device *base);
-extern LONG ohci_OpenUnit(OHCI1394Device *base, struct IORequest *ioreq, ULONG index);
-extern void ohci_CloseUnit(OHCI1394Device *base, struct IORequest *ioreq);
-extern LONG ohci_Init(OHCI1394Unit *unit);
-extern void ohci_Term(OHCI1394Unit *unit);
+extern LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index);
+extern void ohci_CloseUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq);
 extern LONG ohci_Enable(OHCI1394Unit *unit);
 extern void ohci_Disable(OHCI1394Unit *unit);
-extern LONG ohci_ResetUnit(OHCI1394Unit *unit);
-extern BOOL ohci_RaiseBusReset(OHCI1394Unit *unit, BOOL shortreset);
 extern UWORD ohci_GetTimeStamp(OHCI1394Unit *unit);
-extern UWORD ohci_ComputeResponseTS(UWORD req_timestamp, UWORD offset);
 extern UQUAD ohci_UpTime(OHCI1394Unit *unit);
-extern LONG ohci_SendPHYPacket(
-	OHCI1394Unit *unit,
-	HeliosSpeed speed,
-	QUADLET phy_data,
-	OHCI1394ATData *atd);
-extern LONG ohci_ATContext_Send(
-	OHCI1394ATCtx *ctx,
-	QUADLET *p,
-	QUADLET *payload,
-	OHCI1394ATData *atd,
-	UBYTE tlabel,
-	UWORD timestamp);
-extern void ohci_HandleLocalRequest(
-	OHCI1394Unit *unit,
-	HeliosPacket *req,
-	HeliosPacket *resp);
-extern void ohci_CancelATProcess(OHCI1394ATData *atd);
+extern LONG ohci_Init(OHCI1394Unit *unit);
+extern void ohci_Term(OHCI1394Unit *unit);
+extern BOOL ohci_RaiseBusReset(OHCI1394Unit *unit, BOOL shortreset);
+extern LONG ohci_SendPHYPacket(OHCI1394Unit *unit, HeliosSpeed speed, QUADLET phy_data,
+                               OHCI1394ATPacketData *pdata);
+extern LONG ohci_ATContext_Send(OHCI1394ATCtx *ctx, UBYTE generation, QUADLET *p,
+                                QUADLET *payload, OHCI1394ATPacketData *pdata,
+                                UBYTE tlabel, UWORD timestamp);
+extern void ohci_HandleLocalRequest(OHCI1394Unit *unit,
+                                    HeliosAPacket *req,
+                                    HeliosAPacket *resp);
+extern void ohci_CancelATPacket(OHCI1394Unit *unit, OHCI1394ATPacketData *pdata);
 extern LONG ohci_GenerationOK(OHCI1394Unit *unit, UBYTE generation);
 extern LONG ohci_SetROM(OHCI1394Unit *unit, QUADLET *data);
 extern void ohci_IRContext_Destroy(OHCI1394IRCtx *ctx);
-extern OHCI1394IRCtx *ohci_IRContext_Create(
-	OHCI1394Unit *		unit,
-	LONG				index,
-	UWORD				ibuf_size,
-	UWORD				ibuf_count,
-	UWORD				hlen,
-	UBYTE				payload_align,
-	APTR				callback,
-	APTR				udata,
-	OHCI1394IRCtxFlags	flags);
+extern OHCI1394IRCtx *ohci_IRContext_Create(OHCI1394Unit *      unit,
+                                            LONG                index,
+                                            UWORD               ibuf_size,
+                                            UWORD               ibuf_count,
+                                            UWORD               hlen,
+                                            UBYTE               payload_align,
+                                            APTR                callback,
+                                            APTR                udata,
+                                            OHCI1394IRCtxFlags  flags);
 extern void ohci_IRContext_Start(OHCI1394IRCtx *ctx, ULONG channel, ULONG tags);
 extern BOOL ohci_IRContext_Stop(OHCI1394IRCtx *ctx);
 

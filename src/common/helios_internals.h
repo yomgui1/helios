@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,179 +17,148 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** Private Helios Structures and Definitions.
+**
 */
 
 #ifndef LIBRARIES_HELIOS_INTERNAL_H
 #define LIBRARIES_HELIOS_INTERNAL_H
 
 #define HELIOS_INTERNAL 1
-//#define DEBUG_REFCNT 1
 
 #include "libraries/helios.h"
 #include "devices/helios.h"
 #include "utils.h"
+#include "debug.h"
 
 #include <exec/ports.h>
 
-#ifdef DEBUG_REFCNT
-#	define _DBG_REFCNT _DBG
-#	define _WRN_REFCNT _WARN
+#include <hardware/atomic.h>
+
+#ifndef NDEBUG
+#   ifdef DEBUG_REFCNT
+#       define _INFO_REFCNT _INFO
+#       define _WARN_REFCNT _WARN
+#   else
+#       define _INFO_REFCNT(x,a...)
+#       define _WARN_REFCNT(x,a...)
+#   endif /* DEBUG_REFCNT */
 #else
-#	define _DBG_REFCNT(x,a...)
-#	define _WRN_REFCNT(x,a...)
-#endif /* DEBUG_REFCNT */
+#   define _INFO_REFCNT(x,a...)
+#   define _WARN_REFCNT(x,a...)
+#endif /* !NDEBUG */
 
-typedef void (*_HeliosObjectFreeFunc)(APTR);
-typedef LONG (*_HeliosObjectGetAttrFunc)(APTR, ULONG, APTR);
-typedef LONG (*_HeliosObjectSetAttrFunc)(APTR, ULONG, APTR);
+#define _SHOBJ_HEAD \
+    struct Node     hso_SysNode; \
+    LONG            hso_RefCnt;  \
+    LOCK_VARIABLE;
 
-typedef struct _HeliosSharedObject
-{
-	struct Node		hso_Node;
-	LONG			hso_RefCnt;
-	ULONG			hso_Type;
-	APTR			hso_Free;
-	APTR			hso_GetAttr;
-	APTR			hso_SetAttr;
-	LOCK_PROTO;
-} _HeliosSharedObject;
+typedef struct _HeliosSharedObj {_SHOBJ_HEAD} _HeliosSharedObj;
 
 struct HeliosEventListenerList
 {
-	struct MinList	ell_SysList;
-	LOCK_PROTO;
+    struct MinList ell_SysList;
+    LOCK_VARIABLE;
 };
 
-struct HeliosHardware
+typedef union HeliosIds
 {
-	_HeliosSharedObject			hh_Base;
-
-	struct Device *				hh_UnitDevice;		/* Opened HW device */
-	struct Unit *				hh_Unit;			/* Corresponding system unit */
-	LONG						hh_UnitNo;			/* Logical unit # */
-	HeliosSubTask *				hh_HWTask;
-	HeliosEventListenerList		hh_Listeners;
-	HeliosSelfIDStream			hh_SelfIDStream;
-	HeliosTopology *			hh_Topology;		/* Current topology, may be NULL */
-	LOCKED_MINLIST_PROTO(hh_Devices);				/* List of connected devices */
-	LOCKED_MINLIST_PROTO(hh_DeadDevices);			/* List of non-connected devices */
-	UWORD						hh_LocalNodeId;		/* Known after successfull Self-ID process */ \
-	UWORD						hh_BMRetry;
-};
+    QUADLET array[4];
+    struct
+    {
+        QUADLET VendorID;
+        QUADLET ModelID;
+        QUADLET UnitSpecID;
+        QUADLET UnitSWVersion;
+    } fields __attribute__((packed));
+} HeliosIds;
 
 struct HeliosDevice
 {
-	_HeliosSharedObject			hd_Base;
+    _SHOBJ_HEAD
 
-	/* Runtime variables.
-	 * Object must be locked before read/write
-	 */
-	HeliosEventListenerList		hd_Listeners;
-	HeliosHardware *			hd_Hardware;	/* Up-link */
-	HeliosNode *				hd_Node;		/* NULL if not connected (WARNING: owner by HW's topo) */
-	WORD						hd_Generation;	/* -1 if not connected */
-	UWORD						hd_NodeID;		/* -1 if not connected */
-	QUADLET	*					hd_ROM;
-	ULONG						hd_ROMLength;
-	LOCKED_MINLIST_PROTO(hd_Units);				/* Attached units */
-	BOOL 						hd_UnitScan;	/* True if unit scan requiered */
+    HeliosHardware *        hd_Hardware;    
+    HeliosEventListenerList hd_Listeners;
+    union {
+        UQUAD               q;
+        struct {
+            ULONG           hi;
+            ULONG           lo;
+        } w;
+    }                       hd_GUID;
+    ULONG                   hd_Generation;
+    ULONG                   hd_NodeID;
+    HeliosNode              hd_NodeInfo;
+    struct Task *           hd_RomScanner;
+    QUADLET *               hd_Rom;
+    ULONG                   hd_RomLength;
+    HeliosIds               hd_Ids;
+    struct MinList          hd_Units; /* Logical units */
+};
 
-	/* Static variables.
-	 * Always valid and never change,
-	 * can be saved or used as hash code.
-	 */
-	union
-	{
-		UQUAD					hd_GUID;
-		struct
-		{
-			ULONG				hd_GUID_Hi;
-			ULONG				hd_GUID_Lo;
-		};
-	};
+#define HELIOS_HW_HEAD                                                  \
+    struct Unit             hu_Unit;    /* It's a system device unit */ \
+    LONG                    hu_UnitNo;  /* Logical unit # */            \
+    struct Device *         hu_Device;  /* up link */                   \
+    LOCK_VARIABLE; /* General RW access protection */                   \
+    LONG                    hso_RefCnt; /* Keep this field as in _SHO_HEAD */ \
+    HeliosSubTask *         hu_HWTask;                                  \
+    struct MinNode          hu_HWNode;                                  \
+    HeliosEventListenerList hu_Listeners;                               \
+    struct MinList          hu_Devices;                                 \
+    UWORD                   hu_LocalNodeId; /* Known after successfull Self-ID process */ \
+    UWORD                   hu_Pad0;
+
+struct HeliosHardware
+{
+    HELIOS_HW_HEAD
 };
 
 struct HeliosUnit
 {
-	_HeliosSharedObject			hu_Base;
+    _SHOBJ_HEAD
+    
+    /* Following fields are set to NULL when unit is removed */
 
-	HeliosDevice *				hu_Device;			/* up link */
-	const QUADLET *				hu_RomDirectory;	/* Pointer inside hu_Device->hd_Rom */
-	QUADLET						hu_RomDirSize;		/* Size in bytes of hu_RomDirectory */
+    LONG             hu_UnitNo;       /* unit number given during device's ROM parsing */
+    HeliosDevice *   hu_Device;       /* up link */
+    HeliosHardware * hu_Hardware;     /* up link */
+    const QUADLET *  hu_RomDirectory; /* Pointer inside hu_Device->hd_Rom */
+    HeliosIds        hu_Ids;          /* Useful to for bind classes */
 
-	/* Binding field */
-	HeliosClass *				hu_BindClass;		/* driver class */
-	APTR						hu_BindUData;		/* udata for driver implementor */
-	struct MinNode				hu_BindNode;		/* link to class units list */
+    /* Binding field */
+    HeliosClass *    hu_BindClass; /* driver class */
+    APTR             hu_BindUData; /* udata for driver implementor */
 };
 
 struct HeliosClass
 {
-	_HeliosSharedObject			hc_Base;
+    _SHOBJ_HEAD
 
-	struct Library *			hc_Library;
-	STRPTR						hc_LoadedName;
-	HeliosEventListenerList		hc_Listeners;
-	LOCKED_MINLIST_PROTO(hc_Units);					/* Bind units */
+    struct Library *        hc_Base;
+    STRPTR                  hc_LoadedName;
+    HeliosEventListenerList hc_Listeners;
 };
 
-#define _OBJ_GET_TYPE(o) (((_HeliosSharedObject *)(o))->hso_Type)
-#define _OBJ_ISVALID(o) (_OBJ_GET_TYPE(o) != HGA_INVALID)
-#define _OBJ_INVALID(o) (((_HeliosSharedObject *)(o))->hso_Type = 0)
-#define _OBJ_GET_REFCNT(o) ATOMIC_FETCH(&((_HeliosSharedObject *)(o))->hso_RefCnt)
+#define _SHOBJ_DECREF(n, o) ({ \
+            LONG _x = ATOMIC_FETCH(&o->hso_RefCnt); \
+            _x = ATOMIC_NCMPXCHG(&o->hso_RefCnt, 0, _x-1); \
+            _INFO_REFCNT("["n":%p] ctn was %d\n", o, _x); _x; })
 
-#define _OBJ_INCREF(o) ({ \
-	_HeliosSharedObject *_o = (APTR)(o); \
-	LONG _x = ATOMIC_FETCH(&_o->hso_RefCnt); \
-	_x = ATOMIC_NCMPXCHG(&_o->hso_RefCnt, 0, _x+1); \
-	_DBG_REFCNT("[%s:%p] ctn is %d\n", _o->hso_Node.ln_Name, _o, _x); _x; })
+#define _SHOBJ_INCREF(n, o) ({ \
+            LONG _x = ATOMIC_FETCH(&o->hso_RefCnt); \
+            _x = ATOMIC_NCMPXCHG(&o->hso_RefCnt, 0, _x+1); \
+            _INFO_REFCNT("["n":%p] ctn was %d\n", o, _x); _x; })
 
-#define _OBJ_DECREF(o) ({ \
-	_HeliosSharedObject *_o = (APTR)(o); \
-	LONG _x = ATOMIC_FETCH(&_o->hso_RefCnt); \
-	_x = ATOMIC_NCMPXCHG(&_o->hso_RefCnt, 0, _x-1); \
-	_DBG_REFCNT("[%s:%p] ctn is %d\n", _o->hso_Node.ln_Name, _o, _x); _x; })
-
-#define _OBJ_XINCREF(o) ({ \
-	_HeliosSharedObject *_s = (APTR)(o); \
-	LONG _x = 0;\
-	if (_s) _x = _OBJ_INCREF(_s); _x; })
-
-#define _OBJ_XDECREF(o) ({ \
-	_HeliosSharedObject *_s = (APTR)(o); \
-	LONG _x = 0; \
-	if (_s) _x = _OBJ_DECREF(_s); _x; })
-
-#define _OBJ_CLEAR(v) ({ \
-	do { \
-		if (v) { \
-			_HeliosSharedObject *_tmp = (APTR)v; \
-			v = NULL; \
-			_OBJ_DECREF(_tmp); \
-		} \
-	} while (0); })
-
-/* DEPRECATED */
-#define HW_DECREF(o) _OBJ_DECREF(o)
-#define HW_INCREF(o) _OBJ_INCREF(o)
-#define DEV_DECREF(o) _OBJ_DECREF(o)
-#define DEV_INCREF(o) _OBJ_INCREF(o)
-#define CLS_DECREF(o) _OBJ_DECREF(o)
-#define CLS_INCREF(o) _OBJ_INCREF(o)
-#define UNIT_DECREF(o) _OBJ_DECREF(o)
-#define UNIT_INCREF(o) _OBJ_INCREF(o)
-
-#define HW_XDECREF(o) _OBJ_XDECREF(o)
-#define HW_XINCREF(o) _OBJ_XINCREF(o)
-#define DEV_XDECREF(o) _OBJ_XDECREF(o)
-#define DEV_XINCREF(o) _OBJ_XINCREF(o)
-#define CLS_XDECREF(o) _OBJ_XDECREF(o)
-#define CLS_XINCREF(o) _OBJ_XINCREF(o)
-#define UNIT_XDECREF(o) _OBJ_XDECREF(o)
-#define UNIT_XINCREF(o) _OBJ_XINCREF(o)
+#define CLS_DECREF(o) _SHOBJ_DECREF("CLS", o)
+#define CLS_INCREF(o) _SHOBJ_INCREF("CLS", o)
+#define HW_DECREF(o) _SHOBJ_DECREF("HW", o)
+#define HW_INCREF(o) _SHOBJ_INCREF("HW", o)
+#define DEV_DECREF(o) _SHOBJ_DECREF("DEV", o)
+#define DEV_INCREF(o) _SHOBJ_INCREF("DEV", o)
+#define UNIT_DECREF(o) _SHOBJ_DECREF("UNIT", o)
+#define UNIT_INCREF(o) _SHOBJ_INCREF("UNIT", o)
 
 #endif /* LIBRARIES_HELIOS_INTERNAL_H */

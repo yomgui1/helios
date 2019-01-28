@@ -16,13 +16,13 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## Makefile for building the AV/C 1394 library.
 ##
 ##
 
-PRJROOT := $(shell (cd ../..; pwd))
+PRJROOT := ../..
 
 LIBNAME  := avc1394.library
 VERSION  := 0

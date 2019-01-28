@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,10 +17,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** Public common header file for Helios devices.
+**
 */
 
 #ifndef DEVICE_HELIOS_H
@@ -30,94 +30,92 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <exec/io.h>
 #include <exec/errors.h>
 
-/* For old MorphOS-SDK */
-#ifndef QUERYSUBCLASS_FIREWIRE_HWDRIVER
-#define QUERYSUBCLASS_FIREWIRE_HWDRIVER     30000
-#define QUERYSUBCLASS_FIREWIRE_SBP          30001
-#define QUERYSUBCLASS_FIREWIRE_AVC          30002
-#endif
+/* Command supported by devices */
 
-/* Device specific IO commands */
+#define HHIOCMD_QUERYDEVICE       (CMD_NONSTD+0)
+#define HHIOCMD_ENABLE            (CMD_NONSTD+1)
+#define HHIOCMD_DISABLE           (CMD_NONSTD+2)
+#define HHIOCMD_BUSRESET          (CMD_NONSTD+3)
+#define HHIOCMD_SETATTRIBUTES     (CMD_NONSTD+4)
+#define HHIOCMD_SENDPHY           (CMD_NONSTD+5)
+#define HHIOCMD_SENDREQUEST       (CMD_NONSTD+6)
+#define HHIOCMD_SENDRESPONSE      (CMD_NONSTD+7)
+#define HHIOCMD_ADDREQHANDLER     (CMD_NONSTD+8)
+#define HHIOCMD_REMREQHANDLER     (CMD_NONSTD+9)
+#define HHIOCMD_CREATEISOCONTEXT  (CMD_NONSTD+10)
+#define HHIOCMD_DELETEISOCONTEXT  (CMD_NONSTD+11)
+#define HHIOCMD_STARTISOCONTEXT   (CMD_NONSTD+12)
+#define HHIOCMD_STOPISOCONTEXT    (CMD_NONSTD+13)
 
-#define HHIOCMD_BUSRESET          (CMD_NONSTD+0)    /* (struct IOStdReq *) */
-#define HHIOCMD_ENABLE            (CMD_NONSTD+1)    /* (struct IORequest *) */
-#define HHIOCMD_DISABLE           (CMD_NONSTD+2)    /* (struct IORequest *) */
-#define HHIOCMD_SETATTRIBUTES     (CMD_NONSTD+3)    /* (IOHeliosHWSendRequest *) */
-#define HHIOCMD_SENDPHY           (CMD_NONSTD+4)
-#define HHIOCMD_SENDREQUEST       (CMD_NONSTD+5)
-#define HHIOCMD_SENDRESPONSE      (CMD_NONSTD+6)
-#define HHIOCMD_ADDREQHANDLER     (CMD_NONSTD+7)
-#define HHIOCMD_REMREQHANDLER     (CMD_NONSTD+8)
-#define HHIOCMD_CREATEISOCONTEXT  (CMD_NONSTD+9)
-#define HHIOCMD_DELETEISOCONTEXT  (CMD_NONSTD+10)
-#define HHIOCMD_STARTISOCONTEXT   (CMD_NONSTD+11)
-#define HHIOCMD_STOPISOCONTEXT    (CMD_NONSTD+12)
-
-/* Device's may also support following standard IO commands:
+/* They also support following standard IO commands:
  * - CMD_RESET
  */
 
-/* Tags defined for QueryGetDeviceAttr(), data = (HeliosHWQuery *) */
-#define HHA_Dummy               (HELIOS_TAGBASE+0x100)
-/*
- * return supported 1394 standard (see HSTD_xxx)
- * hhq_Data: (ULONG *)
- */
-#define HHA_Standard            (HHA_Dummy+0)
-/*
- * return supported implementation version
- * hhq_Data: (ULONG *)
- */
-#define HHA_DriverVersion       (HHA_Dummy+1)
-/*
- * return GUID of the local node
- * hhq_Data: (UQUAD *)
- */
-#define HHA_LocalGUID           (HHA_Dummy+2)
-/*
- * return NodeID of the local node
- * hhq_Data: (UBYTE *)
- */
-#define HHA_LocalNodeId         (HHA_Dummy+3)
-/*
- * return transaction split timeout (in number of 1394 cycles)
- * hhq_Data: (ULONG *)
- */
-#define HHA_SplitTimeout        (HHA_Dummy+4)
-/*
- * return value of CYCLE_TIME CSR register
- * hhq_Data: (ULONG *)
- */
-#define HHA_CycleTime           (HHA_Dummy+5)
-/*
- * return value of BUS_TIME + CYCLE_TIME CSR registers in atomic way
- * hhq_Data: (ULONG *)
- */
-#define HHA_UpTime              (HHA_Dummy+6)
-/*
- * return vendor's unique number (OUI)
- * hhq_Data: (ULONG *)
- */
-#define HHA_VendorId            (HHA_Dummy+7)
-/*
- * make a copy of the local bus SelfID stream
- * hhq_Data: (HeliosSelfIDStream *)
- */
-#define HHA_SelfID              (HHA_Dummy+8)
+/* HHIOCMD_QUERY Tags */
+#define HHA_Dummy              (HELIOS_TAGBASE+0x100)
+#define HHA_Manufacturer       (HHA_Dummy+0)
+#define HHA_ProductName        (HHA_Dummy+1)
+#define HHA_Version            (HHA_Dummy+2)
+#define HHA_Revision           (HHA_Dummy+3)
+#define HHA_Copyright          (HHA_Dummy+4)
+#define HHA_Description        (HHA_Dummy+5)
+#define HHA_DriverVersion      (HHA_Dummy+6)
+#define HHA_Capabilities       (HHA_Dummy+7)
+#define HHA_TimeStamp          (HHA_Dummy+8)
+#define HHA_UpTime             (HHA_Dummy+9)
+//                             (HHA_Dummy+10)
+#define HHA_Topology           (HHA_Dummy+11)
+#define HHA_SplitTimeout       (HHA_Dummy+12)
+#define HHA_VendorUnique       (HHA_Dummy+13)
+#define HHA_VendorCompagnyId   (HHA_Dummy+14)
+#define HHA_NodeCount          (HHA_Dummy+15)
+#define HHA_TopologyGeneration (HHA_Dummy+16)
+#define HHA_LocalGUID          (HHA_Dummy+17)
 
-/* Helios specific IORequest error codes */
+/* Hardware Capabilities */
+#define HHF_1394A_1995 (1<<0) /* Speeds: s100, s200, s400 */
+#define HHF_1394A_2000 (1<<1)
+#define HHF_1394B_2002 (1<<2) /* Speeds: s800, s1600, s3200 */
+
+/* IORequest errors */
 #define HHIOERR_NO_ERROR                  0
-#define HHIOERR_FAILED                    1 /* Generic error code */
-#define HHIOERR_NOMEM                     2 /* No memory enough */
-#define HHIOERR_UNIT_DISABLED             3 /* HHIOCMD_ENABLE must be called */
-#define HHIOERR_UNRECOVERABLE_ERROR       4 /* HW fatal error (CMD_RESET must be called) */
-#define HHIOERR_ACK                       5 /* packet send without ack complete */
-#define HHIOERR_RCODE                     6 /* packet send and acknownledged, but response error */
+#define HHIOERR_FAILED                    1
+#define HHIOERR_UNRECOVERABLE_ERROR_STATE 2
+#define HHIOERR_UNIT_DISABLED             3
+#define HHIOERR_NOMEM                     5
 
-typedef struct HeliosHWQuery
+/* RequestHandler flags */
+#define HHF_REQH_ALLOCLEN 1 /* let Helios find the start address in given region */
+
+typedef HeliosResponse * (*HeliosHWReqCallback)(HeliosAPacket *request, APTR udata);
+
+typedef struct HeliosHWReqHandler
 {
-	struct Unit *	hhq_Unit;
-	APTR			hhq_Data;
-} HeliosHWQuery;
+    struct MinNode      rh_SysNode;
+    HeliosOffset        rh_RegionStart;
+    HeliosOffset        rh_RegionStop;
+    HeliosOffset        rh_Start;
+    ULONG               rh_Length;
+    ULONG               rh_Reserved;
+    HeliosHWReqCallback rh_ReqCallback;
+    APTR                rh_UserData;
+    ULONG               rh_Flags;
+} HeliosHWReqHandler;
+
+typedef struct IOHeliosHWReq
+{
+    struct IORequest    iohh_Req;
+    APTR                iohh_Data;      /* Versatile field */
+    ULONG               iohh_Length;    /* Dependent of iohh_Data usage */
+    LONG                iohh_Actual;    /* Versatile field */
+    APTR                iohh_Private;
+} IOHeliosHWReq;
+
+typedef struct IOHeliosHWSendRequest
+{
+    IOHeliosHWReq         iohhe_Req;              /* Data: response payload, length: response payload length */
+    struct HeliosDevice * iohhe_Device;           /* If NULL, use DestID field in transaction's packet */
+    HeliosTransaction     iohhe_Transaction;      /* Just fill the packet */
+} IOHeliosHWSendRequest;
 
 #endif /* DEVICE_HELIOS_H */

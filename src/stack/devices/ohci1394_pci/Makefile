@@ -16,20 +16,20 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## $Id$
-## This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+##
 ##
 ## Makefile for building the ohci1394 Helios device.
 ##
+##
 
-PRJROOT := $(shell (cd ../../../..; pwd))
+PRJROOT  	:= ../../../..
 
 DEVNAME  	:= ohci1394_pci.device
 VERSION  	:= 50
 REVISION 	:= 2
 
-OHCI1394_SRCS := $(PRJROOT)/src/common/utils.c
-OHCI1394_SRCS := ohci1394core.c ohci1394cmd.c ohci1394trans.c
+OHCI1394_SRCS := ohci1394cmd.c ohci1394core.c ohci1394topo.c \
+	ohci1394trans.c ohci1394dev.c $(PRJROOT)/src/common/utils.c
 OHCI1394_OBJS := $(OHCI1394_SRCS:.c=.o)
 
 DEVICE_SRCS := ohci1394.device.c
@@ -44,7 +44,7 @@ include $(PRJROOT)/common.mk
 
 DEFINES += -DDEVNAME='"$(DEVNAME)"' -DDBNAME='"OHCI"'
 
-all: $(DEVS_DIR)/Helios $(DEVS_DIR)/Helios/$(DEVNAME)
+all: $(DEVS_DIR)/Helios/$(DEVNAME)
 
 local-clean:
 	rm -vf $(DEVS_DIR)/Helios/$(DEVNAME)*
@@ -55,9 +55,6 @@ local-release: $(DEVS_DIR)/Helios/$(DEVNAME)
 	$(CP) $(DEVS_DIR)/Helios/$(DEVNAME) $(RELARC_DIR)/Devs/Helios/$(DEVNAME)
 	for file in $(subst $(PRJROOT)/,,$(SDK_INC_FILES)); do \
 		$(CP) $(PRJROOT)/$$file $(RELARC_DIR)/SDK/$$file; done
-
-$(DEVS_DIR)/Helios:
-	mkdir -p $@
 
 $(DEVS_DIR)/Helios/$(DEVNAME): $(DEVS_DIR)/Helios/$(DEVNAME).sym
 

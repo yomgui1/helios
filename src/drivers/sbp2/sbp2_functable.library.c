@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,29 +17,34 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2013 by Guillaume ROGUEZ.
+/*
 **
 ** SBP2 class functions table definition file.
+**
 */
 
-#include "private.h"
-#include "proto/heliosclsbase.h"
+#include "sbp2.class.h"
+#include "clib/heliosclsbase_protos.h"
 
-ULONG libFuncTable[]=
+extern void LIB_Open(void);
+extern void LIB_Close(void);
+extern void LIB_Expunge(void);
+extern void LIB_Reserved(void);
+
+ULONG LibFuncTable[]=
 {
-	FUNCARRAY_BEGIN,
+    FUNCARRAY_BEGIN,
 
-	FUNCARRAY_32BIT_NATIVE,
-	(ULONG) LIB_OPEN_FNAME,
-	(ULONG) LIB_CLOSE_FNAME,
-	(ULONG) LIB_EXPUNGE_FNAME,
-	(ULONG) RESERVED_FNAME,
-	-1,
+    FUNCARRAY_32BIT_NATIVE,
+    (ULONG) &LIB_Open,
+    (ULONG) &LIB_Close,
+    (ULONG) &LIB_Expunge,
+    (ULONG) &LIB_Reserved,
+    -1,
 
-	FUNCARRAY_32BIT_SYSTEMV,
-	(ULONG) &HeliosClass_DoMethodA,
-	-1,
+    FUNCARRAY_32BIT_SYSTEMV,
+    (ULONG) &HeliosClass_DoMethodA,
+    -1,
 
-	FUNCARRAY_END
+    FUNCARRAY_END
 };

@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,45 +17,26 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
+**
 */
 
+#include "proto/helios.h"
 #include <proto/exec.h>
 #include <proto/dos.h>
-#include <proto/helios.h>
 
 struct Library *HeliosBase;
 
 int main(int argc, char **argv)
 {
-	int ret = RETURN_OK;
-	
-	/* Opening the library before calling its API */
-	HeliosBase = OpenLibrary(HELIOS_LIBNAME, HELIOS_LIBVERSION);
-	if (HeliosBase)
-	{
-		HeliosClass *hc=NULL;
-		
-		do
-		{
-			hc = Helios_FindObject(HGA_CLASS, hc, TAG_DONE);
-			if (hc)
-			{
-				Helios_RemoveClass(hc);
-				Helios_ReleaseObject(hc);
-			}
-		}
-		while (hc);
-		
-		HeliosBase->lib_Flags |= LIBF_DELEXP;
-		CloseLibrary(HeliosBase);
-	}
-	else
-	{
-		Printf("%s requires %s v%lu\n", (ULONG)argv[0], (ULONG)HELIOS_LIBNAME, HELIOS_LIBVERSION);
-		ret = RETURN_ERROR;
-	}
-	
-	return ret;
+    HeliosBase = OpenLibrary("helios.library", 52);
+    if (NULL != HeliosBase)
+    {
+        Helios_DBG_DumpDevices(NULL);
+        CloseLibrary(HeliosBase);
+    }
+    else
+        Printf("Failed to open helios.library v50\n");
+
+    return 0;
 }

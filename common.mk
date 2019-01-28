@@ -1,16 +1,28 @@
-## $Id$
+## Copyright 2008-2013, 2018 Guillaume Roguez
+##
+## This file is part of Helios.
+##
+## Helios is free software: you can redistribute it and/or modify
+## it under the terms of the GNU Lesser General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## Helios is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU Lesser General Public License for more details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
+##
+
 ##
 ## Common part used by all project Makefile's.
-##
 ##
 
 export
 unexport SUBDIRS
 
-# Mercurial stuff
-SCM_REV := $(shell python c:hg id -i)
-
-# Paths stuff
 LIBS_DIR := $(PRJROOT)/libs
 DEVS_DIR := $(PRJROOT)/devs
 CLS_DIR  := $(PRJROOT)/classes/Helios
@@ -34,11 +46,15 @@ endif
 
 RELVERSION  = 0
 RELREVISION = 0
-RELVER = $(RELVERSION).$(RELREVISION)-$(SCM_REV)
+RELVER = $(RELVERSION).$(RELREVISION)-svn_r$(SVN_REV)
 RELARC_NAME = Helios_$(RELVER)
 RELARC_DIR  = $(TMPDIR)/Helios
 RELARC_CLS_DIR = $(RELARC_DIR)/Classes/Helios
 RELARC_C = $(RELARC_DIR)/C
+
+# SVN stuff
+SVN_REV  := $(shell svnversion $(PRJROOT))
+SVN_ROOT := $(shell svn info $(PRJROOT) | grep "Repository Root:" | cut -d ":" -f "2-")
 
 #--- MorphOS dev tools framework ---
 
@@ -56,7 +72,7 @@ DEFINES := $(CCDEFINES) \
 	-DUSE_INLINE_STDARG \
 	-DAROS_ALMOST_COMPATIBLE \
 	-DDATE='"$(shell /bin/date +%d.%m.%y)"' \
-	-DCOPYRIGHTS='"\xa9\x20Guillaume\x20ROGUEZ\x20[$(SCM_REV)]"'
+	-DCOPYRIGHTS='"\xa9\x20Guillaume\x20ROGUEZ\x20[SVN:\x20r$(SVN_REV)]"'
 CCWARNS = -Wall
 
 ifeq ("$(shell $(CC) -dumpversion | cut -d. -f1)", "4")
@@ -73,8 +89,8 @@ CFLAGS = -noixemul -g
 CPPFLAGS = $(CFLAGS) $(OPT) $(CCWARNS) $(INCDIRS:%=-I%) $(DEFINES)
 LIBS = -L$(PRJROOT)/lib -lhelios -ldebug -lsyscall -lauto
 
-CCLDFLAGS = -noixemul -g -Wl,--traditional-format -Wl,--cref -Wl,--stats -Wl,-Map=$@.map -L$(PRJROOT)/lib -L/usr/lib -L/usr/local/lib
-LDFLAGS = --traditional-format --cref --stats -fl libnix -Map=mapfile.txt -L$(PRJROOT)/lib -L/usr/lib -L/usr/local/lib
+CCLDFLAGS = -noixemul -g -Wl,--traditional-format -Wl,--cref -Wl,--stats -Wl,-Map=$@.map -L$(PRJROOT)/lib
+LDFLAGS = --traditional-format --cref --stats -fl libnix -Map=mapfile.txt -L$(PRJROOT)/lib
 LDLIBS = -labox -ldebug -lsyscall -lc
 
 ifneq ("$(OS)", "MorphOS")
@@ -143,8 +159,8 @@ mkdeps: $(ALL_SRCS:.c=.d)
 	$(CC) -c $(CPPFLAGS) $< -o $@
 
 .c.d:
-	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
-	$(SHELL) -ec '$(CC) -MM $(CPPFLAGS) $< | sed -e '\''s%\($(notdir $*)\)\.o[ :]*%\1.o $@ : %g'\'' > $@; [ -s $@ ] || rm -fv $@'
+	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_BOLD)" : "$(COLOR_HIGHLIGHT2)"$^"$(COLOR_NORMAL)
+	$(SHELL) -ec '$(CC) -MM $(CPPFLAGS) $< | sed -e '\''s%\($(notdir $*)\)\.o[ :]*%\1.o $@ : %g'\'' > $@;'
 
 %.library: %.library.db
 	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
@@ -164,9 +180,15 @@ mkdeps: $(ALL_SRCS:.c=.d)
 %.sym: %.db
 	$(NM) -n $^ >$@
 
-#--- Archive and Release help targets ---
+#--- SVN help targets ---
 
-.PHONY: rel-lha rel-tbz release
+.PHONY: svn-release rel-lha rel-tbz release
+
+svn-release:
+	svn copy --parents -m "Making release $(RELVERSION).$(RELREVISION)" \
+		$(PRJROOT) $(SVN_ROOT)/tags/release-$(RELVERSION).$(RELREVISION)
+
+#--- Archive and Release help targets ---
 
 rel-lha:
 	-delete force $(RELARC_DIR)//$(RELARC_NAME).lha

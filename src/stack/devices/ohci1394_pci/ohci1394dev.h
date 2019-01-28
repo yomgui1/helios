@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,18 +17,22 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
-** Header file for topology API
+** Header file for devices API
+**
+** Follow the "1394 Open Host Controller Interface Specifications",
+** Release 1.1, Junary 6, 2000.
+**
 */
 
-#ifndef HELIOS_TOPOPOLGY_H
-#define HELIOS_TOPOPOLGY_H
+#ifndef OHCI1394_DEV_H
+#define OHCI1394_DEV_H
 
-#include "libraries/helios.h"
+#include "ohci1394core.h"
 
-extern BOOL _Helios_UpdateTopologyMapping(HeliosHardware *hh);
-extern void _Helios_FreeTopology(HeliosHardware *hh);
+extern void dev_OnNewNode(OHCI1394Unit *unit, HeliosNode *node);
+extern void dev_OnUpdatedNode(OHCI1394Unit *unit, HeliosNode *node);
+extern void dev_OnRemovedNode(OHCI1394Unit *unit, HeliosNode *node);
 
-#endif /* HELIOS_TOPOPOLGY_H */
+#endif /* OHCI1394_DEV_H */

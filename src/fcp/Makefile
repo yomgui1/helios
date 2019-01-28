@@ -16,13 +16,13 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## Makefile for building the FCP library.
 ##
 ##
 
-PRJROOT := $(shell (cd ../..; pwd))
+PRJROOT  	:= ../..
 
 LIBNAME  	:= fcp.device
 VERSION  	:= 0

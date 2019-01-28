@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,40 +17,42 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
+**
 */
 
 #include "proto/helios.h"
-
-#define DBNAME "ROMSTART"
-#include "utils.h"
 
 #include <exec/execbase.h>
 #include <proto/exec.h>
 
 #include <string.h>
 
-#define MAX_HW_UNITS 2
+#define HELIOS_LIBNAME "helios.library"
+#define MAX_HW_UNITS 8
 
 int main(int argc, char **argv)
 {
-	struct Library *HeliosBase;
-	LONG result=-1;
-	
-	HeliosBase = OpenLibrary(HELIOS_LIBNAME, HELIOS_LIBVERSION);
-	if (NULL != HeliosBase)
-	{
-		ULONG cnt;
-		
-		for (cnt=0; cnt<MAX_HW_UNITS; cnt++)
-			Helios_AddHardware("Helios/ohci1394_pci.device", cnt);
-		
-		CloseLibrary(HeliosBase);
-		result = 0;
-	}
-	else
-		utils_ReportMissingLibrary(HELIOS_LIBNAME, HELIOS_LIBVERSION);
+    struct Library *HeliosBase;
+    struct Task *task;
+    LONG result=-1;
+    
+    task = FindTask(NULL);
+    task->tc_UserData = (APTR)0x837105; /* The magic key */
 
-	return result;
+    HeliosBase = OpenLibrary(HELIOS_LIBNAME, 52);
+    if (NULL != HeliosBase)
+    {
+        ULONG cnt;
+        
+        Helios_AddClass("Helios/sbp2.class", 50);
+        
+        for (cnt=0; cnt<MAX_HW_UNITS; cnt++)
+            Helios_AddHardware("Helios/ohci1394_pci.device", cnt);
+        
+        CloseLibrary(HeliosBase);
+        result = 0;
+    }
+
+    return result;
 }

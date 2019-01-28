@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,27 +17,82 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** MorphOS OHCI-1394 device interface implemention.
+**
 */
 
-#define DEBUG_SYSTEM_LIBRARY
+#define NDEBUG
 
 #include "ohci1394.device.h"
 #include "ohci1394core.h"
 #include "ohci1394trans.h"
-#include "utils.h"
+#include "debug.h"
 
 #include <exec/resident.h>
 #include <exec/errors.h>
 #include <exec/lists.h>
 #include <devices/timer.h>
-#include <libraries/query.h>
 
 #include <proto/exec.h>
 #include <proto/utility.h>
+
+static OHCI1394Device *devInit(OHCI1394Device *base,
+                                BPTR seglist,
+                                struct ExecBase *sysbase);
+static OHCI1394Device *devOpen(void);
+static BPTR devExpunge(void);
+static BPTR devClose(void);
+static void devBeginIO(void);
+static void devAbortIO(void);
+static int devReserved(void);
+
+/*------------------ PRIVATE GLOBALS SECTION ----------------------*/
+
+static const ULONG devFuncTable[] = {
+    FUNCARRAY_32BIT_NATIVE,
+
+    (ULONG) devOpen,
+    (ULONG) devClose,
+    (ULONG) devExpunge,
+    (ULONG) devReserved,
+    (ULONG) devBeginIO,
+    (ULONG) devAbortIO,
+
+    ~0
+};
+
+static const struct {
+    ULONG  LibSize;
+    const void  *FuncTable;
+    const void  *DataTable;
+    void (*InitFunc)(void);
+} dev_init = {
+    sizeof(OHCI1394Device),
+    devFuncTable,
+    NULL,
+    (void (*)())devInit
+};
+
+/*------------------ PUBLIC GLOBALS SECTION -----------------------*/
+
+struct Resident LibResident=
+{
+    RTC_MATCHWORD,
+    &LibResident,
+    &LibResident + 1,
+    RTF_PPC | RTF_EXTENDED | RTF_AUTOINIT,
+    VERSION,
+    NT_DEVICE,
+    0,
+    DEVNAME,
+    VERSION_STR,
+    (APTR) &dev_init,
+    /* New Fields */
+    REVISION,
+    NULL            /* No More Tags for now*/
+};
 
 struct ExecBase *SysBase;
 struct DosLibrary *DOSBase;
@@ -46,444 +101,319 @@ struct Library *UtilityBase;
 struct Library *HeliosBase;
 
 ULONG __abox__ = 1;
-const char *vers = "\0" VSTRING;
+const char *vers = "\0$VER:"DEVNAME" "VERSION_STR"."REVISION_STR" ("DATE") "COPYRIGHTS;
 
-static ULONG devFuncTable[] = {
-	FUNCARRAY_BEGIN,
 
-	FUNCARRAY_32BIT_NATIVE,
+/*------------------ PRIVATE CODE SECTION -------------------------*/
 
-	(ULONG) DEV_OPEN_FNAME,
-	(ULONG) DEV_CLOSE_FNAME,
-	(ULONG) DEV_EXPUNGE_FNAME,
-	(ULONG) DEV_QUERY_FNAME,
-	(ULONG) DEV_BEGINIO_FNAME,
-	(ULONG) DEV_ABORTIO_FNAME,
-	-1,
-
-	FUNCARRAY_END
-};
-
-static struct TagItem devQueryTags[] =
+//+ devReserved
+static int devReserved(void) { return 0; }
+//-
+//+ devInit
+static OHCI1394Device *devInit(OHCI1394Device *base,
+                               BPTR seglist,
+                               struct ExecBase *sysbase)
 {
-	{QUERYINFOATTR_NAME, (ULONG) DEVNAME},
-	{QUERYINFOATTR_IDSTRING, (ULONG) VSTRING},
-	{QUERYINFOATTR_DESCRIPTION, (ULONG) "Generic low-level driver for PCI OHCI 1394 Chipset"},
-	{QUERYINFOATTR_COPYRIGHT, (ULONG) COPYRIGHTS},
-	{QUERYINFOATTR_AUTHOR, (ULONG) AUTHOR},
-	{QUERYINFOATTR_DATE, (ULONG) DATE},
-	{QUERYINFOATTR_VERSION, VERSION},
-	{QUERYINFOATTR_REVISION, REVISION},
-	{QUERYINFOATTR_RELEASETAG, (ULONG) "RC1"},
-	{QUERYINFOATTR_CODETYPE, CODETYPE_PPC},
-	{QUERYINFOATTR_SUBTYPE, QUERYSUBTYPE_DEVICE},
-	{QUERYINFOATTR_CLASS, QUERYCLASS_FIREWIRE},
-	{QUERYINFOATTR_SUBCLASS, QUERYSUBCLASS_FIREWIRE_HWDRIVER},
-	{TAG_DONE,0}
-};
+    _INFO("+ base=%lx, seglist=%lx, sysbase=%lx\n", base, seglist, sysbase);
 
-/* First function: protection against lib execution */
-LONG NoExecute(void) { return -1; }
+    SysBase = sysbase;
 
-/*============================================================================*/
-/*--- LOCAL CODE -------------------------------------------------------------*/
-/*============================================================================*/
-static APTR
-my_open_lib(CONST_STRPTR libname, ULONG version)
-{
-	struct Library *lib;
+    HeliosBase = OpenLibrary("helios.library", 52);
+    if (NULL != HeliosBase)
+    {
+        PCIXBase = OpenLibrary("pcix.library", 50);
+        if (NULL != PCIXBase)
+        {
+            DOSBase = (struct DosLibrary *) OpenLibrary("dos.library", 39);
+            if (NULL != DOSBase)
+            {
+                UtilityBase = OpenLibrary("utility.library", 39);
+                if (NULL != UtilityBase)
+                {
+                    base->hd_MemPool = CreatePool(MEMF_PUBLIC|MEMF_CLEAR, 16384, 4096);
+                    if (NULL != base->hd_MemPool)
+                    {
+                        base->hd_UnitCount = 0;
+                        base->hd_SegList = seglist;
 
-	lib = (APTR)OpenLibrary(libname, version);
-	if (lib == NULL)
-		utils_ReportMissingLibrary(libname, version);
-	return lib;
+                        /* Scan the PCI bus and generate units nodes */
+                        if (ohci_ScanPCI(base))
+                        {
+                            _INFO("- dev.OpenCnt=%ld\n", base->hd_Library.lib_OpenCnt);
+                            return base;
+                        }
+                        else
+                            _ERR("PCI scan failed!\n");
+                    }
+                    else
+                        _ERR("CreatePool() failed!\n");
+
+                    CloseLibrary((struct Library *)UtilityBase);
+                }
+                else
+                    _ERR("OpenLibrary(\"utility.library\", 39) failed!\n");
+
+                CloseLibrary((struct Library *)UtilityBase);
+            }
+            else
+                _ERR("OpenLibrary(\"dos.library\", 39) failed!\n");
+
+            CloseLibrary(PCIXBase);
+        }
+        else
+            _ERR("OpenLibrary(\"pcix.library\", 50) failed!\n");
+
+        CloseLibrary(HeliosBase);
+    }
+    else
+        _ERR("OpenLibrary(\"helios.library\", 50) failed!\n");
+
+    _INFO("- Failed\n");
+    return NULL;
 }
-static BPTR
-internalExpunge(OHCI1394Device *base)
+//-
+//+ devOpen
+OHCI1394Device *devOpen(void)
 {
-	BPTR seglist;
+    LONG unit = REG_D0;
+    IOHeliosHWReq  *ioreq = (APTR) REG_A1;
+    OHCI1394Device *base = (APTR) REG_A6;
+    OHCI1394Device *ret = NULL;
+    LONG err;
 
-	base->hd_Library.lib_Flags |= LIBF_DELEXP;
-	if (base->hd_Library.lib_OpenCnt != 0)
-		return 0;
+    _INFO("+ ioreq=%lx, base=%lx\n", ioreq, base);
 
-	seglist = base->hd_SegList;
+    ++base->hd_Library.lib_OpenCnt;
+    base->hd_Library.lib_Flags &= ~LIBF_DELEXP;
 
-	_DBG_DEV("Remove from system...\n");
-	Forbid();
-	REMOVE(&base->hd_Library.lib_Node);
-	Permit();
+    _INFO("dev.OpenCnt=%ld\n", base->hd_Library.lib_OpenCnt);
 
-	_DBG_DEV("Free resources...\n");
-	DeletePool(base->hd_MemPool);
-	CloseLibrary(UtilityBase);
-	CloseLibrary((struct Library *) DOSBase);
-	CloseLibrary(PCIXBase);
-	CloseLibrary(HeliosBase);
+    /* Sanity checks */
+    if (ioreq->iohh_Req.io_Message.mn_Length < sizeof(IOHeliosHWReq))
+    {
+        err = IOERR_BADLENGTH;
+        _ERR("Bad length\n");
+        goto end;
+    }
 
-	FreeMem((char *)base - base->hd_Library.lib_NegSize,
-			base->hd_Library.lib_NegSize + base->hd_Library.lib_PosSize);
+    if ((unit < 0) || (unit > base->hd_UnitCount))
+    {
+        err = IOERR_OPENFAIL;
+        _ERR("Invalid unit number: %ld\n", unit);
+        goto end;
+    }
+    
+    /* Open the unit (initialize PCI and 1394 HW at first open) */
+    err = ohci_OpenUnit(base, ioreq, unit);
+    if (err)
+    {
+        _ERR("ohci_OpenUnit() failed, err=%ld\n", err);
+        goto end;
+    }
 
-	return seglist;
+    /* Open successed */
+    err = 0;
+    ret = base;
+
+    base->hd_Library.lib_Flags &= ~LIBF_DELEXP;
+    ++base->hd_Library.lib_OpenCnt;
+
+  end:
+    --base->hd_Library.lib_OpenCnt;
+    ioreq->iohh_Req.io_Error = err;
+
+    _INFO("- ret=%p, err=%ld, dev.OpenCnt=%ld\n", ret, err, base->hd_Library.lib_OpenCnt);
+    return ret;
 }
-/*============================================================================*/
-/*--- LIBRARY CODE -----------------------------------------------------------*/
-/*============================================================================*/
-DEVINIT(OHCI1394Device, base, seglist)
-{
-	/* Note: MemPool must clear memory at allocation */
-	base->hd_MemPool = CreatePool(MEMF_PUBLIC|MEMF_CLEAR, 16384, 4096);
-	if (NULL != base->hd_MemPool)
-	{
-		_DBG_DEV("Open resources...\n");
-		DOSBase		= my_open_lib("dos.library", 50);
-		UtilityBase	= my_open_lib("utility.library", 50);
-		PCIXBase	= my_open_lib("pcix.library", 50);
-		HeliosBase	= my_open_lib(HELIOS_LIBNAME, HELIOS_LIBVERSION);
+//-
+//+ internalExpunge
+static BPTR internalExpunge(OHCI1394Device *base) {
+    BPTR ret = 0;
 
-		if (DOSBase && UtilityBase && PCIXBase && HeliosBase)
-		{
-			base->hd_UnitCount = 0;
-			base->hd_SegList = seglist;
+    _INFO("+ base=%lx\n", base);
 
-			/* Scan the PCI bus and generate units nodes */
-			if (ohci_ScanPCI(base))
-			{
-				_INF_DEV("init done\n");
-				return (APTR)base;
-			}
-			else
-				_ERR_DEV("PCI scan failed!\n");
-		}
+    base->hd_Library.lib_Flags |= LIBF_DELEXP;
+    if (base->hd_Library.lib_OpenCnt == 0)
+    {
+        ret = base->hd_SegList;
+        Remove(&base->hd_Library.lib_Node);
+        FreeMem((char *)base - base->hd_Library.lib_NegSize,
+                base->hd_Library.lib_NegSize + base->hd_Library.lib_PosSize);
+    }
 
-		if (DOSBase) CloseLibrary((struct Library*)DOSBase);
-		if (UtilityBase) CloseLibrary(UtilityBase);
-		if (PCIXBase) CloseLibrary(PCIXBase);
-		if (HeliosBase) CloseLibrary(HeliosBase);
+    _INFO("-\n");
 
-		DeletePool(base->hd_MemPool);
-	}
-	else
-		_ERR_DEV("CreatePool() failed!\n");
-
-	return NULL;
+    return ret;
 }
-ENDFUNC
-DEVOPEN(OHCI1394Device, base, ioreq, unit)
+//-
+//+ devExpunge
+static BPTR devExpunge(void)
 {
-	struct Device *ret = NULL;
-	LONG err;
-
-	/* Sanity checks */
-	if (ioreq->io_Message.mn_Length < sizeof(struct IORequest))
-	{
-		err = IOERR_BADLENGTH;
-		_ERR_DEV("Bad IO length\n");
-		goto on_return;
-	}
-
-	if ((unit < 0) || (unit > base->hd_UnitCount))
-	{
-		err = IOERR_OPENFAIL;
-		_ERR_DEV("Invalid unit number: %ld\n", unit);
-		goto on_return;
-	}
-
-	/* Open the unit:
-	 * At first open: initialize PCI and 1394 HW
-	 * Then: just no-op
-	 */
-	err = ohci_OpenUnit(base, ioreq, unit);
-	if (err)
-		goto on_return;
-
-	/* successfull */
-	++base->hd_Library.lib_OpenCnt;
-	base->hd_Library.lib_Flags &= ~LIBF_DELEXP;
-	ret = (APTR)base;
-	err = 0;
-
-	_INF_DEV("open done\n");
-
-on_return:
-	if (err)
-		base->hd_Library.lib_Flags |= LIBF_DELEXP;
-	ioreq->io_Error = err;
-	return ret;
+    OHCI1394Device *base = (APTR) REG_A6;
+    return internalExpunge(base);
 }
-ENDFUNC
-DEVCLOSE(OHCI1394Device, base, ioreq)
+//-
+//+ devClose
+static BPTR devClose(void)
 {
-	BPTR seglist = 0;
+    IOHeliosHWReq *ioreq = (APTR) REG_A1;
+    OHCI1394Device *base = (APTR) REG_A6;
+    BPTR ret = 0;
 
-	ohci_CloseUnit(base, ioreq);
+    _INFO("+ ioreq=%lx, base=%lx, dev.OpenCnt=%ld\n", ioreq, base, base->hd_Library.lib_OpenCnt);
 
-	/* In case if re-user */
-	ioreq->io_Unit   = (APTR) 0;
-	ioreq->io_Device = (APTR) 0;
+    ohci_CloseUnit(base, ioreq);
 
-	if (--base->hd_Library.lib_OpenCnt == 0)
-	{
-		if (base->hd_Library.lib_Flags & LIBF_DELEXP)
-			seglist = internalExpunge(base);
-	}
+    /* Trash user structure to if he want to re-use it */
+    ioreq->iohh_Req.io_Unit   = (APTR) -1;
+    ioreq->iohh_Req.io_Device = (APTR) -1;
 
-	return seglist;
+    if (--base->hd_Library.lib_OpenCnt == 0)
+    {
+        _INFO("Freeing ressources...\n");
+        DeletePool(base->hd_MemPool);
+        CloseLibrary(UtilityBase);
+        CloseLibrary((struct Library *) DOSBase);
+        CloseLibrary(PCIXBase);
+        CloseLibrary(HeliosBase);
+
+        if (base->hd_Library.lib_Flags & LIBF_DELEXP)
+            ret = internalExpunge(base);
+    }
+
+    _INFO("- dev.OpenCnt=%ld\n", base->hd_Library.lib_OpenCnt);
+    return ret;
 }
-ENDFUNC
-DEVEXPUNGE(OHCI1394Device, base)
+//- 
+//+ devBeginIO
+static void devBeginIO(void)
 {
-	return internalExpunge(base);
+    IOHeliosHWReq *ioreq = (APTR) REG_A1;
+    OHCI1394Device *base = (APTR) REG_A6;
+    OHCI1394Unit *unit;
+    ULONG ret;
+
+    _INFO("+ base=%lx, ioreq=%lx\n", base, ioreq);
+
+    unit = (APTR) ioreq->iohh_Req.io_Unit;
+
+    _INFO("unit: %p, IO Quick: %d\n", unit, ioreq->iohh_Req.io_Flags & IOF_QUICK);
+
+    ioreq->iohh_Req.io_Message.mn_Node.ln_Type = NT_MESSAGE;
+    ioreq->iohh_Req.io_Error = 0;
+
+    LOCK_REGION_SHARED(unit);
+    ret = unit->hu_Flags.UnrecoverableError;
+    UNLOCK_REGION_SHARED(unit);
+
+    /* Block any command except CMD_RESET if the unit is in an unrecoverable state */
+    if (ret && (CMD_RESET != ioreq->iohh_Req.io_Command))
+    {
+        _ERR("UnrecoverableError\n");
+        ioreq->iohh_Req.io_Error = HHIOERR_UNRECOVERABLE_ERROR_STATE;
+    }
+    else
+    {
+        //_INFO("cmd = %08x\n", ioreq->iohh_Req.io_Command);
+        switch(ioreq->iohh_Req.io_Command)
+        {
+            case CMD_RESET:
+                ret = cmdReset(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_QUERYDEVICE:
+                ret = cmdQueryDevice(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_ENABLE:
+                ret = cmdEnable(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_DISABLE:
+                ret = cmdDisable(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_BUSRESET:
+                ret = cmdBusReset(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_SENDPHY:
+                ret = cmdSendPhy(ioreq, unit, base);
+                break;
+                
+            case HHIOCMD_SENDREQUEST:
+                ret = cmdSendRequest(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_ADDREQHANDLER:
+                ret = cmdAddReqHandler(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_REMREQHANDLER:
+                ret = cmdRemReqHandler(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_SETATTRIBUTES:
+                ret = cmdSetAttrs(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_CREATEISOCONTEXT:
+                ret = cmdCreateIsoCtx(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_DELETEISOCONTEXT:
+                ret = cmdDelIsoCtx(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_STARTISOCONTEXT:
+                ret = cmdStartIsoCtx(ioreq, unit, base);
+                break;
+
+            case HHIOCMD_STOPISOCONTEXT:
+                ret = cmdStopIsoCtx(ioreq, unit, base);
+                break;
+
+            default:
+                _INFO("CMD_INVALID\n");
+                ioreq->iohh_Req.io_Error = IOERR_NOCMD;
+                ret = 0;
+                break;
+        }
+    }
+
+    if (ret)
+        ioreq->iohh_Req.io_Flags &= ~IOF_QUICK;
+    else if (!(ioreq->iohh_Req.io_Flags & IOF_QUICK))
+        ReplyMsg(&ioreq->iohh_Req.io_Message);
+
+    _INFO("- ret=%lu\n", ret);
 }
-
-ENDFUNC
-DEVQUERY(OHCI1394Device, base, data, attr)
+//-
+//+ devAbortIO
+static void devAbortIO(void)
 {
-	struct TagItem *ti;
+    IOHeliosHWReq *ioreq = (APTR) REG_A1;
+    OHCI1394Device *base = (APTR) REG_A6;
+    OHCI1394Unit *unit = (OHCI1394Unit *)ioreq->iohh_Req.io_Unit;
+    LONG cancelled;
 
-	if (QUERYINFOATTR_DEVICE_UNITS == attr)
-		*data = base->hd_UnitCount;
-	else if (QUERYINFOATTR_DEVICE_UNIT_UNIT == attr)
-	{
-		struct QueryUnitID *MyUnitID = (APTR)data;
-		OHCI1394Unit *unit = (APTR)MyUnitID->Unit;
+    _INFO("+ base=%lx, ioreq=%lx\n", base, ioreq);
 
-		MyUnitID->ID = unit->hu_UnitNo;
-	}
-	else if (NULL != (ti = FindTagItem(attr, devQueryTags)))
-		*data = ti->ti_Data;
-	else
-	{
-		HeliosHWQuery *hhq = (APTR)data;
-		OHCI1394Unit *unit = (APTR)hhq->hhq_Unit;
+    switch(ioreq->iohh_Req.io_Command)
+    {
+        case HHIOCMD_SENDREQUEST:
+            cancelled = abortSendRequest(ioreq, unit, base);
+            break;
 
-		switch (attr)
-		{
-			case HHA_Standard:
-				*(ULONG*)hhq->hhq_Data = HSTD_1394_1995;
-				break;
+        default: /* Other commands can't be cancelled */
+            cancelled = FALSE;
+            /*if (!(ioreq->iohh_Req.io_Flags & IOF_QUICK))
+                ReplyMsg(&ioreq->iohh_Req.io_Message);*/
+    }
 
-			case HA_EventListenerList:
-				*(HeliosEventListenerList**)hhq->hhq_Data = &unit->hu_Listeners;
-				break;
+    if (cancelled)
+        ioreq->iohh_Req.io_Error = IOERR_ABORTED;
 
-			case OHCI1394A_Generation:
-				SHARED_PROTECT_BEGIN(unit);
-				*(ULONG*)hhq->hhq_Data = unit->hu_OHCI_LastGeneration;
-				SHARED_PROTECT_END(unit);
-				break;
-
-			case HHA_SelfID:
-				{
-					HeliosSelfIDStream *dest = hhq->hhq_Data;
-
-					SHARED_PROTECT_BEGIN(unit);
-					{
-						dest->hss_Generation = unit->hu_OHCI_LastGeneration;
-						dest->hss_LocalNodeID = OHCI1394_NODEID_NODENUMBER(unit->hu_LocalNodeId);
-						dest->hss_PacketCount = unit->hu_SelfIdPktCnt;
-						CopyMem(unit->hu_SelfIdArray, dest->hss_Data, unit->hu_SelfIdPktCnt * 8);
-					}
-					SHARED_PROTECT_END(unit);
-				}
-				break;
-
-			case HHA_LocalNodeId:
-				SHARED_PROTECT_BEGIN(unit);
-				*(UWORD*)hhq->hhq_Data = unit->hu_LocalNodeId;
-				SHARED_PROTECT_END(unit);
-				break;
-
-			case OHCI1394A_PciVendorId:
-				*(ULONG*)hhq->hhq_Data = unit->hu_PCI_VID;
-				break;
-
-			case OHCI1394A_PciDeviceId:
-				*(ULONG*)hhq->hhq_Data = unit->hu_PCI_DID;
-				break;
-
-			case HHA_VendorId:
-				*(char*)hhq->hhq_Data = unit->hu_OHCI_VendorID;
-				break;
-
-			case HHA_DriverVersion:
-				*(ULONG*)hhq->hhq_Data = unit->hu_OHCI_Version;
-				break;
-
-			case HHA_LocalGUID:
-				*(UQUAD*)hhq->hhq_Data = unit->hu_GUID;
-				break;
-
-			case HHA_SplitTimeout:
-				SHARED_PROTECT_BEGIN(unit);
-				*(ULONG*)hhq->hhq_Data = unit->hu_SplitTimeoutCSR;
-				SHARED_PROTECT_END(unit);
-				break;
-
-#ifdef NOT_IMPLEMENTED_YET
-			case HHA_CycleTime:
-				*(ULONG*)hhq->hhq_Data = ohci_GetTimeStamp(unit);
-				break;
-
-			case HHA_UpTime:
-				*(ULONG*)hhq->hhq_Data = ohci_UpTime(unit);
-				break;
-#endif
-
-			default:
-				_WRN("Unmanaged attr: $%08lx (QUERYINFOATTR_Dummy+%lu)\n",
-					attr, attr-QUERYINFOATTR_Dummy);
-				return FALSE;
-		}
-
-		return TRUE;
-	}
-
-	return FALSE;
+    _INFO("-\n");
 }
-ENDFUNC
-DEVBEGINIO(OHCI1394Device, base, ioreq)
-{
-	OHCI1394Unit *unit = (OHCI1394Unit *)ioreq->io_Unit;
-	ULONG err;
-
-	ioreq->io_Message.mn_Node.ln_Type = NT_MESSAGE;
-	ioreq->io_Error = 0;
-
-	if (!unit->hu_Flags.Initialized)
-	{
-		ioreq->io_Error = IOERR_SELFTEST;
-		err = 0;
-	}
-	else
-	{
-		SHARED_PROTECT_BEGIN(unit);
-		err = unit->hu_Flags.UnrecoverableError;
-		SHARED_PROTECT_END(unit);
-
-		/* Block any command except CMD_RESET if the unit is in an unrecoverable state */
-		if (err && (CMD_RESET != ioreq->io_Command))
-		{
-			_ERR_DEV("OHCI Unrecoverable Error\n");
-			ioreq->io_Error = HHIOERR_UNRECOVERABLE_ERROR;
-		}
-		else
-		{
-			//_INF_DEV("cmd = %08x\n", ioreq->iohh_Req.io_Command);
-			switch(ioreq->io_Command)
-			{
-				case CMD_RESET:
-					err = cmdReset(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_BUSRESET:
-					err = cmdBusReset(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_ENABLE:
-					err = cmdEnable(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_DISABLE:
-					err = cmdDisable(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_SENDREQUEST:
-					err = cmdSendRequest(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_SENDPHY:
-					err = cmdSendPhy(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_ADDREQHANDLER:
-					err = cmdAddReqHandler(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_REMREQHANDLER:
-					err = cmdRemReqHandler(ioreq, unit, base);
-					break;
-
-#if 0
-				case HHIOCMD_SETATTRIBUTES:
-					err = cmdSetAttrs(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_CREATEISOCONTEXT:
-					err = cmdCreateIsoCtx(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_DELETEISOCONTEXT:
-					err = cmdDelIsoCtx(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_STARTISOCONTEXT:
-					err = cmdStartIsoCtx(ioreq, unit, base);
-					break;
-
-				case HHIOCMD_STOPISOCONTEXT:
-					err = cmdStopIsoCtx(ioreq, unit, base);
-					break;
-#endif
-
-				default:
-					_ERR_DEV("Invalid command 0x%X\n", ioreq->io_Command);
-					ioreq->io_Error = IOERR_NOCMD;
-					err = 0;
-					break;
-			}
-		}
-	}
-
-	if (err)
-		ioreq->io_Flags &= ~IOF_QUICK;
-	else if (!(ioreq->io_Flags & IOF_QUICK))
-		ReplyMsg(&ioreq->io_Message);
-}
-ENDFUNC
-DEVABORTIO(OHCI1394Device, base, ioreq)
-{
-	OHCI1394Unit *unit = (OHCI1394Unit *)ioreq->io_Unit;
-	LONG cancelled;
-
-	switch(ioreq->io_Command)
-	{
-		case HHIOCMD_SENDREQUEST:
-			cancelled = abortSendRequest(ioreq, unit, base);
-			break;
-
-		default: /* Other commands can't be cancelled */
-			cancelled = FALSE;
-			/*if (!(ioreq->iohh_Req.io_Flags & IOF_QUICK))
-				ReplyMsg(&ioreq->iohh_Req.io_Message);*/
-	}
-	if (cancelled)
-		ioreq->io_Error = IOERR_ABORTED;
-}
-ENDFUNC
-/*============================================================================*/
-/*--- RESIDENT ---------------------------------------------------------------*/
-/*============================================================================*/
-static struct LibInitStruct devInit = {
-	.LibSize	= sizeof(OHCI1394Device),
-	.FuncTable	= devFuncTable,
-	.DataTable	= NULL,
-	.InitFunc	= (void (*)())DEV_INIT_FNAME,
-};
-struct Resident devResident=
-{
-	.rt_MatchWord	= RTC_MATCHWORD,
-	.rt_MatchTag	= &devResident,
-	.rt_EndSkip		= &devResident + 1,
-	.rt_Flags		= RTF_PPC | RTF_EXTENDED | RTF_AUTOINIT,
-	.rt_Version		= VERSION,
-	.rt_Type		= NT_DEVICE,
-	.rt_Pri			= 0,
-	.rt_Name		= DEVNAME,
-	.rt_IdString	= VSTRING,
-	.rt_Init		= &devInit,
-	/* V50 */
-	.rt_Revision	= REVISION,
-	.rt_Tags		= devQueryTags,
-};
-/*=== EOF ====================================================================*/
+//-

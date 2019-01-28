@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,28 +17,28 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2013 by Guillaume ROGUEZ.
+/*
 **
 ** Helios SBP2 device header.
+**
 */
 
 #ifndef SBP2_DEVICE_H
 #define SBP2_DEVICE_H
 
-#include  "private.h"
+#include "private.h"
 
 #ifndef DEVNAME
 #   define DEVNAME              "sbp2.device"
 #endif
 #ifndef DEV_VERSION
-#   define DEV_VERSION          0
+#   define DEV_VERSION          50
 #endif
 #ifndef DEV_REVISION
 #   define DEV_REVISION         0
 #endif
 #ifndef DEV_VERSION_STR
-#   define DEV_VERSION_STR      "0"
+#   define DEV_VERSION_STR      "50"
 #endif
 #ifndef DEV_REVISION_STR
 #   define DEV_REVISION_STR     "0"
@@ -53,23 +53,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define RC_DONTREPLY -1
 #define RC_OK 0
 
-/* Exec device side of SBP2 */
-typedef struct SBP2Device
-{
-	struct Library		dv_Library;       /* standard */
-	UWORD				dv_Flags;         /* various flags */
-	BPTR				dv_SegList;       /* device seglist */
-	
-	SBP2ClassLib *		dv_SBP2ClassBase; /* up link */
-	struct ExecBase *	dv_SysBase;
-	struct Library *	dv_MountBase;
-	
-	LOCK_PROTO;
-	LOCKED_MINLIST_PROTO(dv_Units);
-	ULONG				dv_UnitCount;	/* Length of hc_Units */
-} SBP2Device;
+/*----------------------------------------------------------------------------*/
+/*--- SYMBOLS ----------------------------------------------------------------*/
 
 extern const ULONG devFuncTable[];
+extern SBP2Device *devInit(SBP2Device *base,
+                           BPTR seglist,
+                           struct ExecBase *sysbase);
 extern BPTR devCleanup(SBP2Device *base);
 
 #endif /* SPB2_DEVICE_H */

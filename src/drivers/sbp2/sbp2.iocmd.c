@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,15 +17,15 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
+/*
 **
 ** SBP2 class IO commands API.
 **
 */
 
-//#define NDEBUG
+#define NDEBUG
 #define DEBUG_SCSI
-#define DEBUG_MEM
+//#define DEBUG_MEM
 
 #include "sbp2.class.h"
 
@@ -38,7 +38,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <string.h>
 
+#define SysBase (unit->u_SBP2ClassBase->hc_SysBase)
+
 #ifndef NDEBUG
+//+ scsi_cmd_names
 static const STRPTR scsi_cmd_names[256] =
 {
     [0x00]="TEST_UNIT_READY",
@@ -122,8 +125,8 @@ static const STRPTR scsi_cmd_names[256] =
     [0x4e]="$4e",
     [0x4f]="$4f",
     [0x50]="$50",
-    [0x51]="READ_DISC_INFRMATION",
-    [0x52]="READ_TRACK_INFRMATION",
+    [0x51]="READ_DISC_INFORMATION",
+    [0x52]="READ_TRACK_INFORMATION",
     [0x53]="$53",
     [0x54]="$54",
     [0x55]="MODE_SELECT_10",
@@ -298,13 +301,14 @@ static const STRPTR scsi_cmd_names[256] =
     [0xfe]="$fe",
     [0xff]="$ff"
 };
+//-
 #endif
 
-/*============================================================================*/
-/*--- LOCAL CODE -------------------------------------------------------------*/
-/*============================================================================*/
-static LONG
-sbp2_scsi_getmodepage(SBP2Unit *unit, UBYTE page)
+/*----------------------------------------------------------------------------*/
+/*--- LOCAL CODE SECTION -----------------------------------------------------*/
+
+//+ sbp2_scsi_getmodepage
+static LONG sbp2_scsi_getmodepage(SBP2Unit *unit, UBYTE page)
 {
     UBYTE cmd10[10];
     struct SCSICmd scsicmd;
@@ -333,7 +337,7 @@ sbp2_scsi_getmodepage(SBP2Unit *unit, UBYTE page)
     cmd10[8] = 0;    /* Alloc length lo */
     cmd10[9] = 0;    /* Control */
 
-    _INF("do SCSI_MODE_SENSE_10...\n");
+    _INFO_SCSI("do SCSI_MODE_SENSE_10...\n");
     ioerr = sbp2_do_scsi_cmd(unit, &scsicmd, ORB_TIMEOUT);
     if (ioerr)
     {
@@ -370,22 +374,23 @@ sbp2_scsi_getmodepage(SBP2Unit *unit, UBYTE page)
 
     return 0;
 }
-static void
-sbp2_fakegeometry(SBP2Unit *unit)
+//-
+//+ sbp2_fakegeometry
+static void sbp2_fakegeometry(SBP2Unit *unit)
 {
-    _INF("Faking geometry...\n");
+    _INFO("Faking geometry...\n");
     unit->u_Geometry.dg_Heads = 1;
     unit->u_Geometry.dg_TrackSectors = 1;
     unit->u_Geometry.dg_CylSectors = 1;
     unit->u_Geometry.dg_Cylinders = unit->u_Geometry.dg_TotalSectors;
 }
+//-
 
+/*----------------------------------------------------------------------------*/
+/*--- PUBLIC CODE SECTION ----------------------------------------------------*/
 
-/*============================================================================*/
-/*--- PUBLIC CODE ------------------------------------------------------------*/
-/*============================================================================*/
-LONG
-sbp2_iocmd_scsi(SBP2Unit *unit, struct IOStdReq *ioreq)
+//+ sbp2_iocmd_scsi
+LONG sbp2_iocmd_scsi(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     UBYTE cmd10[10];
     struct SCSICmd *cmd, scsicmd10;
@@ -412,7 +417,7 @@ sbp2_iocmd_scsi(SBP2Unit *unit, struct IOStdReq *ioreq)
         goto out;
     }
 
-    _INF("SCSI[$%02x-%s] Sending, SCSI=[CmdLen=%u, Data=%p, Len=%lu]\n",
+    _INFO_SCSI("SCSI[$%02x-%s] Sending, SCSI=[CmdLen=%u, Data=%p, Len=%lu]\n",
                cmd->scsi_Command[0], scsi_cmd_names[cmd->scsi_Command[0]],
                cmd->scsi_CmdLength, cmd->scsi_Data, cmd->scsi_Length);
 
@@ -438,30 +443,30 @@ send_cmd:
     if (!ioerr)
     {
         ioreq->io_Actual = ioreq->io_Length;
-        _INF("SCSI[$%02x-%s] OK, IO=[actual=%lu], SCSI=[Actual=%lu]\n",
+        _INFO_SCSI("SCSI[$%02x-%s] OK, IO=[actual=%lu], SCSI=[Actual=%lu]\n",
                    cmd->scsi_Command[0], scsi_cmd_names[cmd->scsi_Command[0]],
                    ioreq->io_Actual, cmd->scsi_Actual);
     }
     else
     {
-        _ERR("SCSI[$%02x-%s] Failed, IO=[err=%ld, actual=%lu], SCSI=[Status=$%02x, Actual=%lu]\n",
+        _ERR_SCSI("SCSI[$%02x-%s] Failed, IO=[err=%ld, actual=%lu], SCSI=[Status=$%02x, Actual=%lu]\n",
                   cmd->scsi_Command[0], scsi_cmd_names[cmd->scsi_Command[0]],
                   ioerr, ioreq->io_Actual, cmd->scsi_Status, cmd->scsi_Actual);
         if (cmd->scsi_SenseActual > 13)
-            _ERR("SCSI[$%02x-%s] Failed, SenseLen=%u, SenseData=[key=$%x, asc/ascq=$%02x/$%02x]\n",
+            _ERR_SCSI("SCSI[$%02x-%s] Failed, SenseLen=%u, SenseData=[key=$%x, asc/ascq=$%02x/$%02x]\n",
                       cmd->scsi_Command[0], scsi_cmd_names[cmd->scsi_Command[0]],
                       cmd->scsi_SenseActual, cmd->scsi_SenseData[2] & SK_MASK,
                       cmd->scsi_SenseData[12], cmd->scsi_SenseData[13]);
         switch (cmd->scsi_CmdLength)
         {
             case 6:
-                _ERR("SCSI cmd6 [%02x %02x %02x %02x %02x %02x]\n",
+                _ERR_SCSI("SCSI cmd6 [%02x %02x %02x %02x %02x %02x]\n",
                           cmd->scsi_Command[0], cmd->scsi_Command[1], cmd->scsi_Command[2],
                           cmd->scsi_Command[3], cmd->scsi_Command[4], cmd->scsi_Command[5]);
                 break;
 
             case 10:
-                _ERR("SCSI cmd10 [%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x]\n",
+                _ERR_SCSI("SCSI cmd10 [%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x]\n",
                           cmd->scsi_Command[0], cmd->scsi_Command[1], cmd->scsi_Command[2],
                           cmd->scsi_Command[3], cmd->scsi_Command[4], cmd->scsi_Command[5],
                           cmd->scsi_Command[6], cmd->scsi_Command[7], cmd->scsi_Command[8],
@@ -469,7 +474,7 @@ send_cmd:
                 break;
 
             case 12:
-                _ERR("SCSI cmd12 [%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x]\n",
+                _ERR_SCSI("SCSI cmd12 [%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x]\n",
                           cmd->scsi_Command[0], cmd->scsi_Command[1], cmd->scsi_Command[2],
                           cmd->scsi_Command[3], cmd->scsi_Command[4], cmd->scsi_Command[5],
                           cmd->scsi_Command[6], cmd->scsi_Command[7], cmd->scsi_Command[8],
@@ -548,7 +553,7 @@ send_cmd:
 
                 if (try_again)
                 {
-                    _WRN("Xlate 6->10 cmd %s\n",
+                    _WARN("Xlate 6->10 cmd %s\n",
                           scsi_cmd_names[((struct SCSICmd *)ioreq->io_Data)->scsi_Command[0]]);
 
                     cmd = &scsicmd10;
@@ -597,14 +602,15 @@ out:
     ioreq->io_Error = ioerr;
     return ioerr;
 }
-LONG
-sbp2_iocmd_start_stop(SBP2Unit *unit, struct IOStdReq *ioreq)
+//-
+//+ sbp2_iocmd_start_stop
+LONG sbp2_iocmd_start_stop(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     UBYTE cmd6[6];
     struct SCSICmd scsicmd;
     UBYTE sensedata[18];
 
-    _INF("IO: CMD_START/CMD_STOP\n");
+    _INFO_SCSI("IO: CMD_START/CMD_STOP\n");
 
     bzero(sensedata, sizeof(sensedata));
     bzero(cmd6, 6);
@@ -635,12 +641,13 @@ sbp2_iocmd_start_stop(SBP2Unit *unit, struct IOStdReq *ioreq)
             break;
     }
     
-    _INF("do SCSI_DA_START_STOP_UNIT...\n");
+    _INFO_SCSI("do SCSI_DA_START_STOP_UNIT...\n");
     ioreq->io_Error = sbp2_do_scsi_cmd(unit, &scsicmd, ORB_TIMEOUT);
     return ioreq->io_Error;
 }
-LONG
-sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
+//-
+//+ sbp2_iocmd_read64
+LONG sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     UBYTE cmd10[10];
     struct SCSICmd scsicmd;
@@ -661,7 +668,7 @@ sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
         return ioreq->io_Error;
     }
 
-    _INF("Flags=$%02x, Data=%p, Length=%lu, Offset=$%llx\n",
+    _INFO("Flags=$%02x, Data=%p, Length=%lu, Offset=$%llx\n",
           ioreq->io_Flags, ioreq->io_Data, ioreq->io_Length, offset64);
 
     if(dataremain & 511)
@@ -685,8 +692,8 @@ sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
     if (unit->u_OneBlockSize < unit->u_BlockSize)
     {
         if (NULL != unit->u_OneBlock)
-            FreePooled(unit->u_Class->hc_MemPool, unit->u_OneBlock, unit->u_OneBlockSize);
-        unit->u_OneBlock = AllocPooled(unit->u_Class->hc_MemPool, unit->u_BlockSize);
+            FreePooled(unit->u_SBP2ClassBase->hc_MemPool, unit->u_OneBlock, unit->u_OneBlockSize);
+        unit->u_OneBlock = AllocPooled(unit->u_SBP2ClassBase->hc_MemPool, unit->u_BlockSize);
         if (NULL == unit->u_OneBlock)
         {
             _ERR("Alloc block failed\n");
@@ -723,7 +730,7 @@ sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
         /* Limit transfer size */
         datalen = MIN(dataremain, maxtrans);
 
-        _INF("Reading %lu bytes from block %ld, %ld bytes left...\n", datalen, startblock, dataremain);
+        _INFO("Reading %lu bytes from block %ld, %ld bytes left...\n", datalen, startblock, dataremain);
 
         /* if offset is not block aligned or xfer size is less than a block size */
         if (insideblockoffset || (datalen < unit->u_BlockSize))
@@ -757,7 +764,7 @@ sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
             if (((ULONG)&unit->u_OneBlock[insideblockoffset] & 3) ||
                 ((ULONG)&(((UBYTE *) ioreq->io_Data)[dataoffset]) & 3) ||
                 (datalen & 3))
-                _WRN("CopyMemQuick() will fails\n");
+                _WARN("CopyMemQuick() will fails\n");
             CopyMemQuick(&unit->u_OneBlock[insideblockoffset],
                          &(((UBYTE *) ioreq->io_Data)[dataoffset]),
                          datalen);
@@ -799,8 +806,9 @@ out:
     ioreq->io_Actual = dataoffset;
     return ioreq->io_Error;
 }
-LONG
-sbp2_iocmd_write64(SBP2Unit *unit, struct IOStdReq *ioreq)
+//-
+//+ sbp2_iocmd_write64
+LONG sbp2_iocmd_write64(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     UBYTE cmd10[10];
     struct SCSICmd scsicmd;
@@ -821,7 +829,7 @@ sbp2_iocmd_write64(SBP2Unit *unit, struct IOStdReq *ioreq)
         return ioreq->io_Error;
     }
 
-    _INF("Flags=$%02x, Data=%p, Length=%lu, Offset=$%llx\n",
+    _INFO("Flags=$%02x, Data=%p, Length=%lu, Offset=$%llx\n",
           ioreq->io_Flags, ioreq->io_Data, ioreq->io_Length, offset64);
 
     if(dataremain & 511)
@@ -845,8 +853,8 @@ sbp2_iocmd_write64(SBP2Unit *unit, struct IOStdReq *ioreq)
     if (unit->u_OneBlockSize < unit->u_BlockSize)
     {
         if (NULL != unit->u_OneBlock)
-            FreePooled(unit->u_Class->hc_MemPool, unit->u_OneBlock, unit->u_OneBlockSize);
-        unit->u_OneBlock = AllocPooled(unit->u_Class->hc_MemPool, unit->u_BlockSize);
+            FreePooled(unit->u_SBP2ClassBase->hc_MemPool, unit->u_OneBlock, unit->u_OneBlockSize);
+        unit->u_OneBlock = AllocPooled(unit->u_SBP2ClassBase->hc_MemPool, unit->u_BlockSize);
         if (NULL == unit->u_OneBlock)
         {
             _ERR("Alloc block failed\n");
@@ -867,7 +875,7 @@ sbp2_iocmd_write64(SBP2Unit *unit, struct IOStdReq *ioreq)
         /* Limit transfer size */
         datalen = MIN(dataremain, maxtrans);
 
-        _INF("Writing %lu bytes from block %ld, %ld bytes left...\n", datalen, startblock, dataremain);
+        _INFO("Writing %lu bytes from block %ld, %ld bytes left...\n", datalen, startblock, dataremain);
 
         /* if offset is not block aligned or xfer size is less than a block size */
         if (insideblockoffset || (datalen < unit->u_BlockSize))
@@ -962,8 +970,9 @@ out:
     ioreq->io_Actual = dataoffset;
     return ioreq->io_Error;
 }
-LONG
-sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
+//-
+//+ sbp2_iocmd_get_geometry
+LONG sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     struct DriveGeometry *dg;
     ULONG length;
@@ -974,7 +983,7 @@ sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
     BOOL gotsect = FALSE;
     BOOL gotcylsect = FALSE;
 
-    _INF("IO: TD_GETGEOMETRY\n");
+    _INFO("IO: TD_GETGEOMETRY\n");
 
     ioreq->io_Actual = 0;
     ioreq->io_Error = 0;
@@ -1066,7 +1075,7 @@ sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
     }
 #endif
 
-    _INF("Capacity (temp): Cylinders=%lu, Heads=%lu, TrackSectors=%u\n",
+    _INFO("Capacity (temp): Cylinders=%lu, Heads=%lu, TrackSectors=%u\n",
            unit->u_Geometry.dg_Cylinders, unit->u_Geometry.dg_Heads,
            unit->u_Geometry.dg_TrackSectors);
 
@@ -1128,14 +1137,14 @@ sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
 
 geo_ok:
     if (unit->u_Geometry.dg_Cylinders * unit->u_Geometry.dg_CylSectors != unit->u_Geometry.dg_TotalSectors)
-        _INF("Estimated Geometry yields %lu less total blocks %lu: Cylinders=%lu, CylSectors=%lu, Heads=%lu, TrackSectors=%lu, Blocks=%lu\n",
+        _INFO("Estimated Geometry yields %lu less total blocks %lu: Cylinders=%lu, CylSectors=%lu, Heads=%lu, TrackSectors=%lu, Blocks=%lu\n",
               unit->u_Geometry.dg_TotalSectors - unit->u_Geometry.dg_Cylinders * unit->u_Geometry.dg_CylSectors,
               unit->u_Geometry.dg_Cylinders * unit->u_Geometry.dg_CylSectors,
               unit->u_Geometry.dg_Cylinders, unit->u_Geometry.dg_CylSectors,
               unit->u_Geometry.dg_Heads, unit->u_Geometry.dg_TrackSectors,
               unit->u_Geometry.dg_TotalSectors);
     else
-        _INF("Capacity (final): Cylinders=%lu, CylSectors=%lu, Heads=%lu, TrackSectors=%lu, Blocks=%lu, SectorSize=%lu\n",
+        _INFO("Capacity (final): Cylinders=%lu, CylSectors=%lu, Heads=%lu, TrackSectors=%lu, Blocks=%lu, SectorSize=%lu\n",
               unit->u_Geometry.dg_Cylinders, unit->u_Geometry.dg_CylSectors,
               unit->u_Geometry.dg_Heads, unit->u_Geometry.dg_TrackSectors,
               unit->u_Geometry.dg_TotalSectors, unit->u_Geometry.dg_SectorSize);
@@ -1145,4 +1154,6 @@ geo_ok:
 
     return ioreq->io_Error;
 }
-/*=== EOF ====================================================================*/
+//-
+
+/* EOF */

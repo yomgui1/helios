@@ -74,14 +74,6 @@ only each 3 seconds
 
 ## Changes
 
-### v1.0
-
-**Only Sources**
-
-**No distributed in binary form yet**
-
-This is a major rewrite of Helios
-
 ### v0.5
 
 #### new versions

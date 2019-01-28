@@ -16,14 +16,15 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## Projects top Makefile
 ##
 ##
 
+PRJROOT := ..
+
 # Declare here all projects directories
-PRJROOT := $(shell (cd ..; pwd))
 SUBDIRS := stack drivers tools
 
 include $(PRJROOT)/common.mk

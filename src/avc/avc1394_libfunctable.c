@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,7 +17,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* 
+/*
 **
 ** Helios AV/C 1394 Library functions table definition file.
 **

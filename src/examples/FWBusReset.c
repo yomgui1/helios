@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,69 +17,67 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
+**
 */
 
+#include "proto/helios.h"
 #include <proto/exec.h>
 #include <proto/dos.h>
-#include <proto/helios.h>
 
 struct Library *HeliosBase;
 static const UBYTE template[] = "HW_UNIT/N,LBR=LONGBUSRESET/S";
 
 static struct {
-	LONG *unitno;
-	BOOL lbr;
-} args = {NULL, 0};
+    LONG *unitno;
+    BOOL shortbr;
+} args;
 
 int main(int argc, char **argv)
 {
-	APTR rdargs;
-	LONG unitno=0;
+    APTR rdargs;
+    LONG unitno = 0;
 
-	rdargs = ReadArgs(template, (APTR) &args, NULL);
-	if (NULL != rdargs)
-	{
-		if (NULL != args.unitno)
-			unitno = *args.unitno;
-	}
-	else
-	{
-		PrintFault(IoErr(), NULL);
-		return RETURN_ERROR;
-	}
+    rdargs = ReadArgs(template, (APTR) &args, NULL);
+    if (NULL != rdargs)
+    {
+        if (NULL != args.unitno)
+            unitno = *args.unitno;
+    }
+    else
+    {
+        PrintFault(IoErr(), NULL);
+        return RETURN_ERROR;
+    }
 
-	/* Opening the library before calling its API */
-	HeliosBase = OpenLibrary(HELIOS_LIBNAME, HELIOS_LIBVERSION);
-	if (HeliosBase)
-	{
-		HeliosHardware *hh = NULL;
-		
-		hh = Helios_FindObject(HGA_HARDWARE, NULL,
-			HA_UnitNo, unitno,
-			TAG_DONE);
+    HeliosBase = OpenLibrary("helios.library", 52);
+    if (NULL != HeliosBase)
+    {
+        ULONG cnt=0;
+        HeliosHardware *hw = NULL;
 
-		if (hh)
-		{
-			struct IOStdReq ioreq;
-	
-			ioreq.io_Message.mn_Length = sizeof(ioreq);
-			ioreq.io_Command = HHIOCMD_BUSRESET;
-			ioreq.io_Data = (APTR)!args.lbr;
-			
-			Helios_DoIO(hh, (struct IORequest *)&ioreq);
-			
-			/* Returned hardware object has been incref'ed for our usage.
-			 * As we don't need anymore, we need to release it.
-			 */
-			Helios_ReleaseObject(hh);
-		}
+        Helios_WriteLockBase();
+        {
+            while (NULL != (hw = Helios_GetNextHardware(hw)))
+            {
+                if (unitno == cnt++)
+                    break;
 
-		CloseLibrary(HeliosBase);
-	}
-	else
-		return RETURN_FAIL;
+                Helios_ReleaseHardware(hw);
+            }
+        }
+        Helios_UnlockBase();
 
-	return RETURN_OK;
+        if (NULL != hw)
+        {
+            Helios_BusReset(hw, args.shortbr);
+            Helios_ReleaseHardware(hw);
+        }
+
+        CloseLibrary(HeliosBase);
+    }
+    else
+        return RETURN_FAIL;
+
+    return RETURN_OK;
 }

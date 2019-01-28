@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,26 +17,56 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2013 by Guillaume ROGUEZ.
+/*
 **
 ** SBP2 class private API header file.
+**
 */
 
 #ifndef SBP2_PRIVATE_H
 #define SBP2_PRIVATE_H
 
-#include <proto/exec.h>
-#include <proto/dos.h>
-#include <proto/utility.h>
+#ifndef NDEBUG
+#   ifdef DEBUG_LIB
+#       define _INFO_LIB _INFO
+#       define _ERR_LIB _ERR
+#   else
+#       define _INFO_LIB(x,a...)
+#       define _ERR_LIB(x,a...)
+#   endif /* DEBUG_LIB */
+#   ifdef DEBUG_ORB
+#       define _INFO_ORB _INFO
+#       define _ERR_ORB _ERR
+#   else
+#       define _INFO_ORB(x,a...)
+#       define _ERR_ORB(x,a...)
+#   endif /* DEBUG_ORB */
+#   ifdef DEBUG_SCSI
+#       define _INFO_SCSI _INFO
+#       define _ERR_SCSI _ERR
+#       define _WARN_SCSI _WARN
+#   else
+#       define _INFO_SCSI(x,a...)
+#       define _ERR_SCSI(x,a...)
+#       define _WARN_SCSI(x,a...)
+#   endif /* DEBUG_SCSI */
+#else
+#   define _INFO_LIB(x,a...)
+#   define _ERR_LIB(x,a...)
+#   define _INFO_ORB(x,a...)
+#   define _ERR_ORB(x,a...)
+#   define _INFO_SCSI(x,a...)
+#   define _ERR_SCSI(x,a...)
+#   define _WANR_SCSI(x,a...)
+#endif /* !NDEBUG */
+
+#include "utils.h"
+#include "debug.h"
 #include "proto/helios.h"
 
 #include <devices/scsidisk.h>
 #include <devices/trackdisk.h>
 #include <libraries/mount.h>
-
-#include "utils.h"
-#include "debug.h"
 
 #define LOGIN_RETRY 5
 
@@ -89,196 +119,210 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define SBP2_PRODUCTID_LEN 16
 #define SBP2_PRODUCTVERSION_LEN 4
 
-struct SBP2ORBRequest;
-struct SBP2Unit;
 struct SBP2ClassLib;
 typedef struct SBP2ClassLib SBP2ClassLib;
 
 typedef union ORBPointer
 {
-	struct {
-		ULONG hi;
-		ULONG lo;
-	} addr __attribute__((packed));
-	UQUAD q;
+    struct {
+        ULONG hi;
+        ULONG lo;
+    } addr __attribute__((packed));
+    UQUAD  q;
 } ORBPointer __attribute__((__aligned__(8)));
 
 typedef struct ORBStatus {
 	QUADLET status;
 	QUADLET orb_low;
-	UBYTE data[24];
+    UBYTE data[24];
 } ORBStatus;
 
 /* Optimization : writting length + addr_hi in single 32bits write */
 typedef struct SBP2SGPage {
-	ULONG length_addr_hi;
-	ULONG addr_lo;
+    ULONG length_addr_hi;
+    ULONG addr_lo;
 } SBP2SGPage __attribute__((__aligned__(8)));
 
-typedef void(*ORBDoneCallback)(struct SBP2Unit *unit, struct SBP2ORBRequest *orbreq, ORBStatus *status);
+struct SBP2ORBRequest;
+struct SBP2Unit;
+
+typedef void(*ORBDoneCallback)(SBP2ClassLib *base,
+                               struct SBP2ORBRequest *orbreq,
+                               ORBStatus *status);
 
 typedef struct SBP2ORBRequest
 {
-	struct IOStdReq     or_Base;        /* For the transport layer (Helios) */
-	struct MinNode      or_Node;        /* To enqueue into the pending list */
-	HeliosPacket        or_Packet;      /* IEEE1394 Packet */
-	ORBPointer          or_ORBAddr;     /* The ORB 1394 address (written to the target) */
-	ORBDoneCallback     or_ORBDone;     /* Called when ORB status is available (or error) */
-	ORBStatus           or_ORBStatus;   /* SBP2 ORB status */
-	struct Task *       or_ORBStTask;
-	ULONG               or_ORBStSignal;
+    IOHeliosHWSendRequest or_Base;        /* For the transport layer (Helios) */
+    struct MinNode        or_Node;        /* To enqueue into the pending list */
+    ORBPointer            or_ORBAddr;     /* The ORB 1394 address (written to the target) */
+    ORBDoneCallback       or_ORBDone;     /* Called when ORB status is available (or error) */
+    ORBStatus             or_ORBStatus;   /* SBP2 ORB status */
+    struct Task *         or_ORBStTask;
+    ULONG                 or_ORBStSignal;
 } SBP2ORBRequest;
 
 typedef struct ORBLogin
 {
-	ORBPointer password;
-	ORBPointer response;
-	UWORD      control;
-	UWORD      lun;
-	UWORD      passwordlen;
-	UWORD      responselen;
-	UQUAD      statusfifo;
-} ORBLogin __attribute__((__aligned__(4)));
+    ORBPointer password;
+    ORBPointer response;
+    UWORD      control;
+    UWORD      lun;
+    UWORD      passwordlen;
+    UWORD      responselen;
+    UQUAD      statusfifo;
+} ORBLogin __attribute__((__aligned__(8)));
 
 typedef struct ORBLogout
 {
-	UQUAD      reserved;
-	UQUAD      reserved1;
-	UWORD      control;
-	UWORD      loginid;
-	ULONG      reserved2;
-	UQUAD      statusfifo;
-} ORBLogout __attribute__((__aligned__(4)));
+    UQUAD      reserved;
+    UQUAD      reserved1;
+    UWORD      control;
+    UWORD      loginid;
+    ULONG      reserved2;
+    UQUAD      statusfifo;
+} ORBLogout __attribute__((__aligned__(8)));
 
 typedef struct ORBReconnect
 {
-	UQUAD      reserved;
-	UQUAD      reserved1;
-	UWORD      control;
-	UWORD      loginid;
-	ULONG      reserved2;
-	UQUAD      statusfifo;
-} ORBReconnect __attribute__((__aligned__(4)));
+    UQUAD      reserved;
+    UQUAD      reserved1;
+    UWORD      control;
+    UWORD      loginid;
+    ULONG      reserved2;
+    UQUAD      statusfifo;
+} ORBReconnect __attribute__((__aligned__(8)));
 
 typedef struct ORBDummy
 {
-	ORBPointer next;
-	UQUAD      reserved1;
-	UWORD      control;
-	UWORD      reserved2;
-} ORBDummy __attribute__((__aligned__(4)));
+    ORBPointer next;
+    UQUAD      reserved1;
+    UWORD      control;
+    UWORD      reserved2;
+} ORBDummy __attribute__((__aligned__(8)));
 
 typedef struct ORBSCSICommand
 {
-	ORBPointer next;
-	ULONG      desc_hi;
-	ULONG      desc_lo;
-	UWORD      control;
-	UWORD      datalen;
-	UBYTE      cdb[16];
-} ORBSCSICommand __attribute__((__aligned__(4)));
+    ORBPointer next;
+    ULONG      desc_hi;
+    ULONG      desc_lo;
+    UWORD      control;
+    UWORD      datalen;
+    UBYTE      cdb[16];
+} ORBSCSICommand __attribute__((__aligned__(8)));
 
 typedef struct ORBLoginResponse
 {
-	UWORD      length;
-	UWORD      login_id;
-	UQUAD      command_agent __attribute__((packed));
-	UWORD      reserved;
-	UWORD      reconnect_hold;
+    UWORD      length;
+    UWORD      login_id;
+    UQUAD      command_agent __attribute__((packed));
+    UWORD      reserved;
+    UWORD      reconnect_hold;
 } ORBLoginResponse;
 
 typedef struct SBP2SCSICmdReq
 {
-	SBP2ORBRequest    sr_Base;
-	ORBSCSICommand    sr_ORB;
-	struct SCSICmd *  sr_Cmd;
-	struct SBP2Unit * sr_Unit;
+    SBP2ORBRequest    sr_Base;
+    ORBSCSICommand    sr_ORB;
+    struct SCSICmd *  sr_Cmd;
+    struct SBP2Unit * sr_Unit;
 
-	/* Align SG pages on a cache line */
-	SBP2SGPage        sr_SGPages[ORB_SG_PAGES];
+    /* Align SG pages on a cache line */
+    SBP2SGPage        sr_SGPages[ORB_SG_PAGES];
 } SBP2SCSICmdReq;
 
 typedef struct {
-	ULONG Logged:1;
-	ULONG Ordered:1;
-	ULONG AcceptIO:1;
-	ULONG Removable:1;
-	ULONG Ready:1;
-	ULONG WriteProtected:1;
-	ULONG AutoMountCD:1;
-	ULONG ProcessIO;
-	ULONG Public;
-	ULONG NotUsed0:6;
+    ULONG Logged:1;
+    ULONG Ordered:1;
+    ULONG AcceptIO:1;
+    ULONG Removable:1;
+    ULONG Ready:1;
+    ULONG WriteProtected:1;
+    ULONG AutoMountCD:1;
+    ULONG ProcessIO;
+    ULONG Public;
+    ULONG NotUsed0:6;
 
-	/* Workarounds */
-	ULONG Inquiry36:1;    /* Force inquiry length to 36 bytes */
-	ULONG PowerCond:1;    /* Set POWER_CONDITION bits */
-	ULONG FixCapacity:1;  /* Try to fix capacity values if wrong */
-	ULONG MaxXfert128k:1; /* Use for xfert 128k-bytes at max per SCSI command */
+    /* Workarounds */
+    ULONG Inquiry36:1;    /* Force inquiry length to 36 bytes */
+    ULONG PowerCond:1;    /* Set POWER_CONDITION bits */
+    ULONG FixCapacity:1;  /* Try to fix capacity values if wrong */
+    ULONG MaxXfert128k:1; /* Use for xfert 128k-bytes at max per SCSI command */
 } SBP2Flags;
 
 /* SBP2 logical unit: */
 typedef struct SBP2Unit
 {
-	struct Unit				u_SysUnit;
+    struct Unit          u_SysUnit;
 
-	/* Management data */
-	LOCK_PROTO;
-	SBP2ClassLib *			u_Class;
-	LONG					u_UnitNo;
-	SBP2Flags				u_Flags;
-	struct Task *			u_DriverTask;
-	struct MsgPort *		u_TimerPort;
-	struct timerequest *	u_IOTimeReq;
-	ULONG					u_ChangeCounter;
-	APTR					u_NotifyUnit;
-	ULONG					u_AutoReconnect;
-	
-	/* Transport info */
-	HeliosHardware *		u_HeliosHardware;
-	HeliosDevice *			u_HeliosDevice;
-	HeliosUnit *			u_HeliosUnit;
-	ULONG					u_Generation;
-	UQUAD					u_GUID;
-	UWORD					u_NodeID;
-	UBYTE					u_MaxSpeed;
-	UBYTE					u_MaxPayload;
+    /* Management data */
+    LOCK_VARIABLE;
+    LONG                 u_UnitNo;
+    SBP2Flags            u_Flags;
+    SBP2ClassLib *       u_SBP2ClassBase;
+    struct Task *        u_DriverTask;
+    STRPTR               u_TaskName;
+    struct MsgPort *     u_TimerPort;
+    struct timerequest * u_IOTimeReq;
+    ULONG                u_ChangeCounter;
+    APTR                 u_NotifyUnit;
+    ULONG                u_AutoReconnect;
+    
+    /* Transport info */
+    HeliosHardware *     u_HeliosHW;
+    HeliosDevice *       u_HeliosDevice;
+    HeliosUnit *         u_HeliosUnit;
+    ULONG                u_Generation;
+    UQUAD                u_GUID;
+    UWORD                u_NodeID;
+    UBYTE                u_MaxSpeed;
+    UBYTE                u_MaxPayload;
 
-	/* ROM data */
-	HeliosOffset			u_MgtAgentBase;
-	LONG					u_MgtTimeout;
-	UWORD					u_LUN;
-	UWORD					u_MaxReconnectHold;
-	UWORD					u_DeviceType;
-	UBYTE					u_ORBSize;
-	UBYTE					u_Reserved0;
+    /* ROM data */
+    HeliosOffset         u_MgtAgentBase;
+    LONG                 u_MgtTimeout;
+    UWORD                u_LUN;
+    UWORD                u_MaxReconnectHold;
+    UWORD                u_DeviceType;
+    UBYTE                u_ORBSize;
+    UBYTE                u_Reserved0;
 
-	/* Login data */
-	ORBLoginResponse		u_ORBLoginResponse;
-	UWORD					u_LoginID;
-	UBYTE					u_Reserved1[2];
+    /* Login data */
+    ORBLoginResponse     u_ORBLoginResponse;
+    UWORD                u_LoginID;
+    UBYTE                u_Reserved1[2];
 
-	/* ORB management data */
-	LOCKED_MINLIST_PROTO(u_PendingORBs);
-	HeliosRequestHandler	u_FifoStatusRH;
+    /* ORB management data */
+    struct MinList       u_PendingORBList;
+    HeliosHWReqHandler   u_FSReqHandler;
 
-	/* Unit specifics and SCSI cmds management data */
-	STRPTR					u_UnitName;
-	struct MsgPort *		u_OrbPort;
-	struct DriveGeometry	u_Geometry;
-	ULONG					u_BlockSize;
-	UBYTE					u_BlockShift;
-	UBYTE					u_Read10Cmd;
-	BYTE					u_ORBStatusSigBit;
-	UBYTE					u_Reserved2;
-	UBYTE *					u_OneBlock;
-	ULONG					u_OneBlockSize;
-	UBYTE					u_ModePageBuf[256];
+    /* Unit specifics and SCSI cmds management data */
+    STRPTR               u_UnitName;
+    struct MsgPort *     u_OrbPort;
+    struct DriveGeometry u_Geometry;
+    ULONG                u_BlockSize;
+    UBYTE                u_BlockShift;
+    UBYTE                u_Read10Cmd;
+    BYTE                 u_ORBStatusSigBit;
+    UBYTE                u_Reserved2;
+    UBYTE *              u_OneBlock;
+    ULONG                u_OneBlockSize;
+    UBYTE                u_ModePageBuf[256];
 
-	UBYTE					u_VendorID[SBP2_VENDORID_LEN+1];
-	UBYTE					u_ProductID[SBP2_PRODUCTID_LEN+1];
-	UBYTE					u_ProductVersion[SBP2_PRODUCTVERSION_LEN+1];
+    UBYTE                u_VendorID[SBP2_VENDORID_LEN+1];
+    UBYTE                u_ProductID[SBP2_PRODUCTID_LEN+1];
+    UBYTE                u_ProductVersion[SBP2_PRODUCTVERSION_LEN+1];
 } SBP2Unit;
+
+/* Exec device side of SBP2 */
+typedef struct SBP2Device
+{
+    struct Library     dv_Library;       /* standard */
+    UWORD              dv_Flags;         /* various flags */
+    BPTR               dv_SegList;       /* device seglist */
+    SBP2ClassLib *     dv_SBP2ClassBase; /* up link */
+    struct ExecBase *  dv_SysBase;
+    struct Library *   dv_MountBase;
+} SBP2Device;
 
 extern void sbp2_cancel_orbs(SBP2Unit *unit);
 extern LONG sbp2_do_scsi_cmd(SBP2Unit *unit, struct SCSICmd *scsicmd, ULONG timeout);
@@ -292,6 +336,6 @@ extern LONG sbp2_TermClass(SBP2ClassLib *base);
 extern LONG sbp2_ReleaseAllBindings(SBP2ClassLib *base);
 extern LONG sbp2_ForceUnitBinding(SBP2ClassLib *base, HeliosUnit *unit);
 extern LONG sbp2_AttemptUnitBinding(SBP2ClassLib *base, HeliosUnit *unit);
-extern LONG sbp2_ReleaseUnitBinding(SBP2ClassLib *base, HeliosUnit *unit);
+extern LONG sbp2_ReleaseUnitBinding(SBP2ClassLib *base, HeliosUnit *unit, SBP2Unit *sbp2_unit);
 
 #endif /* SBP2_PRIVATE_H */

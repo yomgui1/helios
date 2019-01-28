@@ -16,37 +16,32 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## $Id$
+##
 ##
 ## Makefile for building the SBP2 driver.
 ##
 ##
 
-PRJROOT := $(shell (cd ../../..; pwd))
+PRJROOT  	:= ../../..
 
 LIBNAME  	:= sbp2.class
-VERSION  	:= 52
-REVISION 	:= 0
+VERSION  	:= 50
+REVISION 	:= 1
 
-CLS_SRCS := $(PRJROOT)/src/common/utils.c \
-	sbp2.device.c sbp2.core.c sbp2.iocmd.c
-CLS_OBJS := $(CLS_SRCS:.c=.o)
+SBP2_SRCS := $(PRJROOT)/src/common/utils.c \
+	sbp2.core.c sbp2.device.c sbp2.iocmd.c
+SBP2_OBJS := $(SBP2_SRCS:.c=.o)
 
-LIBRARY_SRCS := sbp2.class.c functable.c
+LIBRARY_SRCS := sbp2.class.c sbp2_functable.library.c
 LIBRARY_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(LIBRARY_SRCS)))
 
-ALL_SRCS	:= $(LIBRARY_SRCS) $(CLS_SRCS)
+ALL_SRCS	:= $(LIBRARY_SRCS) $(SBP2_SRCS)
 
 include $(PRJROOT)/common.mk
 
-DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"SBP2"'
+DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"HC_SBP2"'
 
-.PHONY: dirs
-
-all: dirs $(CLS_DIR)/$(LIBNAME)
-
-dirs:
-	[ -d "$(CLS_DIR)" ] || mkdir -p "$(CLS_DIR)"
+all: $(CLS_DIR)/$(LIBNAME)
 
 local-clean:
 	rm -vf $(CLS_DIR)/$(LIBNAME)*
@@ -57,6 +52,6 @@ local-release: $(CLS_DIR)/$(LIBNAME)
 
 $(CLS_DIR)/$(LIBNAME): $(CLS_DIR)/$(LIBNAME).sym
 
-$(CLS_DIR)/$(LIBNAME).db: $(LIBRARY_OBJS) $(CLS_OBJS)
+$(CLS_DIR)/$(LIBNAME).db: $(LIBRARY_OBJS) $(SBP2_OBJS)
 	@$(ECHO) $(COLOR_BOLD)">> " $(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)

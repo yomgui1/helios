@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -20,7 +20,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef  CLIB_AVC1394_PROTOS_H
 #define  CLIB_AVC1394_PROTOS_H
 
-/* 
+/*
 **
 ** AVC1394 C prototypes.
 **

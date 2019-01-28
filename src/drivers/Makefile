@@ -16,13 +16,14 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ##
 
+PRJROOT := ../..
+
 # Declare here all projects directories
-PRJROOT := $(shell (cd ../..; pwd))
-SUBDIRS := dummy sbp2
+SUBDIRS := sbp2
 
 include $(PRJROOT)/common.mk
 

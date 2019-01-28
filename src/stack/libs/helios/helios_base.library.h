@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,35 +17,48 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** Helios Library structure header file.
+**
 */
 
 #ifndef HELIOS_BASE_LIBRARY_H
 #define HELIOS_BASE_LIBRARY_H
 
-#include "private.h"
-
+#include <exec/types.h>
+#include <exec/tasks.h>
+#include <exec/ports.h>
+#include <exec/memory.h>
+#include <exec/lists.h>
+#include <exec/semaphores.h>
+#include <exec/execbase.h>
+#include <exec/alerts.h>
 #include <exec/libraries.h>
+#include <exec/interrupts.h>
+#include <exec/resident.h>
+#include <dos/dos.h>
 #include <devices/timer.h>
+
+#include <proto/exec.h>
+#include <proto/utility.h>
+
 #include <clib/debug_protos.h>
+
+#include "helios_internals.h"
 
 struct HeliosBase
 {
-	struct Library			hb_Lib;
-	BPTR					hb_SegList;
+	struct Library	        hb_Lib;
+	BPTR                    hb_SegList;
 
-	LOCK_PROTO;
-
-	APTR					hb_MemPool;
-	struct timerequest		hb_TimeReq;
-	ULONG					hb_HwCount;
-	HeliosEventListenerList	hb_Listeners;
-	
-	LOCKED_MINLIST_PROTO(hb_Hardwares);
-	LOCKED_MINLIST_PROTO(hb_Classes);
+    LOCK_VARIABLE;
+    struct timerequest      hb_TimeReq;
+    APTR                    hb_MemPool;
+    HeliosEventListenerList hb_Listeners;
+    struct MinList          hb_Hardwares;
+    struct MinList          hb_Classes;
+    struct MinList          hb_ReportList;
 };
 
 extern struct HeliosBase *HeliosBase;

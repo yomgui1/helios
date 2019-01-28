@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,7 +17,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* 
+/*
 **
 ** Public Helios OHCI 1394 device header.
 **
@@ -28,7 +28,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <devices/helios.h>
 
-/* Possible values for HHA_DriverVersion query tag*/
+/* Possible values for tags HHA_DriverVersion */
 #define OHCI1394_VERSION_1_0    0x00010000
 #define OHCI1394_VERSION_1_1    0x00010010
 

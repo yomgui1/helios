@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,29 +17,25 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2013 by Guillaume ROGUEZ.
+/*
 **
-** class functions table definition file.
+** Header file for topology API
+**
+** Follow the "1394 Open Host Controller Interface Specifications",
+** Release 1.1, Junary 6, 2000.
+**
 */
 
-#include "private.h"
-#include "proto/heliosclsbase.h"
+#ifndef OHCI1394_TOPO_H
+#define OHCI1394_TOPO_H
 
-ULONG libFuncTable[]=
-{
-	FUNCARRAY_BEGIN,
+#include "ohci1394core.h"
 
-	FUNCARRAY_32BIT_NATIVE,
-	(ULONG) LIB_OPEN_FNAME,
-	(ULONG) LIB_CLOSE_FNAME,
-	(ULONG) LIB_EXPUNGE_FNAME,
-	(ULONG) RESERVED_FNAME,
-	-1,
+#include <exec/nodes.h>
 
-	FUNCARRAY_32BIT_SYSTEMV,
-	(ULONG) &HeliosClass_DoMethodA,
-	-1,
+extern void ohci_FreeTopology(OHCI1394Unit *unit);
+extern void ohci_ResetTopology(OHCI1394Unit *unit);
+extern void ohci_InvalidTopology(OHCI1394Unit *unit);
+extern BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid);
 
-	FUNCARRAY_END
-};
+#endif /* OHCI1394_TOPO_H */

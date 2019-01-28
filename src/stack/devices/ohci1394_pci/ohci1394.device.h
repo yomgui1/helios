@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,10 +17,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** Private Helios OHCI 1394 device header.
+**
 */
 
 #ifndef OHCI1394_DEVICE_H
@@ -36,42 +36,32 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <devices/timer.h>
 
 #ifndef DEVNAME
-#   define DEVNAME			"ohci1394_pci.device"
+#   define DEVNAME          "ohci1394_pci.device"
 #endif
 #ifndef VERSION
-#   define VERSION			0
+#   define VERSION          50
 #endif
 #ifndef REVISION
-#   define REVISION			0
+#   define REVISION         0
 #endif
 #ifndef VERSION_STR
-#   define VERSION_STR		"0"
+#   define VERSION_STR      "50"
 #endif
 #ifndef REVISION_STR
-#   define REVISION_STR		"0"
+#   define REVISION_STR     "0"
 #endif
 #ifndef DATE
-#   define DATE				__DATE__
-#endif
-#ifndef AUTHOR
-#   define AUTHOR			"Guillaume ROGUEZ"
+#   define DATE             __DATE__
 #endif
 #ifndef COPYRIGHTS
-#   define COPYRIGHTS		"(C) "AUTHOR
+#   define COPYRIGHTS       "(C) Guillaume ROGUEZ"
 #endif
 
-#define VSTRING "$VER:"DEVNAME" "VERSION_STR"."REVISION_STR" ("DATE") "COPYRIGHTS
 
-#define CMDP(name) \
-	ULONG name ( \
-		struct IOStdReq *ioreq, \
-		struct OHCI1394Unit *unit, \
-		OHCI1394Device *base)
+/*----------------------------------------------------------------------------*/
+/*--- STRUCTURES SECTION -----------------------------------------------------*/
 
-/*============================================================================*/
-/*--- STRUCTURES -------------------------------------------------------------*/
-/*============================================================================*/
-
+//+ OHCI1394Device
 typedef struct OHCI1394Device
 {
     struct Library          hd_Library;       /* standard */
@@ -82,13 +72,16 @@ typedef struct OHCI1394Device
     ULONG                   hd_UnitCount;     /* Number of units found */
     struct MinList          hd_Units;         /* List of units */
 } OHCI1394Device;
+//-
 
 struct OHCI1394Unit; /* ohci1394core.h */
 
-/*============================================================================*/
-/*--- PROTOTYPES -------------------------------------------------------------*/
-/*============================================================================*/
+/*----------------------------------------------------------------------------*/
+/*--- PROTOTYPES SECTION -----------------------------------------------------*/
 
+#define CMDP(name) ULONG name (IOHeliosHWReq *ioreq, struct OHCI1394Unit *unit, OHCI1394Device *base)
+
+extern CMDP(cmdQueryDevice);
 extern CMDP(cmdReset);
 extern CMDP(cmdEnable);
 extern CMDP(cmdDisable);

@@ -1,0 +1,265 @@
+----> Comment accéder à un noeud 1394?
+
+- Le 1394 utilise un système d'adressage unique de 64-bit pour accèder à toutes données de
+n'importe quel noeud sur n'importe quel bus (soit 16 exbioctets adressables)
+- Les 16 bits de poid fort sont utilisés pour adresser les noeuds (NODE_ID), les 48 autres sont pour
+un noeud lui-même.
+- Dans les 16 bits, les 10 de poid fort sont pour identifier le bus (BUS_ID) auquel appartient
+un noeud donné et les 6 autres pour identifier le noeud dans ce bus (PHY_ID).
+
+=> NODE_ID = BUS_ID << 10 + PHY_ID
+
+- Une valeur de NODE_ID n'est affecté et valable qu'entre 2 énumérations complètes de bus.
+=> Donc cette valeur n'est pas constante dans le temps pour un noeud physique donné.
+
+- Chaque noeud possède un GUID de 64 bits l'identifiant de façon unique dans le temps.
+
+=> Attention, bien que le NODE_ID soit garanti par le système d'énumération d'être unique
+à un instant t, le GUID ne l'est pas forcement car ce dernier est marqué par le contructeur
+et il existe des devices avec des GUID faux ou bien dupliqué (ex. les Pegasos).
+=> Prévoir le cas!
+
+- Toutes les valeurs possible de NODE_ID ne référent pas toutes un noeud.
+Il existe des combinaisons ayant d'autres significations:
+ -> BUS_ID: 0x3ff = bus local, le bus du noeud où on se trouve.
+ -> PHY_ID: 0x3f = broadcast, le message est envoyé à tous les noeuds du bus donné par BUS_ID.
+=> il y a donc 1023 bus possibles, ayant chacun au maximum 63 noeuds: soit 64449 noeuds adressables.
+
+3) Mais comment ce comporter si on rajoute un bridge OHCI sur le PCI?
+
+- C'est le mode Beta?
+=> Le mode Beta n'est pas à supporter pour l'instant. Donc le BUS_ID fixé à 0x3ff à la couche application.
+Pas possible de traverser les bus!
+=> Mais ce laisser la possibilité au niveau bas.
+
+- Par contre que ce passe t'il quand une application souhaite proposer un service?
+=> elle inscrit son service sur un bus donné, pas tous les bus en même temp (pas de broadcast de service).
+
+=> cela implique aussi de gérer les ROM par bridges et non pas niveau système.
+
+
+----> Bus management
+
+-> Sur un bus donné, ce dernier peut voir ces caractéristiques contrôlées par un noeud donnée,
+dans ce cas se noeud est le "bus manager" (BM) ou le "isochronous resources manager" (IRM).
+Si aucun noeud BM ou IRM existe sur un bus, ce bus ne peut effectuer des transactions isochrones.
+Si aucun noeud BM existe mais un noeud IRM est présent, ce dernier effectura une partie des 
+opérations possibles d'un noeud BM.
+
+=> Dans le cas d'un système voulant être BM ou IRM, il faut donc une tâche dédiée à cette gestion.
+=> En plus de la bibliothèque il faut donc un programme BM/IRM.
+=> Les applications auront peut-être un besoin de communiquer avec ce programme, un port public lui sera-assigné.
+
+-> Idée design du SBM:
+=> faut savoir que les devices peuvent faire une partie du boulot du SBM, donc les devices font
+partis du SBM.
+1) Le SBM est une tâche qui vient discuter avec un device donné.
+2) Le SBM implémente les services décrits dans la norme IEEE1394.
+3) Un SBM doit s'enregister auprès du device, c'est une relation 1:1.
+4) Lors de l'enregistrement, le device pratique un RESET complet. Le SBM
+doit fournir les éléments suivant:
+ - Capacité: IRM/BM.
+5) Le SBM répond sur un port public aux messages suivants:
+ - RESET (reset le device)
+ - INIT (flush le device)
+ - LINK_ON (envoi vers un node donné d'un packet PHY LINK_ON)
+ - 
+
+----> Transactions
+
+- Sauf pour les transactions Lock, les autres transactions n'ont aucunes garantie d'atomicité,
+par contre les transactions asynchrones ont une garantie d'intégrité.
+
+=> même si cela peut-être bloqué du côté du contrôleur lui-même, rien n'empèche donc de lire une donnée
+qui va être changée par la suite, alors que cette demande d'écriture est faite avant celle de lecture
+(=> 'posted write').
+
+- Types de séquences possibles dans une transaction:
+
+Envoi -> Msg Ack -> Msg Réponse (la réponse peut-être recue avant, la pile force le msg ack)
+Envoi -> Msg Ack (cas du broadcast)
+
+- Cas du service requêtes externes:
+-> ces requêtes sont des sous-actions 1394 d'une transaction initiée par un noeud externe,
+une application peut souhaiter répondre à ces transactions.
+=> Ces requètes arrivent par packets depuis les ISR. Vu que c'est paquets sont stockés
+dans une FIFO en mémoire (OHCI) il faut se dép
+
+- Il se peut que le chipset hardware gère de façon autonome une partie des requètes vers le noeuds local.
+Les applications peuvent elles aussi vouloir répondre sur certaines parties adressable.
+-> Il ne faut pas de conflis (i.e. une app voulant gérer le CSR BANDWIDTH_AVAILABLE sur un chipset OHCI).
+=> Il faut une couche soft d'enregistrement des handlers suivant les zones adressées.
+
+- Petit problème avec les packets sur les contexts AR-resp: quand un packet de réponse
+arrive sur cette DMA, une interruption est levée, le packet est lu est décodé par la
+transaction layer du device driver qui se doit retrouver la requête ayant générée cette réponse.
+Mais les données dans le buffer DMA doivent y être utilisé au plus vite, pour d'une part ne pas
+surcharger le buffer DMA et d'autre part passer au packet suivant.
+Dans cette config il faut alors recopier les données vers par exemple un buffer alloué
+par l'application. Ainsi l'application à tout son temps pour l'analyser sans déranger
+le reste du système.
+Mais cela prend du temps de recopier des données! Mais cela est encore utile
+pour dans le cas des réponses.
+Par contre maintenant si on suit le même principe pour la réception de requête,
+si les données sont recopiée pour être rejetée par la suite par l'application (rcode=error).
+On pert beaucoup de temps dans cette copie, surtout si l'applie detecte le pb par une simple lecture.
+Mais si on fait un système de callbacks, où l'appli peut lire "in-situ" dans le buffer DMA
+les données et envoyer une réponse immédiate, alors une mauvaise application qui plante bloquera
+tout le processus de gestion de ce context! Plus aucuns packets sur ce context ne pourra être traité.
+
+=> ??? quoi faire???
+
+a) déport (toujours copier) = sécurité, pas lié au code des applications.
+b) gestion in-situ = vitesse mais exécution de code app dans le process DMA.
+
+=> Une solution possible:
+ -> cas b)(vitesse) mais la tâche de décodage des pakets est tuable et remplacable.
+ -> mais cela n'est pas encore 100% sécurisé, le code app est toujours exécuté.
+
+Bon mais j'y pense: les packets arrivant sur ce context ne sont pas gros (pas de block req),
+car c'est forcement hors zone physique (donc genre CSR), et cette zone n'accepte généralement
+pas ce types de transactions. On peut même pousser l'optimisation à ce que le tâche traitant
+les packets traite le champ TCode avec une carte des TCode possible donnée par l'application.
+=> dans ce cas une recopie du packet est possible.
+
+- Envoi d'un packet raw (procédure):
+-> Garder en mémoire les règles suivantes:
+    a) le moins d'accés mémoires possibles.
+    b) le moins de traitements possibles.
+    c) ne pas toucher aux données venant de l'utilisateur.
+=> faut que cela aille vite!
+
+-> c'est un packet raw, donc on considère que ce packet est remplis
+de façon correcte, au pire le packet sera rejeté par le hard.
+-> mais il y a des fields qui DOIVENT être gérés par la stack, car
+ils doivent pas géner des packets 'classique'.
+Il y qu'un champ qui ne peut être donné:
+    -> TLabel, vu qu'il doit être unique! (Tout TCode sauf PHY et STREAM).
+-> Quoi qu'il arrive en amont de la programmation des DMA et vu comment je gère
+ces programmes, il faudra toujours recopier les quadlets headers du packet dans
+un descripteur (un *-immediate). Donc déjà 1 copie.
+-> Vu que le champ (si il existe) TLabel devra forcement être modifié,
+et vu la règle c), ce TLabel sera écrit dans le descripteur uniquement.
+Ensuite lorsque la reception du ack le descripteur est rendu, il faut sauver
+ce TLabel pour pouvoir le comparer lors de la reception du packet de réponse (si il y a lieu).
+
+- Tout envoi de paquet n'est pas forcement une transaction.
+=> paquet réponse à une requête = c'est une sous-action, dans une transaction initiée ailleurs.
+Pas de tlabel, et juste ack.
+
+----> Broadcast
+
+-> Un packet broadcast asynchrone est forcement une écriture.
+-> Un packet broadcast ne recoit pas de "ack", l'OHCI force donc le HW à
+générer cet événement quand un packet broadcast est transmit (ouf!).
+
+----> Device commandes
+
+- Envoi RAW packet (raw = au format du device)
+
+-> structure ioreq?
+    => données brutes et longeur en octet.
+    => transaction complete (requête => réservation d'un tlabel, ack et réponse possible) ou juste ack (paquets réponse, PHY, stream).
+        => attention à ne pas modifier le packet utilisateur avec ce tlabel.
+    => vu qu'il faut recopier le payload venant des packets du context AR, mettre un champ response+length.
+
+- Envoi Helios packet (tous les données packet ieee, sauf CRC, découpées en champs dans une structures, voir tagitem).
+
+
+----> Mémoire
+
+** AT request DMA **
+- Les buffers DMA de ce context ne font pas plus de 3 descriptors, ils sont donc limité en taille.
+- Sauf les packets PHY, tous les packets de requête sont parfaitement identifiés de façon unique
+avec les valeurs de SourceID, DestID et TLabel.
+Sachant que la valeur SourceID est fixée dans une génération donnée (si bus reset, la DMA est flushée),
+reste 2^22 (16+6) requêtes possibles, soit beaucoup trop pour un buffer DMA contenant tout.
+Il faut dont le limiter, 2 solutions:
+
+1) un grand buffer prédéfini, pré-remplis où prendre les buffers à la volé
+=> beaucoup d'opérations de gestion doivent être faite en interne.
+2) alloué les buffers au besoin
+=> l'overhead est limité à l'algorithme d'allocation mémoire du système.
+
+Sachant que le 1) permet de pré-remplir les descripteurs, et comme la mémoire du 2) est
+le grand buffer du 1)... la solution 1) est retenue.
+
+
+----> Structure
+
+** Programmes **
+
+== bridge manager ==
+-> Initialise le noeud du bridge et gère la ROM associées.
+-> Propose des services bus: lancement de BM ou IRM, stock de la topologie et reset du bus.
+-> il transfert les messages de status du bus aux applications.
+
+** Bibliothèques **
+
+== helios.library ==
+-> Taskless
+-> Propose une API au niveau application:
+
+- Connaitre les bus disponibles.
+- Pouvoir effectuer des commandes au niveau bus.
+- Connaitre la topologie d'un bus donné (noeuds).
+- Manipuler la ROM du noeud sur d'un bridge.
+- Pouvoir envoyer des requêtes vers un NODE_ID donné (BUS_ID fixé à 0x3ff).
+- Pouvoir recevoir des requêtes et y répondre.
+- Intermédiaire aux services supplémentaires de l'implémentation 1394 (OHCI => filtrage des noeuds).
+
+== helios_hw.library ==
+-> Propose une API d'interface entre l'API d'application et le HW:
+
+- Stock et gére la liste des bridges disponibles.
+- Savoir quels sont les bridges (donc les bus) sur le système.
+- Permet à un bridge de s'enregister.
+- Manipulation des packets au format 1394.
+- Création et manipulation ROM.
+- Création et manipulation de topologie.
+- Création de tâches et IPC.
+- Interface pour les services.
+
+== ohci1394_pci.device ==
+-> Implémente l'interface logiciel entre un chipset OHCI1394 sur bus PCI.
+-> Utilisé par le programme "Bridge manager".
+-> Implémente la couche de transaction 1394.
+
+- Met en place l'ISR et tâches de gestions des DMA (A/I).
+- S'enregistre avec l' "helios_hw.library".
+- Propose l'écriture de ROM au bridge manager.
+- Construit une topologie du bus à chaque bus reset et l'envoi au bridge manager.
+- gère les requêtes sur les régions CSR.
+
+
+----> Utilisation
+
+Le système commence par exécuter autant de "bridge manager" que besoin, en leur donnant
+quel device/id doit être géré. Ce dernier ouvre le device/id donné et donne les caractèristiques
+de ROM par défauts. Il peut au besoin lancer une tâche BM ou IRM sur le bus.
+Puis il enregistre le bus créé après de l'"helios_app.library".
+Si il n'y a pas de tâche BM ou IRM, il fini par la demande d'un bus_reset et attend les messages du device,
+ou des applications.
+
+
+----> Mapping erreurs sur les IO
+
+- Lors de l'envois d'un packet:
+ -> plus de TLabel     => IOERR_UNITBUSY
+ -> plus de Buffer DMA => IOERR_UNITBUSY
+ -> Erreur de generation => HHIOERR_FAILED + Actual = HELIOS_ACK_GENERATION
+ -> Packet malformé => HHIOERR_FAILED + Actual = HELIOS_ACK_TYPE_ERROR
+ -> Packet envoyé + erreur ack => HHIOERR_FAILED + Actual = <ack code>
+ -> Packet annulé => HHIOERR_FAILED + Actual = HELIOS_ACK_CANCELLED
+ -> Packet envoyé + réponse => HHIOERR_NO_ERROR + Actual = HELIOS_ACK_COMPLETE
+
+
+----> Statégie
+
+- Devices:
+ -> La stack linux génère des structures de devices uniques tant que ce dernier existe.
+Mais elles est partagée entre les applications: chacune vois la même structure.
+Le gain en consommation mémoire est important mais le risque qu'une application
+corrompant les données cassent les autres est fort.
+ -> J'aimerai choisir de mettre une structure device par requérant: cela implique que
+c'est à ces derniers de demander la mise à jour et non plus d'être avertis.

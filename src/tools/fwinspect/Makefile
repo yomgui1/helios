@@ -16,14 +16,13 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## Makefile for building FWInspect tool for Helios.
 ##
 ##
 
-PRJROOT := $(shell (cd ../../..; pwd))
-
+PRJROOT  := ../..
 ALL_SRCS := main.c
 
 include $(PRJROOT)/common.mk

@@ -16,13 +16,13 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## Makefile for building all Helios stuff.
 ##
 ##
 
-PRJROOT := $(shell (cd .; pwd))
+PRJROOT := .
 SUBDIRS := src
 
 include $(PRJROOT)/common.mk

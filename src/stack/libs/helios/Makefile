@@ -16,39 +16,25 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## $Id$
+##
 ##
 ## Makefile for building the Helios library.
 ##
 ##
 
-PRJROOT := $(shell (cd ../../../..; pwd))
+PRJROOT  	:= ../../../..
 
 LIBNAME  	:= helios.library
-VERSION  	:= 53
+VERSION  	:= 52
 REVISION 	:= 0
 
-HELIOS_SRCS := $(PRJROOT)/src/common/utils.c \
-	misc.c \
-	rom.c \
-	topology.c \
-	objects.c \
-	hardwares.c \
-	devices.c \
-	classes.c \
-	units.c
+HELIOS_SRCS := $(PRJROOT)/src/common/utils.c misc.c rom.c objects.c classes.c
 HELIOS_OBJS := $(HELIOS_SRCS:.c=.o)
 
 LIBRARY_SRCS := helios.library.c helios_functable.library.c
 LIBRARY_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(LIBRARY_SRCS)))
 
 ALL_SRCS	:= $(LIBRARY_SRCS) $(HELIOS_SRCS)
-
-SDK_NEEDED_FILES = \
-	$(PRJROOT)/include/fd/helios_lib.fd \
-	$(PRJROOT)/include/fd/heliosclsbase_lib.fd \
-	$(PRJROOT)/include/clib/helios_protos.h \
-	$(PRJROOT)/include/clib/heliosclsbase_protos.h
 
 GEN_INCLUDES = \
 	$(PRJROOT)/include/proto/helios.h \
@@ -61,7 +47,10 @@ GEN_INCLUDES = \
 GLUELIB = $(PRJROOT)/lib/libhelios.a
 
 SDK_INC_FILES := \
-	$(SDK_NEEDED_FILES) \
+	$(PRJROOT)/include/fd/helios_lib.fd \
+	$(PRJROOT)/include/fd/heliosclsbase_lib.fd \
+	$(PRJROOT)/include/clib/helios_protos.h \
+	$(PRJROOT)/include/clib/heliosclsbase_protos.h \
 	$(PRJROOT)/include/libraries/helios.h \
 	$(GEN_INCLUDES)
 
@@ -69,12 +58,9 @@ include $(PRJROOT)/common.mk
 
 DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"HELIOS"'
 
-.PHONY: dirs sdk install
+.PHONY: sdk
 
-all: dirs $(LIBS_DIR)/$(LIBNAME)
-
-dirs:
-	[ -d "$(PRJROOT)/libs" ] || mkdir -p "$(PRJROOT)/libs"
+all: $(LIBS_DIR)/$(LIBNAME) sdk
 
 local-clean:
 	rm -vf $(LIBS_DIR)/$(LIBNAME)* $(GLUELIB) $(GEN_INCLUDES)
@@ -87,28 +73,18 @@ local-release: $(LIBS_DIR)/$(LIBNAME) sdk
 	for file in $(subst $(PRJROOT)/,,$(SDK_INC_FILES)); do \
 		$(CP) $(PRJROOT)/$$file $(RELARC_DIR)/SDK/$$file; done
 
-install: $(LIBS_DIR)/$(LIBNAME)
-	$(CP) $(LIBS_DIR)/$(LIBNAME) /LIBS/
-	-FlushLib $(LIBNAME)
-	
-uninstall:
-	@$(ECHO) $(COLOR_BOLD)">> " $(COLOR_HIGHLIGHT1)"Removing LIBS:$(LIBNAME)"$(COLOR_NORMAL)
-	-Delete LIBS:$(LIBNAME)
-	-FlushLib $(LIBNAME)
-
 $(LIBS_DIR)/$(LIBNAME): $(LIBS_DIR)/$(LIBNAME).sym
 
 $(LIBS_DIR)/$(LIBNAME).db: $(LIBRARY_OBJS) $(HELIOS_OBJS)
-	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
+	@$(ECHO) $(COLOR_BOLD)">> " $(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
-$(GEN_INCLUDES:$(PRJROOT)/include/%=%): sdk
+sdk: $(GEN_INCLUDES) $(GLUELIB)
 
-sdk: $(SDK_NEEDED_FILES)
+$(GEN_INCLUDES): \
+		$(PRJROOT)/include/fd/helios_lib.fd $(PRJROOT)/include/clib/helios_protos.h \
+		$(PRJROOT)/include/fd/heliosclsbase_lib.fd $(PRJROOT)/include/clib/heliosclsbase_protos.h
 	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"Making includes..."$(COLOR_NORMAL)
-	[ -d "$(PRJROOT)/include/proto" ] || mkdir -p "$(PRJROOT)/include/proto"
-	[ -d "$(PRJROOT)/include/inline" ] || mkdir -p "$(PRJROOT)/include/inline"
-	[ -d "$(PRJROOT)/include/ppcinline" ] || mkdir -p "$(PRJROOT)/include/ppcinline"
 	$(CVINCLUDE) -q --fd $(PRJROOT)/include/fd/helios_lib.fd \
 				 --clib $(PRJROOT)/include/clib/helios_protos.h \
 				 --proto $(PRJROOT)/include/proto/helios.h \
@@ -119,8 +95,9 @@ sdk: $(SDK_NEEDED_FILES)
 				 --proto $(PRJROOT)/include/proto/heliosclsbase.h \
 				 --inlines $(PRJROOT)/include/ppcinline/heliosclsbase.h \
 				 --vbccinline $(PRJROOT)/include/inline/heliosclsbase.h
+
+$(GLUELIB): $(PRJROOT)/include/fd/helios_lib.fd $(PRJROOT)/include/clib/helios_protos.h
 	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"Making library stubs..."$(COLOR_NORMAL)
-	[ -d "$(PRJROOT)/lib" ] || mkdir -p "$(PRJROOT)/lib"
 	$(CVINCLUDE) -q --fd $(PRJROOT)/include/fd/helios_lib.fd \
 				 --clib $(PRJROOT)/include/clib/helios_protos.h \
 				 --gluelib $(PRJROOT)/lib/libhelios.a

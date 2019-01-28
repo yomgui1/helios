@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,10 +17,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2013 by Guillaume ROGUEZ.
+/*
 **
 ** SBP2 Class header file.
+**
 */
 
 #ifndef SPB2_CLASS_H
@@ -48,22 +48,21 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include "private.h"
 
 #define VSTRING LIBNAME" "VR_ST" ("DATE") "COPYRIGHTS"\r\n"
-#define VERS    LIBNAME" "VR_ST
-#define VERSTAG "\0$VER: "LIBNAME"  "VR_ST" ("DATE") "COPYRIGHTS
 
 struct SBP2ClassLib
 {
-	struct Library			hc_Lib;
-	BPTR					hc_SegList;
-
-	APTR					hc_MemPool;
-	struct ExecBase *		hc_SysBase;
-	struct DosLibrary *		hc_DOSBase;
-	struct Library *		hc_UtilityBase;
-	struct Library *		hc_QueryBase;
-	struct Library *		hc_HeliosBase;
-	HeliosClass *			hc_HeliosClass;
-	struct SBP2Device *		hc_DevBase;
+	struct Library      hc_Lib;
+	BPTR                hc_SegList;
+    LOCK_VARIABLE;
+    APTR                hc_MemPool;
+    struct ExecBase *   hc_SysBase;
+    struct DosLibrary * hc_DOSBase;
+    struct Library *    hc_UtilityBase;
+    struct Library *    hc_HeliosBase;
+    SBP2Device *        hc_DevBase;
+    struct HeliosClass *hc_HeliosClass;
+    struct MinList      hc_Units;
+    ULONG               hc_MaxUnitNo;
 };
 
 #endif /* SPB2_CLASS_H */

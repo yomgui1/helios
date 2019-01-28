@@ -16,13 +16,13 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-## 
+##
 ##
 ## Makefile for building the Helios MUI Preference library.
 ##
 ##
 
-PRJROOT := $(shell (cd ../../..; pwd))
+PRJROOT  	:= ../../..
 
 LIBNAME  	:= helios.mprefs
 VERSION  	:= 50

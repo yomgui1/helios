@@ -16,7 +16,7 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-INCDIRS = . ../../include
+INCDIRS = . ../../include /usr/local/include/ffmpeg
 LIBS_DIR = ../../lib
 
 CC = ppc-morphos-gcc
@@ -33,11 +33,10 @@ endif
 
 CFLAGS = -noixemul -g -Wl,--traditional-format
 CPPFLAGS = $(CFLAGS) $(OPT) $(CCWARNS) $(INCDIRS:%=-I%) $(DEFINES:%=-D%)
-LIBS = -L$(LIBS_DIR) -lhelios -lauto
+LIBS = -L$(LIBS_DIR) -lhelios -ldebug -lsyscall -lauto
 
-PROGRAMS = FWDevLister FWBusReset FWRead FWAddClass FWRemoveAllClasses
-_PROGRAMS = SCSICmd6 \
-	FWReset FWSendPhy SimpleReportMsgClient
+PROGRAMS = FWDumpDevices FWBusReset SCSICmd6 \
+	FWReset FWSendPhy SimpleReportMsgClient FWReadRom
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -47,7 +46,7 @@ _PROGRAMS = SCSICmd6 \
 
 all: $(PROGRAMS)
 
-%: %.c
+$(PROGRAMS):
 	$(CC) $(CPPFLAGS) $@.c -o $@ $(LIBS)
 
 clean:

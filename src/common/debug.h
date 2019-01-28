@@ -1,4 +1,4 @@
-/* Copyright 2008-2013, 2018 Guillaume Roguez
+/* Copyright 2008-2013,2019 Guillaume Roguez
 
 This file is part of Helios.
 
@@ -17,10 +17,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* $Id$
-** This file is copyrights 2008-2012 by Guillaume ROGUEZ.
+/*
 **
 ** Header file for loggin facilities.
+**
 */
 
 #ifndef DEBUG_H
@@ -36,14 +36,10 @@ extern void vdprintf();
 
 #ifndef NDEBUG
 
-#define XDBFN(_h, _f, _a...) dprintf(_h "%6s:%4lu:%-30s: " _f,DBNAME,__LINE__,__FUNCTION__,##_a)
+#define XDBFN(h, x, a...) dprintf(h"["DBNAME"-%-28s:%4lu] "x,__FUNCTION__,__LINE__ ,##a)
 
 #define DB(x, a...) dprintf("OHCI1394: "x , ##a)
-#ifndef NIRQDEBUG
-	#define IRQDB(x, a...) dprintf("{IRQ} "x , ##a)
-#else
-	#define IRQDB(x, a...)
-#endif
+#define IRQDB(x, a...) dprintf("{IRQ} "x , ##a)
 #define DB_Raw(x, a...) dprintf(x , ## a)
 #define DB_NotImplemented() DB("%s: %s() not implemented\n",__FILE__,__FUNCTION__)
 #define DB_NotFinished() DB("%s: %s() not finished\n",__FILE__,__FUNCTION__)
@@ -68,32 +64,29 @@ extern void vdprintf();
 #error "DBNAME shall be defined before including debug.h file."
 #endif
 
-#define _ERR(_fmt, _a...) XDBFN("[E]", _fmt, ##_a)
-#define _WRN(_fmt, _a...) XDBFN("[W]", _fmt, ##_a)
-#define _INF(_fmt, _a...) XDBFN("[I]", _fmt, ##_a)
-#define _DBG(_fmt, _a...) XDBFN("[D]", _fmt, ##_a)
+#define _ERR(fmt, args...)  XDBFN("[ERR]",fmt ,##args)
+#define _WARN(fmt, args...) XDBFN("[WRN]",fmt ,##args)
+#define _INFO(fmt, args...) XDBFN("[INF]",fmt ,##args)
 
-#ifdef DEBUG_SYSTEM_LIBRARY
-#define DH_LIB "<lib> "
-#define DH_DEV "<dev> "
-
-#define _ERR_LIB(_fmt, _a...) _ERR(DH_LIB _fmt, ##_a)
-#define _WRN_LIB(_fmt, _a...) _WRN(DH_LIB _fmt, ##_a)
-#define _INF_LIB(_fmt, _a...) _INF(DH_LIB _fmt, ##_a)
-#define _DBG_LIB(_fmt, _a...) _DBG(DH_LIB _fmt, ##_a)
-
-#define _ERR_DEV(_fmt, _a...) _ERR(DH_DEV _fmt, ##_a)
-#define _WRN_DEV(_fmt, _a...) _WRN(DH_DEV _fmt, ##_a)
-#define _INF_DEV(_fmt, _a...) _INF(DH_DEV _fmt, ##_a)
-#define _DBG_DEV(_fmt, _a...) _DBG(DH_DEV _fmt, ##_a)
-#endif
+#ifndef NDEBUG
+#   ifdef DEBUG_1394
+#       define _INFO_1394 _INFO
+#       define _ERR_1394 _ERR
+#   else
+#       define _INFO_1394(x,a...)
+#       define _ERR_1394(x,a...)
+#   endif /* DEBUG_1394 */
+#else
+#   define _INFO_1394(x,a...)
+#   define _ERR_1394(x,a...)
+#endif /* !NDEBUG */
 
 #define log_APIError(m) _log_APIError(__FUNCTION__, m)
 static inline void _log_APIError(CONST_STRPTR fname, CONST_STRPTR msg)
 {
     DB("  Function '%s' failed: \"%s\"\n", fname, msg);
 }
-#define log_Error(m, a...) dprintf(DBNAME"-Error: "m"\n" ,##a)
+#define log_Error(m, a...) dprintf("OHCI1394-Error: "m"\n" ,##a)
 
 #ifdef DEBUG_MEM
 #include <hardware/byteswap.h>

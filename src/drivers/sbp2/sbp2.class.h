@@ -18,7 +18,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-** This file is copyrights 2008-2013 by Guillaume ROGUEZ.
 **
 ** SBP2 Class header file.
 */

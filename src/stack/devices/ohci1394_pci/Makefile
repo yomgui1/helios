@@ -17,7 +17,6 @@
 ##
 
 ##
-## This file is copyrights 2008-2012 by Guillaume ROGUEZ.
 ##
 ## Makefile for building the ohci1394 Helios device.
 ##

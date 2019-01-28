@@ -18,12 +18,12 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** SBP2 class core API.
 */
 
 /* Define it when SCSI data address shall be 4-bytes aligned */
 //#define ERROR_ON_BAD_ALIGNMENT
+
 #define DEBUG_MEM
 
 #include "sbp2.class.h"
@@ -199,7 +199,7 @@ static void dump_agent_state(SBP2Unit *unit)
 			case 3: s="DEAD"; break;
 			default: s="<unknown state>"; break;
 		}
-		
+
 		_INFO_1394("DEV[$%p] AGENT_STATE=$%08x (%s)\n", unit, status, s);
 	}
 	else
@@ -219,10 +219,10 @@ static struct timerequest *sbp2_add_timereq(SBP2Unit *unit, ULONG timeout)
 	if (NULL != tr)
 	{
 		CopyMem(unit->u_IOTimeReq, tr, sizeof(*tr));
-		
+
 		tr->tr_time.tv_secs = timeout / 1000;
 		tr->tr_time.tv_micro = (timeout % 1000) * 1000;
-		
+
 		SendIO(&tr->tr_node);
 	}
 
@@ -599,6 +599,7 @@ static void sbp2_handle_removable(SBP2Unit *unit)
 	if (ready_changed)
 		sbp2_on_medium_changed(unit);
 }
+
 static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 {
 	HeliosDevice *dev = unit->u_HeliosDevice;
@@ -616,7 +617,7 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 	STRPTR task_name;
 
 	INIT_LOCKED_LIST(unit->u_PendingORBs);
-	
+
 	unit->u_SysUnit.unit_OpenCnt = 0;
 	unit->u_SysUnit.unit_MsgPort.mp_Flags = PA_IGNORE;
 	unit->u_SysUnit.unit_MsgPort.mp_SigTask = NULL;
@@ -638,7 +639,7 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 		char buf[60];
 
 		unit->u_AutoReconnect = 0;
-		
+
 		if ((GetVar("helios_autoreconnect", buf, sizeof(buf), 0) > 0) &&
 			(StrToLong(buf, &value) > 0))
 			unit->u_AutoReconnect = value;
@@ -710,7 +711,7 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 					HA_Hardware, (ULONG)&unit->u_HeliosHW, /* NR */
 					HA_EventListenerList, (ULONG)&dev_ell,
 					TAG_DONE);
-	
+
 	/* Something wrong with the device ? */
 	if ((gen != unit->u_Generation) || (NULL == unit->u_HeliosHW) || (NULL == dev_ell))
 		goto release_unit;
@@ -867,7 +868,7 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 			if (run & update)
 				sbp2_update(unit);
 		}
-		
+
 		/* Device IO requests */
 		if (run && ((sigs & ioreq_signal) || (unit->u_Flags.ProcessIO)))
 		{
@@ -1058,6 +1059,7 @@ release_unit:
 	Permit();
 }
 #endif
+
 static void
 sbp2_read_ascii_field(STRPTR in, STRPTR out, ULONG len)
 {
@@ -1077,6 +1079,7 @@ sbp2_read_ascii_field(STRPTR in, STRPTR out, ULONG len)
 	}
 	out[len-1] = '\0';
 }
+
 static LONG
 sbp2_do_read_quadlet(SBP2Unit *unit,
 	HeliosOffset offset,
@@ -1102,6 +1105,7 @@ sbp2_do_read_quadlet(SBP2Unit *unit,
 		*buf = p->QuadletData;
 	return err;
 }
+
 static LONG
 sbp2_do_write_quadlet(SBP2Unit *unit,
 	HeliosOffset offset,
@@ -1123,6 +1127,7 @@ sbp2_do_write_quadlet(SBP2Unit *unit,
 	Helios_FillWriteQuadletPacket(p, speed, offset, value);
 	return Helios_DoIO(unit->u_HeliosHardware, (struct IORequest *)&ioreq);
 }
+
 static void
 sbp2_send_write_block(SBP2Unit *unit,
 	struct IOStdReq *ioreq,
@@ -1139,6 +1144,7 @@ sbp2_send_write_block(SBP2Unit *unit,
 	Helios_FillWriteBlockPacket(p, speed, offset, data, length);
 	Helios_SendIO(unit->u_HeliosHardware, (struct IORequest *)ioreq);
 }
+
 static void
 sbp2_send_orb_req(SBP2Unit *unit,
 	SBP2ORBRequest *orbreq,
@@ -1170,6 +1176,7 @@ sbp2_send_orb_req(SBP2Unit *unit,
 	}
 	UNLOCK_LIST(unit->u_PendingORBs);
 }
+
 static void
 sbp2_config_logical_unit(SBP2Unit *unit, QUADLET value)
 {
@@ -1179,6 +1186,7 @@ sbp2_config_logical_unit(SBP2Unit *unit, QUADLET value)
 	_INF_UNIT(unit, "=> Unit characteristics : Ordered=%s, DeviceType=$%02X, LUN=%u\n",
 		YESNO(unit->u_Flags.Ordered), unit->u_DeviceType, unit->u_LUN);
 }
+
 static void
 sbp2_scan_logical_unit_directory(SBP2Unit *unit, const QUADLET *dir)
 {
@@ -1192,6 +1200,7 @@ sbp2_scan_logical_unit_directory(SBP2Unit *unit, const QUADLET *dir)
 			sbp2_config_logical_unit(unit, value);
 	}
 }
+
 static LONG
 sbp2_wait(SBP2Unit *unit, ULONG signal, ULONG timeout)
 {
@@ -1234,6 +1243,7 @@ sbp2_wait(SBP2Unit *unit, ULONG signal, ULONG timeout)
 
 	return err;
 }
+
 static QUADLET
 sbp2_get_agent_state(SBP2Unit *unit)
 {
@@ -1243,6 +1253,7 @@ sbp2_get_agent_state(SBP2Unit *unit)
 		S100, &state);
 	return state;
 }
+
 static void
 sbp2_agent_reset(SBP2Unit *unit)
 {
@@ -1251,6 +1262,7 @@ sbp2_agent_reset(SBP2Unit *unit)
 		unit->u_ORBLoginResponse.command_agent + SBP2_AGENT_RESET,
 		S100, 0);
 }
+
 static BOOL
 sbp2_inquiry(SBP2Unit *unit)
 {
@@ -1285,7 +1297,7 @@ try_inquiry:
 	bzero(inquirydata, 256);
 	bzero(sensedata, sizeof(sensedata));
 	bzero(cmd6, 6);
-	
+
 	cmd6[0] = SCSI_INQUIRY;
 	cmd6[4] = inquiry_len;
 
@@ -1304,7 +1316,7 @@ try_inquiry:
 
 		break;
 	}
-	
+
 	if (!err)
 	{
 		/* Check if we can get more data */
@@ -1377,12 +1389,14 @@ out:
 	FreeVecDMA(inquirydata);
 	return ret;
 }
+
 static void
 sbp2_complete_managment_orb(SBP2Unit *unit, SBP2ORBRequest *orbreq, ORBStatus *status)
 {
 	if (status)
 		CopyMem(status, &orbreq->or_ORBStatus, sizeof(orbreq->or_ORBStatus));
 }
+
 static LONG
 sbp2_do_management_orb(SBP2Unit *unit, APTR orb)
 {
@@ -1394,7 +1408,7 @@ sbp2_do_management_orb(SBP2Unit *unit, APTR orb)
 	bzero(&orbreq, sizeof(orbreq));
 	orbreq.or_Base.io_Message.mn_Length = sizeof(orbreq);
 	orbreq.or_Base.io_Message.mn_ReplyPort = unit->u_OrbPort;
-	
+
 	/* Send the ORB request */
 	sbp2_send_orb_req(unit, &orbreq, orb, unit->u_MgtAgentBase,
 		sbp2_complete_managment_orb, status_signal);
@@ -1439,11 +1453,13 @@ out:
 	sbp2_cancel_orbs(unit);
 	return err;
 }
+
 static void
 sbp2_automount_task(SBP2Unit *unit)
 {
 	MountMountTags(unit->u_NotifyUnit, TAG_END);
 }
+
 static void
 sbp2_automount(SBP2Unit *unit)
 {
@@ -1459,6 +1475,7 @@ sbp2_automount(SBP2Unit *unit)
 	if (!proc)
 		_ERR_UNIT(unit, "Auto-mount task creation failed\n");
 }
+
 static LONG
 sbp2_do_start_unit(SBP2Unit *unit)
 {
@@ -1467,6 +1484,7 @@ sbp2_do_start_unit(SBP2Unit *unit)
 	ioreq.io_Command = CMD_START;
 	return sbp2_iocmd_start_stop(unit, &ioreq);
 }
+
 static void
 sbp2_get_capacity(SBP2Unit *unit)
 {
@@ -1539,6 +1557,7 @@ sbp2_get_capacity(SBP2Unit *unit)
 
 	return;
 }
+
 static void
 sbp2_send_dummy_orb(SBP2Unit *unit)
 {
@@ -1547,24 +1566,24 @@ sbp2_send_dummy_orb(SBP2Unit *unit)
 
 	orb.next.q = ORBPOINTER_NULL;
 	orb.control = ORBCONTROLF_NOTIFY | (3<<13);
-	
+
 	SBP2ORBRequest orbreq;
 	ZERO(orbreq);
-	
+
 	orbreq.or_Base.io_Message.mn_Length = sizeof(orbreq);
 	orbreq.or_Base.io_Message.mn_ReplyPort = unit->u_OrbPort;
-	
+
 	/* Send the ORB request */
 	ULONG status_signal = 1ul << unit->u_ORBStatusSigBit;
 	_DBG_UNIT(unit, "sending dummy ORB...\n");
 	sbp2_send_orb_req(unit, &orbreq, &orb,
 		unit->u_ORBLoginResponse.command_agent + SBP2_ORB_POINTER,
 		sbp2_complete_managment_orb, status_signal);
-	
+
 	/* Wait for 1394 transport */
 	ULONG orb_sig = 1ul << unit->u_OrbPort->mp_SigBit;
 	ULONG sigs = Wait(SIGBREAKF_CTRL_C | orb_sig);
-	
+
 	if (sigs & orb_sig)
 	{
 		GetMsg(unit->u_OrbPort);
@@ -1585,7 +1604,7 @@ sbp2_send_dummy_orb(SBP2Unit *unit)
 			goto out;
 		}
 
-		if (STATUS_GET_RESPONSE(orbreq.or_ORBStatus) || 
+		if (STATUS_GET_RESPONSE(orbreq.or_ORBStatus) ||
 			(STATUS_GET_SBP_STATUS(orbreq.or_ORBStatus) != 0 &&
 			 STATUS_GET_SBP_STATUS(orbreq.or_ORBStatus) != SBP2_REQ_ST_DUMMY_ORB_COMPLETED))
 		{
@@ -1598,6 +1617,7 @@ sbp2_send_dummy_orb(SBP2Unit *unit)
 out:
 	sbp2_cancel_orbs(unit);
 }
+
 static BOOL
 sbp2_login(SBP2Unit *unit)
 {
@@ -1642,7 +1662,7 @@ sbp2_login(SBP2Unit *unit)
 			_DBG_UNIT(unit, "LoginID       : $%X\n", unit->u_ORBLoginResponse.login_id);
 			_DBG_UNIT(unit, "CommandAgent  : $%016llX\n", unit->u_ORBLoginResponse.command_agent);
 			_DBG_UNIT(unit, "ReconnectHold : $%X\n", unit->u_ORBLoginResponse.reconnect_hold);
-			
+
 			/* Reset and activate the target command agent */
 			sbp2_agent_reset(unit);
 			sbp2_send_dummy_orb(unit);
@@ -1660,7 +1680,7 @@ sbp2_login(SBP2Unit *unit)
 				_DBG_UNIT(unit, "New BUSY_TIMEOUT=$%08x\n", value);
 			}
 #endif
-			
+
 			return TRUE;
 		}
 		else if (HERR_TIMEOUT != err)
@@ -1669,6 +1689,7 @@ sbp2_login(SBP2Unit *unit)
 
 	return FALSE;
 }
+
 static BOOL
 sbp2_update(SBP2Unit *unit)
 {
@@ -1718,7 +1739,7 @@ sbp2_update(SBP2Unit *unit)
 		_INF_UNIT(unit, "Gen=%u, NodeID=$%04x, MaxSpeed=%u, MaxPayload=%lu\n",
 			unit->u_Generation, unit->u_NodeID,
 			unit->u_MaxSpeed, 1ul << (unit->u_MaxPayload+2));
-		
+
 		if (unit->u_Flags.Logged)
 		{
 			_WRN_UNIT(unit, "Reconnect needed\n");
@@ -1781,12 +1802,14 @@ sbp2_update(SBP2Unit *unit)
 
 	return FALSE;
 }
+
 static void
 sbp2_freemem(APTR p, ULONG s, APTR udata)
 {
 	struct ExecBase *SysBase = udata;
 	FreeMem(p, s);
 }
+
 static HeliosResponse *
 sbp2_fifo_status_rh(HeliosPacket *request, APTR udata)
 {
@@ -1877,11 +1900,12 @@ sbp2_fifo_status_rh(HeliosPacket *request, APTR udata)
 
 	return response;
 }
+
 static LONG
 sbp2_alloc_fsreqh(SBP2Unit *unit)
 {
 	struct IOStdReq ioreq;
-	
+
 	unit->u_FifoStatusRH.hrh_RegionStart = HELIOS_HIGHMEM_START;
 	unit->u_FifoStatusRH.hrh_RegionStop = HELIOS_HIGHMEM_STOP;
 	unit->u_FifoStatusRH.hrh_Length = 0x100;
@@ -1896,11 +1920,12 @@ sbp2_alloc_fsreqh(SBP2Unit *unit)
 
 	return Helios_DoIO(unit->u_HeliosHardware, (struct IORequest *)&ioreq);
 }
+
 static void
 sbp2_dealloc_fsreqh(SBP2Unit *unit)
 {
 	struct IOStdReq ioreq;
-	
+
 	if (unit->u_FifoStatusRH.hrh_Start)
 	{
 		bzero(&ioreq, sizeof(struct IORequest));
@@ -1912,6 +1937,7 @@ sbp2_dealloc_fsreqh(SBP2Unit *unit)
 			_WRN_UNIT(unit, "Helios_DoIO() failed on FIFO status request removal\n");
 	}
 }
+
 static void
 sbp2_read_unit_name(SBP2Unit *unit, const QUADLET *dir)
 {
@@ -1938,6 +1964,7 @@ sbp2_read_unit_name(SBP2Unit *unit, const QUADLET *dir)
 	else
 		_ERR_UNIT(unit, "Helios_ReadTextualDescriptor() failed\n");
 }
+
 static void
 sbp2_getrominfo(SBP2Unit *unit, const QUADLET *dir)
 {
@@ -2018,11 +2045,13 @@ sbp2_getrominfo(SBP2Unit *unit, const QUADLET *dir)
 	/* clamp ORB management timeout to sane values (in milliseconds) */
 	unit->u_MgtTimeout = MIN(MAX(unit->u_MgtTimeout, 5000), 40000);
 }
+
 static void
 sbp2_free_unit(SBP2Unit *sbp2_unit)
 {
 	FreeMem(sbp2_unit, sizeof(*sbp2_unit));
 }
+
 static void
 sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 {
@@ -2051,7 +2080,7 @@ sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 	unit->u_Flags.WriteProtected = 1; /* TODO: Forced */
 	unit->u_Flags.AutoMountCD = 1;
 	unit->u_NodeID = ~0;
-	
+
 	INIT_LOCKED_LIST(unit->u_PendingORBs);
 
 	/* Parse the unit ROM directory block.
@@ -2067,7 +2096,7 @@ sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 		_ERR_UNIT(unit, "failed to obtain unit ROM directory\n");
 		goto release_unit;
 	}
-	
+
 	sbp2_getrominfo(unit, rom_dir);
 	FreeVec(rom_dir);
 
@@ -2094,11 +2123,11 @@ sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 		_ERR_UNIT(unit, "failed to obtain device's listener list\n");
 		goto release_hw;
 	}
-	
+
 	Helios_GetAttrs(unit->u_HeliosHardware,
 		HA_EventListenerList, (ULONG)&hw_ell,
 		TAG_DONE);
-		
+
 	if (!hw_ell)
 	{
 		_ERR_UNIT(unit, "failed to obtain hardware's listener list\n");
@@ -2122,7 +2151,7 @@ sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 		(-1 == unit->u_ORBStatusSigBit) ||
 		(-1 == io_sigbit))
 		goto dealloc_ressources;
-		
+
 	unit->u_IOTimeReq = Helios_OpenTimer(unit->u_TimerPort, UNIT_VBLANK);
 	if (NULL == unit->u_IOTimeReq)
 		goto dealloc_ressources;
@@ -2169,7 +2198,7 @@ sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 
 		if (sigs & SIGBREAKF_CTRL_C)
 			run = FALSE;
-			
+
 		/* Helios events */
 		if (sigs & (1ul << evt_port->mp_SigBit))
 		{
@@ -2224,7 +2253,7 @@ sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 				sbp2_update(unit);
 		}
 	}
-	
+
 forbid_io:
 	/* Forbid new IO requests */
 	EXCLUSIVE_PROTECT_BEGIN(unit);
@@ -2287,9 +2316,10 @@ release_unit:
 	Helios_ReleaseObject(unit->u_HeliosDevice);
 
 	sbp2_free_unit(unit);
-	
+
 	Helios_ReleaseObject(base->hc_HeliosClass);
 }
+
 static BOOL
 sbp2_scsi_setup(SBP2Unit *unit, SBP2SCSICmdReq *req)
 {
@@ -2359,7 +2389,7 @@ sbp2_scsi_setup(SBP2Unit *unit, SBP2SCSICmdReq *req)
 				remains -= len;
 				phy += len;
 			}
-			
+
 			/* Make sure that SG pages are in memory */
 			CacheFlushDataArea(req->sr_SGPages, sizeof(SBP2SGPage)*i);
 
@@ -2379,6 +2409,7 @@ sbp2_scsi_setup(SBP2Unit *unit, SBP2SCSICmdReq *req)
 	log_DumpMem(orb, sizeof(*orb), FALSE, "ORB dump:\n");
 	return TRUE;
 }
+
 static SBP2ORBRequest *
 sbp2_alloc_orb_req(SBP2Unit *unit, ULONG length)
 {
@@ -2395,11 +2426,13 @@ sbp2_alloc_orb_req(SBP2Unit *unit, ULONG length)
 
 	return orbreq;
 }
+
 static void
 sbp2_free_orb_req(SBP2Unit *unit, SBP2ORBRequest *orbreq)
 {
 	FreePooled(unit->u_Class->hc_MemPool, orbreq, orbreq->or_Base.io_Message.mn_Length);
 }
+
 static ULONG
 sbp2_sense_data_from_status(const UBYTE *status, UBYTE *sense_data)
 {
@@ -2423,6 +2456,7 @@ sbp2_sense_data_from_status(const UBYTE *status, UBYTE *sense_data)
 	/* SAM-2 status code */
 	return status[0] & 0x3f;
 }
+
 static void
 sbp2_complete_scsi_orb(SBP2Unit *unit, SBP2ORBRequest *orbreq, ORBStatus *status)
 {
@@ -2442,7 +2476,7 @@ sbp2_complete_scsi_orb(SBP2Unit *unit, SBP2ORBRequest *orbreq, ORBStatus *status
 			_WRN_UNIT(unit, "status says agent is dead\n");
 			_DBG_UNIT(unit, "agent state is %u\n", sbp2_get_agent_state(unit));
 		}
-		
+
 		switch (STATUS_GET_RESPONSE(*status))
 		{
 			case SBP2_STATUS_REQUEST_COMPLETE:
@@ -2473,12 +2507,12 @@ sbp2_complete_scsi_orb(SBP2Unit *unit, SBP2ORBRequest *orbreq, ORBStatus *status
 					}
 				}
 				break;
-				
+
 			case SBP2_STATUS_TRANSPORT_FAILURE:
 				_WRN_UNIT(unit, "SCSI: TRANSPORT_FAILURE\n");
 				scsi_status = HFERR_Phase;
 				break;
-				
+
 			case SBP2_STATUS_ILLEGAL_REQUEST:
 			case SBP2_STATUS_VENDOR_DEPENDENT:
 				_WRN_UNIT(unit, "SCSI: ILLEGAL_REQUEST/VENDOR_DEPENDENT (%u)\n",
@@ -2495,9 +2529,11 @@ sbp2_complete_scsi_orb(SBP2Unit *unit, SBP2ORBRequest *orbreq, ORBStatus *status
 
 	cmd->scsi_Status = scsi_status;
 }
+
 /*============================================================================*/
 /*--- PUBLIC CODE ------------------------------------------------------------*/
 /*============================================================================*/
+
 void
 sbp2_cancel_orbs(SBP2Unit *unit)
 {
@@ -2516,7 +2552,7 @@ sbp2_cancel_orbs(SBP2Unit *unit)
 				AbortIO((struct IORequest *)&req->or_Base);
 				WaitIO((struct IORequest *)&req->or_Base);
 			}
-			
+
 			req->or_ORBDone(unit, req, NULL);
 			_WRN_UNIT(unit, "cancel ORB request @ %p\n", req);
 			Signal(req->or_ORBStTask, req->or_ORBStSignal);
@@ -2524,6 +2560,7 @@ sbp2_cancel_orbs(SBP2Unit *unit)
 	}
 	UNLOCK_LIST(unit->u_PendingORBs);
 }
+
 LONG
 sbp2_do_scsi_cmd(SBP2Unit *unit, struct SCSICmd *scsicmd, ULONG timeout)
 {
@@ -2534,7 +2571,7 @@ sbp2_do_scsi_cmd(SBP2Unit *unit, struct SCSICmd *scsicmd, ULONG timeout)
 
 	scsicmd->scsi_Actual = 0;
 	scsicmd->scsi_SenseActual = 0;
-	
+
 	req = (SBP2SCSICmdReq *) sbp2_alloc_orb_req(unit, sizeof(SBP2SCSICmdReq));
 	if (NULL == req)
 		goto transport_error;
@@ -2565,7 +2602,7 @@ orb_retry:
 		{
 			LONG ack = req->sr_Base.or_Packet.Ack;
 			LONG rcode = req->sr_Base.or_Packet.RCode;
-			
+
 			_ERR_UNIT(unit, "SCSI[$%02x]: ORB send error (ack=%ld, rcode=%ld)\n",
 					scsicmd->scsi_Command[0], ack, rcode);
 
@@ -2597,7 +2634,7 @@ orb_retry:
 			/* scsicmd->scsi_Status set during the cancel_orb */
 			goto out;
 		}
-		
+
 		/* Wait ORB status response */
 		if (HERR_TIMEOUT == sbp2_wait(unit, status_signal, timeout))
 		{
@@ -2642,7 +2679,7 @@ orb_retry:
 	}
 	else
 		sbp2_cancel_orbs(unit);
-		
+
 	goto out;
 
 transport_error:
@@ -2670,6 +2707,7 @@ out:
 
 	return ioerr;
 }
+
 void
 sbp2_unmount_all(SBP2Unit *unit)
 {
@@ -2677,6 +2715,7 @@ sbp2_unmount_all(SBP2Unit *unit)
 	MountDisMountTags(unit->u_NotifyUnit, TAG_END);
 	MountNotifyAll(unit->u_NotifyUnit, -1);
 }
+
 #if 0
 // WARNING: must be called into a r-locked SBP2ClassBase region.
 void sbp2_incref(SBP2Unit *unit)
@@ -2687,6 +2726,7 @@ void sbp2_incref(SBP2Unit *unit)
 	++unit->u_SysUnit.unit_OpenCnt;
 	UNLOCK_REGION(unit);
 }
+
 // WARNING: must be called into a w-locked SBP2ClassBase region.
 void sbp2_decref(SBP2Unit *unit)
 {
@@ -2716,9 +2756,9 @@ void sbp2_decref(SBP2Unit *unit)
 	{
 		SBP2Unit *node;
 		ULONG maxno;
-		
+
 		_INFO("Freeing sbp2 unit %p-<%s>\n", unit, unit->u_UnitName);
-		
+
 		/* Find new unit # max */
 		maxno = base->hc_MaxUnitNo;
 		ForeachNode(&base->hc_Units, node)
@@ -2727,13 +2767,13 @@ void sbp2_decref(SBP2Unit *unit)
 				maxno = node->u_UnitNo;
 		}
 		base->hc_MaxUnitNo = maxno;
-		
+
 		if (NULL != unit->u_NotifyUnit)
 			MountDeleteNotifyUnit(unit->u_NotifyUnit);
-		
+
 		if (NULL != unit->u_UnitName)
 			FreeVecPooled(base->hc_MemPool, unit->u_UnitName);
-		
+
 		/* Free unit itself */
 		FreePooled(base->hc_MemPool, unit, sizeof(*unit));
 
@@ -2743,18 +2783,21 @@ void sbp2_decref(SBP2Unit *unit)
 	}
 }
 #endif
+
 LONG
 sbp2_InitClass(SBP2ClassLib *base, HeliosClass *hc)
 {
 	base->hc_HeliosClass = hc;
 	return 0;
 }
+
 LONG
 sbp2_TermClass(SBP2ClassLib *base)
 {
 	base->hc_HeliosClass = NULL;
 	return 0;
 }
+
 LONG
 sbp2_AttemptUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 {
@@ -2769,7 +2812,7 @@ sbp2_AttemptUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 	{
 		HeliosRomIterator ri;
 		QUADLET key, value;
-		
+
 		Helios_InitRomIterator(&ri, unit_rom_dir);
 		while (Helios_RomIterate(&ri, &key, &value))
 		{
@@ -2779,7 +2822,7 @@ sbp2_AttemptUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 				case KEYTYPEV_IMMEDIATE | CSR_KEY_UNIT_SW_VERSION: version = value; break;
 			}
 		}
-		
+
 		FreeVec(unit_rom_dir);
 
 		if ((SBP2_UNIT_SPEC_ID_ENTRY == specid) && (SBP2_SW_VERSION_ENTRY == version))
@@ -2790,6 +2833,7 @@ sbp2_AttemptUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 
 	return FALSE;
 }
+
 LONG
 sbp2_ForceUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 {
@@ -2825,7 +2869,7 @@ sbp2_ForceUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 			{
 				LOCK_INIT(sbp2_unit);
 				NEWLIST(&sbp2_unit->u_SysUnit.unit_MsgPort.mp_MsgList); /* used to forward IO msg */
-				
+
 				sbp2_unit->u_Class = base;
 				sbp2_unit->u_GUID = guid;
 				sbp2_unit->u_Generation = gen;
@@ -2869,14 +2913,16 @@ sbp2_ForceUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 
 	return FALSE;
 }
+
 LONG
 sbp2_ReleaseUnitBinding(SBP2ClassLib *base, HeliosUnit *hu)
 {
 	struct Task *task=NULL;
-	
+
 	if (Helios_GetAttrs(hu, HA_UserData, (ULONG)&task, TAG_DONE) && task)
 		Signal(task, SIGBREAKF_CTRL_C);
-	
+
 	return 0;
 }
+
 /*=== EOF ====================================================================*/

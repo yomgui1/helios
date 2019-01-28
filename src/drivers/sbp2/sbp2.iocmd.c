@@ -18,9 +18,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** SBP2 class IO commands API.
-**
 */
 
 //#define NDEBUG
@@ -634,7 +632,7 @@ sbp2_iocmd_start_stop(SBP2Unit *unit, struct IOStdReq *ioreq)
             cmd6[4] = ioreq->io_Length ? 0x03 : 0x02;
             break;
     }
-    
+
     _INF("do SCSI_DA_START_STOP_UNIT...\n");
     ioreq->io_Error = sbp2_do_scsi_cmd(unit, &scsicmd, ORB_TIMEOUT);
     return ioreq->io_Error;

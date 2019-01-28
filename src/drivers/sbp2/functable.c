@@ -18,7 +18,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** SBP2 class functions table definition file.
 */
 

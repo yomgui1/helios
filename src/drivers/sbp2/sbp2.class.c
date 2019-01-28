@@ -18,7 +18,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** SBP2 Class core file.
 */
 
@@ -44,7 +43,7 @@ LONG NoExecute(void) { return -1; }
 /*============================================================================*/
 /*--- LOCAL API --------------------------------------------------------------*/
 /*============================================================================*/
-static ULONG 
+static ULONG
 my_lib_expunge(struct SBP2ClassLib *base)
 {
 	BPTR seglist;
@@ -58,7 +57,7 @@ my_lib_expunge(struct SBP2ClassLib *base)
 
 	/* Cleanup underlayered device */
 	devCleanup(base->hc_DevBase);
-	
+
 	seglist = base->hc_SegList;
 
 	_DBG_LIB("Remove from system...\n");
@@ -71,9 +70,9 @@ my_lib_expunge(struct SBP2ClassLib *base)
 	CloseLibrary(UtilityBase);
 	CloseLibrary(QueryBase);
 	CloseLibrary(HeliosBase);
-	
+
 	DeletePool(base->hc_MemPool);
-	
+
 	FreeMem((APTR)((ULONG)(base) - (ULONG)(base->hc_Lib.lib_NegSize)),
 			base->hc_Lib.lib_NegSize + base->hc_Lib.lib_PosSize);
 
@@ -129,7 +128,7 @@ LIBINIT(struct SBP2ClassLib, base, seglist)
 	}
 	else
 		_ERR_DEV("CreatePool() failed\n");
-		
+
 	FreeMem((APTR)((ULONG)(base) - (ULONG)(base->hc_Lib.lib_NegSize)),
 			base->hc_Lib.lib_NegSize + base->hc_Lib.lib_PosSize);
 
@@ -174,7 +173,7 @@ HeliosClass_DoMethodA(struct SBP2ClassLib *base, ULONG methodid, ULONG *data)
 		case HCM_ReleaseUnitBinding: return sbp2_ReleaseUnitBinding(base, (HeliosUnit *)data[0]);
 
 		/* Optional methods */
-		case HCM_AttemptUnitBinding: return sbp2_AttemptUnitBinding(base, (HeliosUnit *)data[0]); 
+		case HCM_AttemptUnitBinding: return sbp2_AttemptUnitBinding(base, (HeliosUnit *)data[0]);
 	}
 
 	return 0;

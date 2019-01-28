@@ -18,7 +18,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** MorphOS SBP2-device driver implemention.
 */
 
@@ -73,7 +72,7 @@ static struct TagItem QueryTags[] =
 const ULONG devFuncTable[] =
 {
 	FUNCARRAY_BEGIN,
-	
+
 	FUNCARRAY_32BIT_NATIVE,
 
 	(ULONG) DEV_OPEN_FNAME,
@@ -88,7 +87,7 @@ const ULONG devFuncTable[] =
 	//(ULONG) devMount,
 	//(ULONG) devDisMount,
 	-1,
-	
+
 	FUNCARRAY_END
 };
 /*============================================================================*/
@@ -152,7 +151,7 @@ static LONG sbp2_io_remchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdR
 	/* clear QuickIO */
 	ioreq->io_Actual = 0;
 	ioreq->io_Error = 0;
-	
+
 	return RC_OK;
 }
 #endif
@@ -163,7 +162,7 @@ BPTR
 devCleanup(SBP2Device *base)
 {
 	BPTR seglist;
-	
+
 	base->dv_Library.lib_Flags |= LIBF_DELEXP;
 	if (base->dv_Library.lib_OpenCnt != 0)
 		return 0;
@@ -213,14 +212,14 @@ DEVOPEN(SBP2Device, base, ioreq, unitno)
 		_ERR_DEV("Bad IO length\n");
 		goto on_return;
 	}
-	
+
 	if ((unitno < 0) || (unitno > base->dv_UnitCount))
 	{
 		err = IOERR_OPENFAIL;
 		_ERR_DEV("Invalid unit number: %ld\n", unitno);
 		goto on_return;
 	}
-	
+
 	/* Search for the given unitno */
 	READ_LOCK_LIST(base->dv_Units);
 	{
@@ -250,9 +249,9 @@ DEVOPEN(SBP2Device, base, ioreq, unitno)
 	base->dv_Library.lib_Flags &= ~LIBF_DELEXP;
 	ret = (APTR)base;
 	err = 0;
-	
+
 	_INF_DEV("open done\n");
-	
+
 on_return:
 	if (err)
 		base->dv_Library.lib_Flags |= LIBF_DELEXP;
@@ -382,7 +381,7 @@ DEVBEGINIO(SBP2Device, base, ioreq)
 			if (IOERR_NOCMD != ret)
 				_ERR("IO cmd %d failed: ret=%ld\n", ioreq->io_Command, ret);
 		}
-		
+
 		/* If not quick I/O, reply the message */
 		if(!(ioreq->io_Flags & IOF_QUICK))
 			ReplyMsg(&ioreq->io_Message);
@@ -415,7 +414,7 @@ DEVQUERY(SBP2Device, base, data, attr)
 		SHARED_PROTECT_BEGIN(base);
 		*data = base->dv_UnitCount + 1;
 		SHARED_PROTECT_END(base);
-		
+
 		_INF("QUERYINFOATTR_DEVICE_UNITS %lu\n", *data);
 		return TRUE;
 	}
@@ -513,7 +512,7 @@ static void devDisMount(void)
 	//SBP2Device *base = (APTR) REG_A6;
 	struct IOStdReq *ioreq = (APTR) REG_A0;
 	SBP2Unit *sbp2_unit = (APTR)ioreq->io_Unit;
-	
+
 	sbp2_unmount_all(sbp2_unit);
 }
 #endif

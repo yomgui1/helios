@@ -17,10 +17,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-/* 
-**
+/*
 ** SBP2 class IO commands API header file.
-**
 */
 
 #ifndef SBP2_IOCMD_H

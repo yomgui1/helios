@@ -18,7 +18,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** Helios SBP2 device header.
 */
 
@@ -58,11 +57,11 @@ typedef struct SBP2Device
 	struct Library		dv_Library;       /* standard */
 	UWORD				dv_Flags;         /* various flags */
 	BPTR				dv_SegList;       /* device seglist */
-	
+
 	SBP2ClassLib *		dv_SBP2ClassBase; /* up link */
 	struct ExecBase *	dv_SysBase;
 	struct Library *	dv_MountBase;
-	
+
 	LOCK_PROTO;
 	LOCKED_MINLIST_PROTO(dv_Units);
 	ULONG				dv_UnitCount;	/* Length of hc_Units */

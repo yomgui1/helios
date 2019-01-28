@@ -111,7 +111,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 /*============================================================================*/
 #if 0
 #ifndef NDEBUG
-//+ sbp2_do_read_block
 static LONG sbp2_do_read_block(SBP2ClassLib *base,
 							   HeliosDevice *dev,
 							   HeliosOffset offset,
@@ -147,8 +146,7 @@ static LONG sbp2_do_read_block(SBP2ClassLib *base,
 
 	return -1;
 }
-//-
-//+ sbp2_do_write_block
+
 static LONG sbp2_do_write_block(SBP2ClassLib *base,
 								HeliosDevice *dev,
 								HeliosOffset offset,
@@ -182,8 +180,7 @@ static LONG sbp2_do_write_block(SBP2ClassLib *base,
 
 	return -1;
 }
-//-
-//+ dump_agent_state
+
 static void dump_agent_state(SBP2Unit *unit)
 {
 	HeliosOffset offset=unit->u_ORBLoginResponse.command_agent+SBP2_AGENT_STATE;
@@ -208,12 +205,11 @@ static void dump_agent_state(SBP2Unit *unit)
 	else
 		_ERR_1394("DEV[$%p] Can't fetch AGENT_STATE register offset %llx, err=%ld\n", unit, offset, err);
 }
-//-
+
 #else
 #define dump_agent_state(x)
 #endif
 
-//+ sbp2_add_timereq
 static struct timerequest *sbp2_add_timereq(SBP2Unit *unit, ULONG timeout)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
@@ -232,16 +228,14 @@ static struct timerequest *sbp2_add_timereq(SBP2Unit *unit, ULONG timeout)
 
 	return tr;
 }
-//-
-//+ sbp2_free_timereq
+
 static void sbp2_free_timereq(SBP2Unit *unit, struct timerequest *tr)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
 
 	FreeMem(tr, sizeof(*tr));
 }
-//-
-//+ sbp2_agent_reset
+
 static void sbp2_agent_reset(SBP2Unit *unit)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
@@ -321,8 +315,7 @@ out:
 	DeleteMsgPort(port);
 #endif
 }
-//-
-//+ sbp2_scsi_test_unit_ready
+
 LONG sbp2_scsi_test_unit_ready(SBP2Unit *unit, UBYTE *sensedata)
 {
 	UBYTE cmd6[6];
@@ -342,8 +335,7 @@ LONG sbp2_scsi_test_unit_ready(SBP2Unit *unit, UBYTE *sensedata)
 
 	return sbp2_do_scsi_cmd(unit, &scsicmd, ORB_TIMEOUT);
 }
-//-
-//+ sbp2_logout
+
 static void sbp2_logout(SBP2Unit *unit)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
@@ -369,8 +361,7 @@ static void sbp2_logout(SBP2Unit *unit)
 	}
 	UNLOCK_REGION(unit);
 }
-//-
-//+ sbp2_reconnect
+
 static BOOL sbp2_reconnect(SBP2Unit *unit)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
@@ -409,8 +400,7 @@ retry:
 
 	return TRUE;
 }
-//-
-//+ sbp2_mount_cd
+
 static void sbp2_mount_cd(SBP2Unit *unit)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
@@ -451,8 +441,7 @@ static void sbp2_mount_cd(SBP2Unit *unit)
 out:
 	FreeVecDMA(data);
 }
-//-
-//+ sbp2_on_medium_changed
+
 static void sbp2_on_medium_changed(SBP2Unit *unit)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
@@ -493,8 +482,7 @@ static void sbp2_on_medium_changed(SBP2Unit *unit)
 		sbp2_unmount_all(unit);
 	}
 }
-//-
-//+ sbp2_flush_io
+
 static void sbp2_flush_io(SBP2Unit *unit)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
@@ -515,8 +503,7 @@ static void sbp2_flush_io(SBP2Unit *unit)
 	}
 	UNLOCK_REGION(unit);
 }
-//-
-//+ sbp2_handle_ioreq
+
 static void sbp2_handle_ioreq(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;
@@ -564,8 +551,7 @@ static void sbp2_handle_ioreq(SBP2Unit *unit, struct IOStdReq *ioreq)
 
 	ReplyMsg(&ioreq->io_Message);
 }
-//-
-//+ sbp2_handle_removable
+
 static void sbp2_handle_removable(SBP2Unit *unit)
 {
 	SBP2ClassLib *base = unit->u_SBP2ClassBase;

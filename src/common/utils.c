@@ -30,15 +30,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdarg.h>
 #include <string.h>
 
-//+ utils_PutChProc
 APTR utils_PutChProc(APTR data, UBYTE c)
 {
     STRPTR *string_p = data;
     ((*string_p)++)[0] = c;
     return data;
 }
-//-
-//+ utils_SafePutChProc
+
 APTR utils_SafePutChProc(APTR data, UBYTE c)
 {
     struct safe_buf *sb = data;
@@ -51,8 +49,7 @@ APTR utils_SafePutChProc(APTR data, UBYTE c)
 
     return data;
 }
-//-
-//+ utils_SPrintF
+
 APTR utils_SPrintF(STRPTR buf, STRPTR fmt, ...)
 {
     struct ExecBase *SysBase = *(struct ExecBase **)4;
@@ -65,8 +62,7 @@ APTR utils_SPrintF(STRPTR buf, STRPTR fmt, ...)
 
     return buf;
 }
-//-
-//+ utils_SafeSPrintF
+
 APTR utils_SafeSPrintF(STRPTR buf, ULONG size, STRPTR fmt, ...)
 {
     struct ExecBase *SysBase = *(struct ExecBase **)4;
@@ -79,8 +75,7 @@ APTR utils_SafeSPrintF(STRPTR buf, ULONG size, STRPTR fmt, ...)
 
     return buf;
 }
-//-
-//+ utils_DupStr
+
 STRPTR utils_DupStr(APTR pool, CONST_STRPTR src)
 {
     struct ExecBase *SysBase = *(struct ExecBase **)4;
@@ -97,8 +92,7 @@ STRPTR utils_DupStr(APTR pool, CONST_STRPTR src)
 
     return dest;
 }
-//-
-//+ utils_GetPhyAddress
+
 ULONG utils_GetPhyAddress(APTR addr)
 {
     struct ExecBase *SysBase = *(struct ExecBase **)4;
@@ -107,4 +101,4 @@ ULONG utils_GetPhyAddress(APTR addr)
 
     return (ULONG) busaddr;
 }
-//-
+

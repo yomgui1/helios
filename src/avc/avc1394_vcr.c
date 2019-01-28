@@ -37,7 +37,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
-//+ vcr_SendCommand
 static LONG vcr_SendCommand(HeliosBus *bus, ULONG nodeid, QUADLET command, QUADLET *result)
 {
     HeliosDeviceHandler *handler;
@@ -74,8 +73,7 @@ static LONG vcr_SendCommand(HeliosBus *bus, ULONG nodeid, QUADLET command, QUADL
 
     return err;
 }
-//-
-//+ vcr_DoTransaction
+
 static LONG vcr_DoTransaction(HeliosBus *bus, ULONG nodeid, QUADLET command, QUADLET *result)
 {
     HeliosDeviceHandler *handler;
@@ -120,23 +118,20 @@ static LONG vcr_DoTransaction(HeliosBus *bus, ULONG nodeid, QUADLET command, QUA
 
     return err;
 }
-//-
+
 
 /*------------------ LIBRARY CODE SECTION -------------------------*/
 
-//+ AVC1394_VCR_Eject
 LONG AVC1394_VCR_Eject(HeliosBus *bus, UWORD nodeid, QUADLET *status)
 {
     return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_LOAD_MEDIUM | AVC1394_VCR_OPERAND_LOAD_MEDIUM_EJECT, status);
 }
-//-
-//+ AVC1394_VCR_Stop
+
 LONG AVC1394_VCR_Stop(HeliosBus *bus, UWORD nodeid, QUADLET *status)
 {
     return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_WIND | AVC1394_VCR_OPERAND_WIND_STOP, status);
 }
-//-
-//+ AVC1394_VCR_IsPlaying
+
 LONG AVC1394_VCR_IsPlaying(HeliosBus *bus, UWORD nodeid)
 {
     ULONG err;
@@ -149,8 +144,7 @@ LONG AVC1394_VCR_IsPlaying(HeliosBus *bus, UWORD nodeid)
     else
         return 0;
 }
-//-
-//+ AVC1394_VCR_IsRecording
+
 LONG AVC1394_VCR_IsRecording(HeliosBus *bus, UWORD nodeid)
 {
     ULONG err;
@@ -163,8 +157,7 @@ LONG AVC1394_VCR_IsRecording(HeliosBus *bus, UWORD nodeid)
     else
         return 0;
 }
-//-
-//+ AVC1394_VCR_Play
+
 LONG AVC1394_VCR_Play(HeliosBus *bus, UWORD nodeid, QUADLET *status)
 {
     if (AVC1394_VCR_OPERAND_PLAY_FORWARD == AVC1394_VCR_IsPlaying(bus, nodeid))
@@ -172,8 +165,7 @@ LONG AVC1394_VCR_Play(HeliosBus *bus, UWORD nodeid, QUADLET *status)
     else
         return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FORWARD, status);
 }
-//-
-//+ AVC1394_VCR_Reverse
+
 LONG AVC1394_VCR_Reverse(HeliosBus *bus, UWORD nodeid, QUADLET *status)
 {
     if (AVC1394_VCR_OPERAND_PLAY_REVERSE == AVC1394_VCR_IsPlaying(bus, nodeid))
@@ -181,8 +173,7 @@ LONG AVC1394_VCR_Reverse(HeliosBus *bus, UWORD nodeid, QUADLET *status)
     else
         return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_REVERSE, status);
 }
-//-
-//+ AVC1394_VCR_Pause
+
 LONG AVC1394_VCR_Pause(HeliosBus *bus, UWORD nodeid, QUADLET *status)
 {
     LONG mode;
@@ -200,10 +191,9 @@ LONG AVC1394_VCR_Pause(HeliosBus *bus, UWORD nodeid, QUADLET *status)
             return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FORWARD_PAUSE, status);
     }
 }
-//-
+
 
 #if 0
-//+ to implement
 QUADLET AVC1394_VCR_Status(HeliosBus bus, ULONG generation, ULONG id)
 {
     return AVC1394_DoTransaction(bus, generation, id, AVC1394_RETRY,
@@ -438,5 +428,5 @@ avc1394_vcr_seek_timecode(raw1394handle_t handle, nodeid_t node, char *timecode)
 
     avc1394_send_command_block( handle, node, request, 2);
 }
-//-
+
 #endif

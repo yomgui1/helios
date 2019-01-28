@@ -3649,7 +3649,6 @@ ohci_ResetUnit(OHCI1394Unit *unit)
 	return FALSE;
 }
 #if 0
-//+ ohci_HandleDeadContexts
 void ohci_HandleDeadContexts(_HELIOS_Bus *bus)
 {
 	_OHCI1394_Chipset *ohci = (APTR) bus;
@@ -3678,8 +3677,7 @@ void ohci_HandleDeadContexts(_HELIOS_Bus *bus)
 	}
 	UNLOCK_REGION(ohci);
 }
-//-
-//+ Helios_DumpOHCI
+
 void Helios_DumpOHCI(HeliosBus *_bus)
 {
 	int i;
@@ -3795,6 +3793,6 @@ void Helios_DumpOHCI(HeliosBus *_bus)
 
 	dprintf("Done ===========================\n");
 }
-//-
+
 #endif /* 0 */
 /*=== EOF ====================================================================*/

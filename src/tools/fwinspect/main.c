@@ -213,7 +213,6 @@ static STRPTR speed2str[] = {
 
 /*==========================================================================================================================*/
 
-//+ LogMsg
 static void LogMsg(STRPTR fmt, ...)
 {
     va_list va;
@@ -229,8 +228,7 @@ static void LogMsg(STRPTR fmt, ...)
     }
     va_end(va);
 }
-//-
-//+ reg_Read
+
 static inline ULONG reg_Read(register ULONG address)
 {
     register ULONG ret;
@@ -239,14 +237,12 @@ static inline ULONG reg_Read(register ULONG address)
 
     return ret;
 }
-//-
-//+ reg_Write
+
 static inline void reg_Write(register ULONG address, ULONG value)
 {
     __asm volatile ("stwbrx %0,0,%1; sync" : : "r" (value), "r" (address));
 }
-//-
-//+ fw_to_eeprom
+
 static void fw_to_eeprom(ULONG iobase, int cs, int clock, int dataout)
 {
     ULONG value = 0x10 /* enable outputs */ | (cs ? 8 : 0) | (clock ? 4 : 0) | (dataout ? 2 : 0);
@@ -254,8 +250,7 @@ static void fw_to_eeprom(ULONG iobase, int cs, int clock, int dataout)
     //dprintf(stderr, " %c%c%c ", cs ? ' ' : '-', clock ? 'c' : ' ', dataout ? '1' : '0');
     reg_Write(iobase + 0x20, value);
 }
-//-
-//+ send_bits_4w
+
 static void send_bits_4w(ULONG iobase, int bits, ULONG value)
 {
     if (bits < 32)
@@ -268,8 +263,7 @@ static void send_bits_4w(ULONG iobase, int bits, ULONG value)
         value <<= 1;
     }
 }
-//-
-//+ write_4w
+
 static void write_4w(ULONG iobase, UBYTE address, UWORD value)
 {
     value = BE_SWAPWORD(value);
@@ -296,8 +290,7 @@ static void write_4w(ULONG iobase, UBYTE address, UWORD value)
     send_bits_4w(iobase, 16, 0x0000);
     fw_to_eeprom(iobase, 0, 0, 0); usleep(10);
 }
-//-
-//+ PimpMyPegasos
+
 static void PimpMyPegasos(APTR board)
 {
     UQUAD guid, mac;
@@ -382,8 +375,7 @@ static void PimpMyPegasos(APTR board)
         }
     }
 }
-//-
-//+ parse_dev_rom
+
 static void parse_dev_rom(DeviceListerData *data)
 {
     ULONG len, gen;
@@ -431,8 +423,7 @@ static void parse_dev_rom(DeviceListerData *data)
         }
     }
 }
-//-
-//+ reset_entry
+
 static void reset_entry(DeviceListerData *data)
 {
     if (NULL != data->Device)
@@ -453,8 +444,7 @@ static void reset_entry(DeviceListerData *data)
     data->GUID[0] = '-';
     data->GUID[1] = '\0';
 }
-//-
-//+ DeviceListConstruct
+
 static APTR DeviceListConstruct(struct Hook *hook, APTR pool, HeliosDevice *dev)
 {
     HeliosEventListenerList *evtlist = 0;
@@ -515,15 +505,13 @@ static APTR DeviceListConstruct(struct Hook *hook, APTR pool, HeliosDevice *dev)
     LogMsg("Failed to add device %p\n", dev);
     return NULL;
 }
-//-
-//+ DeviceListDestruct
+
 static void DeviceListDestruct(struct Hook *hook, APTR pool, DeviceListerData *data)
 {
     reset_entry(data);
     FreePooled(pool, data, sizeof(*data));
 }
-//-
-//+ DeviceListDisplay
+
 static LONG DeviceListDisplay(struct Hook *hook, STRPTR output[], DeviceListerData *data)
 {
     if (NULL != data)
@@ -556,14 +544,12 @@ static LONG DeviceListDisplay(struct Hook *hook, STRPTR output[], DeviceListerDa
 
     return 0;
 }
-//-
-//+ DeviceListCompare
+
 static LONG DeviceListCompare(struct Hook *hook, DeviceListerData *d1, DeviceListerData *d2)
 {
     return (int) d2->NodeInfo.n_PhyID - (int) d1->NodeInfo.n_PhyID;
 }
-//-
-//+ fail
+
 static LONG fail(APTR app, char *str)
 {
     if (app) MUI_DisposeObject(app);
@@ -588,8 +574,7 @@ static LONG fail(APTR app, char *str)
     exit(0);
     return 0;
 }
-//-
-//+ Init
+
 LONG Init(void)
 {
     PCIXBase = OpenLibrary("pcix.library", 50);
@@ -679,8 +664,7 @@ LONG Init(void)
 
     return NULL;
 }
-//-
-//+ HandleHeliosEvents
+
 BOOL HandleHeliosEvents(void)
 {
     HeliosEventMsg *msg;
@@ -803,8 +787,7 @@ BOOL HandleHeliosEvents(void)
 
     return run;
 }
-//-
-//+ HandleHeliosIO
+
 void HandleHeliosIO(void)
 {
     IOHeliosHWSendRequest *ioreq;
@@ -857,8 +840,7 @@ void HandleHeliosIO(void)
         }
     }
 }
-//-
-//+ main
+
 int main(int argc, char **argv)
 {
     Object *win_main;
@@ -912,7 +894,6 @@ int main(int argc, char **argv)
         MUIA_Application_SingleTask , TRUE,
         MUIA_Application_Iconified  , FALSE,
 
-//+     win_main
         SubWindow, win_main = WindowObject,
             MUIA_Window_Title, "FireWire inspector",
             MUIA_Window_ID   , MAKE_ID('M','A','I','N'),
@@ -1006,8 +987,7 @@ int main(int argc, char **argv)
                 End,
             End,
         End,
-//-
-//+     OBJ_ROM_WIN
+
         SubWindow, objs[OBJ_ROM_WIN] = WindowObject,
             MUIA_Window_Title, "ROM Viewer",
             MUIA_Window_ID   , MAKE_ID('R','O','M',' '),
@@ -1018,8 +998,7 @@ int main(int argc, char **argv)
                 End,
             End,
         End,
-//-
-//+     win_read_quadlet
+
         SubWindow, win_read_quadlet = WindowObject,
             MUIA_Window_Title, "Read Quadlet",
             MUIA_Window_ID   , MAKE_ID('R','E','A','D'),
@@ -1048,8 +1027,7 @@ int main(int argc, char **argv)
                 End,
             End,
         End,
-//-
-//+     win_write_quadlet
+
         SubWindow, win_write_quadlet = WindowObject,
             MUIA_Window_Title, "Write Quadlet",
             MUIA_Window_ID   , MAKE_ID('W','R','I','T'),
@@ -1078,7 +1056,7 @@ int main(int argc, char **argv)
                 End,
             End,
         End,
-//-
+
     End;
 
     if (!app)
@@ -1120,7 +1098,6 @@ int main(int argc, char **argv)
     if (NULL != did_str)
         set(objs[OBJ_DID], MUIA_ShortHelp, did_str);
 
-//+     Read quadlet window
     DoMethod(win_read_quadlet, MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
              win_read_quadlet, 3, MUIM_Set, MUIA_Window_Open, FALSE);
 
@@ -1129,8 +1106,7 @@ int main(int argc, char **argv)
 
     DoMethod(objs[OBJ_READ_QUADLET_OK], MUIM_Notify, MUIA_Pressed, FALSE,
              app, 2, MUIM_Application_ReturnID, ID_READ_QUADLET);
-//-
-//+     Write quadlet window
+
     DoMethod(win_write_quadlet, MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
              win_write_quadlet, 3, MUIM_Set, MUIA_Window_Open, FALSE);
 
@@ -1139,11 +1115,10 @@ int main(int argc, char **argv)
 
     DoMethod(objs[OBJ_WRITE_QUADLET_OK], MUIM_Notify, MUIA_Pressed, FALSE,
              app, 2, MUIM_Application_ReturnID, ID_WRITE_QUADLET);
-//-
-//+     ROM Window
+
     DoMethod(objs[OBJ_ROM_WIN], MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
              objs[OBJ_ROM_WIN], 3, MUIM_Set, MUIA_Window_Open, FALSE);
-//-
+
 
     /* Fill the devices list with current devices */
     set(objs[OBJ_DEVICES_LIST], MUIA_List_Quiet, TRUE);
@@ -1184,7 +1159,6 @@ int main(int argc, char **argv)
     {
         LONG id = DoMethod(app, MUIM_Application_Input, &sigs);
 
-//+     id
         switch (id)
         {
             case MUIV_Application_ReturnID_Quit:
@@ -1409,7 +1383,7 @@ int main(int argc, char **argv)
             }
             break;
         }
-//-
+
 
         if (run)
         {
@@ -1433,4 +1407,4 @@ int main(int argc, char **argv)
 
     return fail(app, NULL);
 }
-//-
+

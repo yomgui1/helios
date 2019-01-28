@@ -127,13 +127,11 @@ ULONG __amigappc__ = 1;
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
-//+ SysError_NeedLibrary
 static void SysError_NeedLibrary(STRPTR libname, ULONG version)
 {
     // TODO
 }
-//-
-//+ internal_Expunge
+
 static ULONG internal_Expunge(struct MyDevice *base)
 {
     BPTR MySegment;
@@ -163,11 +161,10 @@ static ULONG internal_Expunge(struct MyDevice *base)
     DEBUG_EXPUNGE("return Segment 0x%lx to ramlib\n", MySegment);
     return (ULONG) MySegment;
 }
-//-
+
 
 /*------------------ DEVICE CODE SECTION -------------------------*/
 
-//+ dev_Init
 static struct MyDevice *dev_Init(struct MyDevice * base,
                                  BPTR              seglist,
                                  struct ExecBase * sbase)
@@ -190,14 +187,12 @@ static struct MyDevice *dev_Init(struct MyDevice * base,
             base->Lib.lib_NegSize + base->Lib.lib_PosSize);
     return NULL;
 }
-//-
-//+ dev_Expunge
+
 static ULONG dev_Expunge(void)
 {
     return internal_Expunge((APTR) REG_A6);
 }
-//-
-//+ dev_Open
+
 static struct MyDevice *dev_Open(void)
 {
     ULONG unit = REG_D0;
@@ -295,8 +290,7 @@ end:
     }
     return ret;
 }
-//-
-//+ dev_Close
+
 static ULONG dev_Close(void)
 {
     struct IOExtFCP *ioreq = (APTR)REG_A1;
@@ -326,23 +320,20 @@ static ULONG dev_Close(void)
 
     return 0;
 }
-//-
-//+ dev_Reserved
+
 static ULONG dev_Reserved(void)
 {
     DEBUG_NULL("FCP device: dev_Reserved called\n");
     return 0;
 }
-//-
-//+ cmd_Invalid
+
 static ULONG cmd_Invalid(struct IOExtFCP *ioreq)
 {
     log_Error("CMD_INVALID received: %u", ioreq->SysReq.io_Command);
     ioreq->SysReq.io_Error = IOERR_NOCMD;
     return 0;
 }
-//-
-//+ dev_BeginIO
+
 static void dev_BeginIO(void)
 {
     struct IOExtFCP *ioreq = (APTR) REG_A1;
@@ -380,8 +371,7 @@ static void dev_BeginIO(void)
     else if (!(ioreq->SysReq.io_Flags & IOF_QUICK))
         ReplyMsg(&ioreq->SysReq.io_Message);
 }
-//-
-//+ dev_AbortIO
+
 static void dev_AbortIO(void)
 {
     struct IOExtFCP *ioreq = (APTR) REG_A1;
@@ -402,4 +392,4 @@ static void dev_AbortIO(void)
         }
     }
 }
-//-
+

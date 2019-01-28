@@ -93,13 +93,11 @@ ULONG __abox__ = 1;
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
-//+ SysError_NeedLibrary
 static void SysError_NeedLibrary(STRPTR libname, ULONG version)
 {
     // TODO
 }
-//-
-//+ avc1394_RunServer
+
 static APTR avc1394_RunServer(void)
 {
     struct Process *proc;
@@ -117,8 +115,7 @@ static APTR avc1394_RunServer(void)
 
     return NULL;
 }
-//-
-//+ avc1394_StopServer
+
 static void avc1394_StopServer(void)
 {
     AVC1394_ServerMsg msg;
@@ -152,8 +149,7 @@ static void avc1394_StopServer(void)
 
     return;
 }
-//-
-//+ LibExpunge
+
 static ULONG LibExpunge(struct AVC1394Library *AVC1394Library)
 {
     BPTR MySegment;
@@ -192,18 +188,16 @@ static ULONG LibExpunge(struct AVC1394Library *AVC1394Library)
                    MySegment));
     return (ULONG) MySegment;
 }
-//-
+
 
 /*------------------ LIBRARY CODE SECTION -------------------------*/
 
-//+ NoExecute
 // The lib execute init protection which simply returns
 LONG NoExecute(void)
 {
     return -1;
 }
-//-
-//+ LIB_Init
+
 struct Library* LIB_Init(struct AVC1394Library * MyLibBase,
                          BPTR                SegList,
                          struct ExecBase *   sBase)
@@ -237,8 +231,7 @@ struct Library* LIB_Init(struct AVC1394Library * MyLibBase,
             MyLibBase->Lib.lib_NegSize + MyLibBase->Lib.lib_PosSize);
     return NULL;
 }
-//-
-//+ LIB_Expunge
+
 ULONG LIB_Expunge(void)
 {
     struct AVC1394Library *AVC1394Library = (struct AVC1394Library *) REG_A6;
@@ -246,8 +239,7 @@ ULONG LIB_Expunge(void)
     DEBUG_EXPUNGE(("LIB_Expunge:\n"));
     return LibExpunge(AVC1394Library);
 }
-//-
-//+ LIB_Open
+
 struct Library* LIB_Open(void)
 {
     struct AVC1394Library *AVC1394Library = (struct AVC1394Library *) REG_A6;
@@ -261,8 +253,7 @@ struct Library* LIB_Open(void)
     AVC1394Library->Lib.lib_OpenCnt++;
     return &AVC1394Library->Lib;
 }
-//-
-//+ LIB_Close
+
 ULONG LIB_Close(void)
 {
     struct AVC1394Library *AVC1394Library = (struct AVC1394Library *) REG_A6;
@@ -282,13 +273,12 @@ ULONG LIB_Close(void)
     }
     return 0;
 }
-//-
-//+ LIB_Reserved
+
 ULONG LIB_Reserved(void)
 {
     DEBUG_NULL(("LIB_Reserved:\n"));
 
     return 0;
 }
-//-
+
 

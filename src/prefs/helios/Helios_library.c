@@ -74,17 +74,14 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 struct Library *LocaleBase;
 struct Library *HeliosBase;
 
-//+ CleanupClasses
 void CleanupClasses(void)
 {}
-//-
-//+ SetupClasses
+
 BOOL SetupClasses(void)
 {
     return TRUE;
 }
-//-
-//+ PreClassInitFunc
+
 BOOL PreClassInitFunc(void)
 {
     HeliosBase = OpenLibrary("helios.library", 50);
@@ -101,8 +98,7 @@ BOOL PreClassInitFunc(void)
 
     return TRUE;
 }
-//-
-//+ PostClassExitFunc
+
 VOID PostClassExitFunc(void)
 {
     CleanupClasses();
@@ -115,7 +111,7 @@ VOID PostClassExitFunc(void)
     if (LocaleBase)
         CloseLibrary(LocaleBase);
 }
-//-
+
 
 /******************************************************************************/
 /*                                                                            */

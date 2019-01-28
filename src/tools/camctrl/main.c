@@ -60,7 +60,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #define ALLOCFAILURE() log_Error("Not enough memory to process.")
 
-//+ TYPES and STRUCTURES
 typedef struct MyBusHandle {
     struct MinNode  SysNode;
     HeliosBusHandle Handle;
@@ -88,7 +87,7 @@ enum {
     MAXLEN_EXACT=0,
     MAXLEN_LASTPACKET,
 };
-//-
+
 
 Object *app = NULL, *gDecoderObj = NULL;
 Object *win_main, *obj_CaptureDeviceList, *obj_CaptureDeviceGroup, *obj_InputFormat;
@@ -110,7 +109,6 @@ struct MUI_CustomClass *gRingBufferMCC = NULL;
 
 /*==========================================================================================================================*/
 
-//+ vLogMsg
 static void vLogMsg(ULONG level, STRPTR fmt, va_list va)
 {
     if (gLogLevel > level)
@@ -122,8 +120,7 @@ static void vLogMsg(ULONG level, STRPTR fmt, va_list va)
         vprintf(fmt, va);
     putchar('\n');
 }
-//-
-//+ LogMsg
+
 static void LogMsg(ULONG level, STRPTR fmt, ...)
 {
     va_list va;
@@ -132,9 +129,8 @@ static void LogMsg(ULONG level, STRPTR fmt, ...)
     vLogMsg(level, fmt, va);
     va_end(va);
 }
-//-
 
-//+ log_Error
+
 void log_Error(STRPTR fmt, ...)
 {
     va_list va;
@@ -143,8 +139,7 @@ void log_Error(STRPTR fmt, ...)
     vLogMsg(LOG_LEVEL_ERROR, fmt, va);
     va_end(va);
 }
-//-
-//+ log_Debug
+
 void log_Debug(STRPTR fmt, ...)
 {
     va_list va;
@@ -153,8 +148,7 @@ void log_Debug(STRPTR fmt, ...)
     vLogMsg(LOG_LEVEL_DEBUG, fmt, va);
     va_end(va);
 }
-//-
-//+ log_Warn
+
 void log_Warn(STRPTR fmt, ...)
 {
     va_list va;
@@ -163,11 +157,10 @@ void log_Warn(STRPTR fmt, ...)
     vLogMsg(LOG_LEVEL_WARN, fmt, va);
     va_end(va);
 }
-//-
+
 
 /*==========================================================================================================================*/
 
-//+ my_atexit
 static void my_atexit(void)
 {
     MyBusHandle *handle;
@@ -193,8 +186,7 @@ static void my_atexit(void)
     if (NULL != gCamCtrlMCC) CamCtrlMCC_Delete(gCamCtrlMCC);
     if (NULL != gRingBufferMCC) RingBufferMCC_Delete(gRingBufferMCC);
 }
-//-
-//+ fail
+
 static LONG fail(char *str)
 {
     if (str) {
@@ -205,8 +197,7 @@ static LONG fail(char *str)
     exit(0);
     return 0;
 }
-//-
-//+ Init
+
 BOOL Init(void)
 {
     gCamCtrlMCC = CamCtrlMCC_Create();
@@ -277,8 +268,7 @@ BOOL Init(void)
 
     return FALSE;
 }
-//-
-//+ CheckNode
+
 static MyDevice *CheckNode(HeliosBusHandle *bh, UBYTE nodeid)
 {
     HeliosDeviceHandle *dh;
@@ -329,14 +319,12 @@ static MyDevice *CheckNode(HeliosBusHandle *bh, UBYTE nodeid)
 
     return NULL;
 }
-//-
-//+ ProcessHeliosMsg
+
 static BOOL ProcessHeliosMsg(void)
 {
     return TRUE;
 }
-//-
-//+ DoGlobalInit
+
 static void DoGlobalInit(void)
 {
     int i;
@@ -357,8 +345,7 @@ static void DoGlobalInit(void)
         }
     }
 }
-//-
-//+ main
+
 int main(int argc, char **argv)
 {
     BOOL run = TRUE;
@@ -508,7 +495,7 @@ int main(int argc, char **argv)
             End,
         End,
     End;
-    //-
+    
 
     if (!app)
         fail("Failed to create Application.");
@@ -571,7 +558,7 @@ int main(int argc, char **argv)
     /* Video format */
     DoMethod(app, MUIM_Notify, MA_CamCtrl_VideoFmt, MUIV_EveryTime,
              obj_RecvVideoFmt, 3, MUIM_Set, MUIA_Text_Contents, MUIV_TriggerValue);
-    //-
+    
 
     DoGlobalInit();
 
@@ -623,10 +610,10 @@ int main(int argc, char **argv)
                 run = ProcessHeliosMsg();
         }
     }
-    //-
+    
 
     set(win_main, MUIA_Window_Open, FALSE);
 
     return fail(NULL);
 }
-//-
+

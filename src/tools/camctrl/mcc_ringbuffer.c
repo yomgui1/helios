@@ -33,7 +33,6 @@ typedef struct MCCData {
 #define RBF_OVERRUN (1<<0)
 
 /*==========================================================================================================================*/
-//+ flush_buffer
 static void flush_buffer(MCCData *data)
 {
     data->ReadPtr = NULL;
@@ -43,9 +42,8 @@ static void flush_buffer(MCCData *data)
     data->TotalMissed = 0;
     data->TrigLength = -1; /* never trig */
 }
-//-
 
-//+ mNew
+
 static ULONG mNew(struct IClass *cl, Object *obj, struct opSet *msg)
 {
     MCCData *data;
@@ -80,8 +78,7 @@ static ULONG mNew(struct IClass *cl, Object *obj, struct opSet *msg)
     CoerceMethod(cl, obj, OM_DISPOSE);
     return 0;
 }
-//-
-//+ mDispose
+
 static ULONG mDispose(struct IClass *cl, Object *obj, Msg msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -91,8 +88,7 @@ static ULONG mDispose(struct IClass *cl, Object *obj, Msg msg)
 
     return DoSuperMethodA(cl, obj, msg);
 }
-//-
-//+ mGet
+
 static ULONG mGet(struct IClass *cl, Object *obj, struct opGet *msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -119,8 +115,7 @@ static ULONG mGet(struct IClass *cl, Object *obj, struct opGet *msg)
 
     return DoSuperMethodA(cl, obj, (APTR) msg);
 }
-//-
-//+ mSet
+
 static ULONG mSet(struct IClass *cl, Object *obj, struct opSet * msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -146,8 +141,7 @@ static ULONG mSet(struct IClass *cl, Object *obj, struct opSet * msg)
 
     return DoSuperMethodA(cl, obj, (APTR) msg);
 }
-//-
-//+ mFlush
+
 static ULONG mFlush(struct IClass *cl, Object *obj)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -158,8 +152,7 @@ static ULONG mFlush(struct IClass *cl, Object *obj)
 
     return 0;
 }
-//-
-//+ mRead
+
 static ULONG mRead(struct IClass *cl, Object *obj, struct MP_RingBuffer_IO *msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -201,8 +194,7 @@ static ULONG mRead(struct IClass *cl, Object *obj, struct MP_RingBuffer_IO *msg)
 
     return len;
 }
-//-
-//+ mWrite
+
 static ULONG mWrite(struct IClass *cl, Object *obj, struct MP_RingBuffer_IO *msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -257,9 +249,8 @@ static ULONG mWrite(struct IClass *cl, Object *obj, struct MP_RingBuffer_IO *msg
 
     return len;
 }
-//-
 
-//+ DISPATCHER(MyMCC)
+
 DISPATCHER(MyMCC)
 {
     switch (msg->MethodID) {
@@ -275,19 +266,17 @@ DISPATCHER(MyMCC)
     return DoSuperMethodA(cl, obj, msg);
 }
 DISPATCHER_END
-//-
+
 
 /*==========================================================================================================================*/
 
-//+ RingBufferMCC_Create
 struct MUI_CustomClass *RingBufferMCC_Create(void)
 {
     return MUI_CreateCustomClass(NULL, MUIC_Semaphore, NULL, sizeof(MCCData), DISPATCHER_REF(MyMCC));
 }
-//-
-//+ RingBufferMCC_Delete
+
 void RingBufferMCC_Delete(struct MUI_CustomClass *mcc)
 {
     MUI_DeleteCustomClass(mcc);
 }
-//-
+

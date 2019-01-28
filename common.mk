@@ -8,7 +8,7 @@ export
 unexport SUBDIRS
 
 # Mercurial stuff
-SCM_REV := $(shell python c:hg id -i)
+SCM_REV := $(shell git describe --always --long --dirty)
 
 # Paths stuff
 LIBS_DIR := $(PRJROOT)/libs

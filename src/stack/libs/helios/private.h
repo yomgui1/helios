@@ -27,6 +27,27 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define HELIOS_PRIVATE_H
 
 #include "helios_base.library.h"
+#include "clib/helios_protos.h"
+
+#include <proto/exec.h>
+#include <proto/dos.h>
+#include <proto/utility.h>
+
+#if !defined(BUILD_DATE)
+#error "BUILD_DATE are not defined but are mandatory"
+#endif
+
+#ifndef SCM_REV
+#define SCM_REV "private"
+#endif
+
+#define COPYRIGHTS "\xa9\x20Guillaume\x20Roguez\x20[" SCM_REV "]"
+#define VERSION 52
+#define REVISION 1
+#define VR_ST "52.1"
+#define VERS    LIBNAME" "VR_ST
+#define VSTRING LIBNAME" "VR_ST" ("BUILD_DATE") "COPYRIGHTS"\r\n"
+#define VTAG "\0$VER: "LIBNAME" "VR_ST" ("BUILD_DATE") "COPYRIGHTS
 
 #define HeliosClassBase (hc->hc_Base)
 

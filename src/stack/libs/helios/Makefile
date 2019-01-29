@@ -23,10 +23,7 @@
 ##
 
 PRJROOT  	:= ../../../..
-
 LIBNAME  	:= helios.library
-VERSION  	:= 52
-REVISION 	:= 0
 
 HELIOS_SRCS := $(PRJROOT)/src/common/utils.c misc.c rom.c objects.c classes.c
 HELIOS_OBJS := $(HELIOS_SRCS:.c=.o)

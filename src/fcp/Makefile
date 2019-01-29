@@ -23,10 +23,7 @@
 ##
 
 PRJROOT  	:= ../..
-
 LIBNAME  	:= fcp.device
-VERSION  	:= 0
-REVISION 	:= 1
 
 FCP_SRCS := fcp_func.c
 FCP_OBJS := $(FCP_SRCS:.c=.o)
@@ -39,9 +36,9 @@ ALL_SRCS	:= $(LIBRARY_SRCS) $(FCP_SRCS)
 SDK_INC_FILES := \
 	$(PRJROOT)/include/devices/helios/fcp.h
 
-DEFINES := LIBNAME=\"$(LIBNAME)\"
-
 include $(PRJROOT)/common.mk
+
+DEFINES += -DDEVNAME=\"$(LIBNAME)\"
 
 .PHONY: fcp_version.h sdk
 

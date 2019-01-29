@@ -24,7 +24,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <exec/libraries.h>
-#include <exec/resident.h>
 #include <exec/errors.h>
 
 #include <proto/exec.h>
@@ -71,65 +70,6 @@ extern void fcp_ResponseHandler(HeliosBus *    bus,
                                 HeliosPacket * response,
                                 LONG           no_response);
 
-static struct MyDevice *dev_Init(struct MyDevice * base,
-                                 BPTR              seglist,
-                                 struct ExecBase * sbase);
-static ULONG dev_Expunge(void);
-static struct MyDevice *dev_Open(void);
-static ULONG dev_Close(void);
-static ULONG dev_Reserved(void);
-static ULONG cmd_Invalid(struct IOExtFCP *ioreq);
-static void dev_BeginIO(void);
-static void dev_AbortIO(void);
-
-static const ULONG FuncTable[] =
-{
-    FUNCARRAY_32BIT_NATIVE,
-    (ULONG)dev_Open,
-    (ULONG)dev_Close,
-    (ULONG)dev_Expunge,
-    (ULONG)dev_Reserved,
-    (ULONG)dev_BeginIO,
-    (ULONG)dev_AbortIO,
-    ~0
-};
-
-const struct
-{
-    ULONG        LibSize;
-    const void * FuncTable;
-    const void * DataTable;
-    void       (*InitFunc)(void);
-} init =
-{
-    sizeof(struct MyDevice),
-    FuncTable,
-    NULL,
-    (void (*)()) &dev_Init
-};
-
-const struct Resident ROMTag =
-{
-    RTC_MATCHWORD,
-    (APTR) &ROMTag,
-    (APTR) (&ROMTag + 1),
-    RTF_PPC | RTF_EXTENDED | RTF_AUTOINIT,
-    VERSION,
-    NT_DEVICE,
-    0,
-    LIBNAME,
-    VSTRING,
-    (APTR) &init,
-    /* New Fields */
-    REVISION,
-    NULL            /* No More Tags for now*/
-};
-
-const char vers[] = VERSTAG;
-
-ULONG __abox__ = 1;
-ULONG __amigappc__ = 1;
-
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
 static void SysError_NeedLibrary(STRPTR libname, ULONG version)
@@ -171,10 +111,16 @@ static ULONG internal_Expunge(struct MyDevice *base)
     return (ULONG) MySegment;
 }
 
+static ULONG cmd_Invalid(struct IOExtFCP *ioreq)
+{
+    log_Error("CMD_INVALID received: %u", ioreq->SysReq.io_Command);
+    ioreq->SysReq.io_Error = IOERR_NOCMD;
+    return 0;
+}
 
 /*------------------ DEVICE CODE SECTION -------------------------*/
 
-static struct MyDevice *dev_Init(struct MyDevice * base,
+static struct MyDevice *DEV_Init(struct MyDevice * base,
                                  BPTR              seglist,
                                  struct ExecBase * sbase)
 {
@@ -201,12 +147,12 @@ static struct MyDevice *dev_Init(struct MyDevice * base,
     return NULL;
 }
 
-static ULONG dev_Expunge(void)
+static ULONG DEV_Expunge(void)
 {
     return internal_Expunge((APTR) REG_A6);
 }
 
-static struct MyDevice *dev_Open(void)
+static struct MyDevice *DEV_Open(void)
 {
     ULONG unit = REG_D0;
     struct IOExtFCP *ioreq = (APTR) REG_A1;
@@ -318,7 +264,7 @@ end:
     return ret;
 }
 
-static ULONG dev_Close(void)
+static ULONG DEV_Close(void)
 {
     struct IOExtFCP *ioreq = (APTR)REG_A1;
     struct MyDevice *base = (APTR)REG_A6;
@@ -352,20 +298,13 @@ static ULONG dev_Close(void)
     return 0;
 }
 
-static ULONG dev_Reserved(void)
+static ULONG DEV_Reserved(void)
 {
     DEBUG_NULL("FCP device: dev_Reserved called\n");
     return 0;
 }
 
-static ULONG cmd_Invalid(struct IOExtFCP *ioreq)
-{
-    log_Error("CMD_INVALID received: %u", ioreq->SysReq.io_Command);
-    ioreq->SysReq.io_Error = IOERR_NOCMD;
-    return 0;
-}
-
-static void dev_BeginIO(void)
+static void DEV_BeginIO(void)
 {
     struct IOExtFCP *ioreq = (APTR) REG_A1;
     struct MyDevice *base = (APTR) REG_A6;
@@ -408,7 +347,7 @@ static void dev_BeginIO(void)
     }
 }
 
-static void dev_AbortIO(void)
+static void DEV_AbortIO(void)
 {
     struct IOExtFCP *ioreq = (APTR) REG_A1;
     struct MyDevice *base = (APTR) REG_A6;
@@ -432,14 +371,26 @@ static void dev_AbortIO(void)
     }
 }
 
-/*------------------ LIBRARY CODE SECTION -------------------------*/
+/*------------------ SYSTEM DEVICE SECTION ------------------------*/
 
-LONG NoExecute(void)
-{
-    return -1;
-}
+#include "libutils.h"
 
-const struct NoExecute
+static const ULONG devFuncTable[] =
 {
-    LONG (*NoExecuteFunc)(void);
-} NoExecuteRef __attribute__((section (".rodata"))) = { &NoExecute };
+    FUNCARRAY_BEGIN,
+
+    FUNCARRAY_32BIT_NATIVE,
+    (ULONG) DEV_Open,
+    (ULONG) DEV_Close,
+    (ULONG) DEV_Expunge,
+    (ULONG) DEV_Reserved,
+    (ULONG) DEV_BeginIO,
+    (ULONG) DEV_AbortIO,
+    -1,
+
+    FUNCARRAY_END
+};
+
+DECLARE_DEVICE(DEVNAME, struct MyDevice,
+               devFuncTable, DEV_Init,
+               VERSION, REVISION, VSTRING, VTAG);

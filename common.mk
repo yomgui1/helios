@@ -71,18 +71,12 @@ OPT = -O2 -mmultiple -mstring -fno-strict-aliasing
 DEFINES := $(CCDEFINES) \
 	-DUSE_INLINE_STDARG \
 	-DAROS_ALMOST_COMPATIBLE \
-	-DDATE='"$(shell /bin/date +%d.%m.%y)"' \
-	-DCOPYRIGHTS='"\xa9\x20Guillaume\x20ROGUEZ\x20[$(SCM_REV)]"'
+	-DSCM_REV='"$(SCM_REV)"' \
+	-DBUILD_DATE='"$(shell /bin/date +%d.%m.%y)"'
 CCWARNS = -Wall
 
 ifeq ("$(shell $(CC) -dumpversion | cut -d. -f1)", "4")
 CCWARNS += -Wno-pointer-sign
-endif
-
-ifneq ("$(VERSION)", "")
-DEFINES += -DVERSION=$(VERSION) -DREVISION=$(REVISION)
-DEFINES += -DVERSION_STR='"$(VERSION)"' -DREVISION_STR='"$(REVISION)"'
-DEFINES += -DVR_ST='"$(VERSION).$(REVISION)"'
 endif
 
 CFLAGS = -noixemul -g
@@ -118,14 +112,16 @@ endif
 
 .DEFAULT: all
 .PHONY: all clean distclean common-clean common-distclean
-.PHONY: local-clean local-distclean local-release
+.PHONY: local-clean local-distclean local-release mkdeps
 
 .SUFFIXES:
 .SUFFIXES: .c .h .s .o .a .d .db .device .library .class .sym
 
-all:
+all: mkdeps
 
 debug:;
+
+mkdeps: $(ALL_SRCS:.c=.d)
 
 $(addsuffix -%,$(SUBDIRS)):
 	$(MAKE) -C $(patsubst %-$*,%,$@) $*

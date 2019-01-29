@@ -36,7 +36,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <exec/alerts.h>
 #include <exec/libraries.h>
 #include <exec/interrupts.h>
-#include <exec/resident.h>
 #include <dos/dos.h>
 #include <devices/timer.h>
 

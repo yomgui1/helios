@@ -23,10 +23,7 @@
 ##
 
 PRJROOT  	:= ../../../..
-
 DEVNAME  	:= ohci1394_pci.device
-VERSION  	:= 50
-REVISION 	:= 2
 
 OHCI1394_SRCS := ohci1394cmd.c ohci1394core.c ohci1394topo.c \
 	ohci1394trans.c ohci1394dev.c $(PRJROOT)/src/common/utils.c

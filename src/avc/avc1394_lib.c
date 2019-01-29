@@ -38,58 +38,12 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define DEBUG_EXPUNGE(x)    DB x;
 #define DEBUG_NULL(x)       DB x;
 
-extern ULONG LibFuncTable[];
 extern void avc1394_Server(void);
 
 struct AVC1394Library * AVC1394Base = NULL;
 struct ExecBase *   SysBase = NULL;
 struct DosLibrary * DOSBase = NULL;
 struct Library *    HeliosBase = NULL;
-
-struct Library* LIB_Init(struct AVC1394Library *    MyLibBase,
-                         BPTR                       SegList,
-                         struct ExecBase *          SBase);
-
-struct LibInitStruct
-{
-    ULONG   LibSize;
-    APTR    FuncTable;
-    APTR    DataTable;
-    void    (*InitFunc)(void);
-};
-
-struct LibInitStruct LibInitStruct=
-{
-    sizeof(struct AVC1394Library),
-    LibFuncTable,
-    NULL,
-    (void (*)(void)) &LIB_Init
-};
-
-
-struct Resident LibResident=
-{
-    RTC_MATCHWORD,
-    &LibResident,
-    &LibResident + 1,
-    RTF_PPC | RTF_EXTENDED | RTF_AUTOINIT,
-    VERSION,
-    NT_LIBRARY,
-    0,
-    "avc1394.library",
-    VSTRING,
-    &LibInitStruct,
-    /* New Fields */
-    REVISION,
-    NULL            /* No More Tags for now*/
-};
-
-/*
- * To tell the loader that this is a new abox elf and not
- * one for the ppc.library.
- * ** IMPORTANT **
- */
-ULONG __abox__ = 1;
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
@@ -310,5 +264,15 @@ ULONG LIB_Reserved(void)
 
     return 0;
 }
+
+/*------------------ SYSTEM LIBRARY SECTION ------------------------*/
+
+#include "libutils.h"
+
+extern ULONG LibFuncTable[];
+
+DECLARE_LIBRARY(LIBNAME, struct AVC1394Library,
+                LibFuncTable, LIB_Init,
+                VERSION, REVISION, VSTRING, VTAG);
 
 

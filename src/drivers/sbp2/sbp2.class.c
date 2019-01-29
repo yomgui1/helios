@@ -26,64 +26,19 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 //#define NDEBUG
 #define DEBUG_LIB
 
-#if !defined(VERSION) || !defined(REVISION) || !defined(VR_ST) || !defined(DATE)
-#error "Why don't you use the geniune Makefile ?"
-#endif
-
-#define VERS    LIBNAME" "VR_ST
-#define VERSTAG "\0$VER: "LIBNAME"  "VR_ST" ("DATE") "COPYRIGHTS
-
+#include "private.h"
 #include "sbp2.class.h"
 #include "sbp2.device.h"
+#include "libutils.h"
 
 extern ULONG LibFuncTable[]; /* defined in sbp2_functable.library.c */
+struct Library* LIB_Init(SBP2ClassLib *MyLibBase,
+                         BPTR SegList,
+                         struct ExecBase *SBase);
 
-struct Library* LIB_Init(SBP2ClassLib *       MyLibBase,
-                         BPTR              SegList,
-                         struct ExecBase * SBase);
-
-struct LibInitStruct
-{
-    ULONG   LibSize;
-    APTR    FuncTable;
-    APTR    DataTable;
-    void    (*InitFunc)(void);
-};
-
-struct LibInitStruct LibInitStruct=
-{
-    sizeof(SBP2ClassLib),
-    LibFuncTable,
-    NULL,
-    (void (*)(void)) &LIB_Init
-};
-
-
-struct Resident LibResident=
-{
-    RTC_MATCHWORD,
-    &LibResident,
-    &LibResident + 1,
-    RTF_PPC | RTF_EXTENDED | RTF_AUTOINIT,
-    VERSION,
-    NT_LIBRARY,
-    0,
-    LIBNAME,
-    VSTRING,
-    &LibInitStruct,
-    /* New Fields */
-    REVISION,
-    NULL            /* No More Tags for now*/
-};
-
-/*
- * To tell the loader that this is a new abox elf and not
- * one for the ppc.library.
- * ** IMPORTANT **
- *
- * Merge with version also ;-)
- */
-CONST STRPTR __abox__ __attribute__((section (".rodata"))) = VERSTAG;
+DECLARE_LIBRARY(LIBNAME, SBP2ClassLib,
+                LibFuncTable, LIB_Init,
+                VERSION, REVISION, VSTRING, VTAG);
 
 #define SysBase (base->hc_SysBase)
 #define DOSBase (base->hc_DOSBase)
@@ -136,19 +91,7 @@ static ULONG LibExpunge(SBP2ClassLib *base)
     return (ULONG)MySegment;
 }
 
-
 /*------------------ LIBRARY CODE SECTION -------------------------*/
-
-LONG NoExecute(void)
-{
-    return -1;
-}
-
-const struct NoExecute
-{
-    LONG (*NoExecuteFunc)(void);
-} NoExecuteRef __attribute__((section (".rodata"))) = { &NoExecute };
-
 
 struct Library* LIB_Init(SBP2ClassLib *base,
                          BPTR SegList,

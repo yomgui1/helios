@@ -23,10 +23,7 @@
 ##
 
 PRJROOT := ../..
-
 LIBNAME  := avc1394.library
-VERSION  := 0
-REVISION := 1
 
 LIBRARY_SRCS := avc1394_lib.c avc1394_libfunctable.c
 LIBRARY_OBJS := $(LIBRARY_SRCS:.c=.o)
@@ -48,9 +45,9 @@ SDK_INC_FILES := \
 	$(PRJROOT)/include/clib/avc1394_protos.h \
 	$(GEN_INCLUDES)
 
-DEFINES := LIBNAME=\"$(LIBNAME)\"
-
 include $(PRJROOT)/common.mk
+
+DEFINES += -DLIBNAME=\"$(LIBNAME)\"
 
 .PHONY: avc1394_version.h sdk
 

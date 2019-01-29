@@ -26,12 +26,20 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef FCP_VERSION_H
 #define FCP_VERSION_H
 
-#if !defined(LIBNAME) || !defined(VERSION) || !defined(REVISION) || !defined(VR_ST) || !defined(DATE)
-#error "Why don't you use the geniune Makefile ?"
+#if !defined(BUILD_DATE)
+#error "BUILD_DATE are not defined but are mandatory"
 #endif
 
-#define VERS        LIBNAME" "VR_ST
-#define VSTRING     LIBNAME" "VR_ST" ("DATE") \x40 2009 by Guillaume Roguez, written by Guillaume Roguez\r\n"
-#define VERSTAG     "\0$VER: "LIBNAME" "VR_ST" ("DATE") \x40 2009 by Guillaume Roguez, written by Guillaume Roguez"
+#ifndef SCM_REV
+#define SCM_REV "private"
+#endif
+
+#define COPYRIGHTS "\xa9\x20Guillaume\x20Roguez\x20[" SCM_REV "]"
+#define VERSION 0
+#define REVISION 2
+#define VR_ST "0.2"
+#define VERS    DEVNAME" "VR_ST
+#define VSTRING DEVNAME" "VR_ST" ("BUILD_DATE") "COPYRIGHTS"\r\n"
+#define VTAG "\0$VER: "DEVNAME" "VR_ST" ("BUILD_DATE") "COPYRIGHTS
 
 #endif /* FCP_VERSION_H */

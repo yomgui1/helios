@@ -23,10 +23,7 @@
 ##
 
 PRJROOT  	:= ../../..
-
 LIBNAME  	:= sbp2.class
-VERSION  	:= 50
-REVISION 	:= 1
 
 SBP2_SRCS := $(PRJROOT)/src/common/utils.c \
 	sbp2.core.c sbp2.device.c sbp2.iocmd.c

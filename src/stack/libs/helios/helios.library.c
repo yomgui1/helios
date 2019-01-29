@@ -25,64 +25,29 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 //#define NDEBUG
 
-#include "fw_libversion.h"
-
 #include "private.h"
+#include "libutils.h"
+
 #include "clib/helios_protos.h"
 #include <proto/intuition.h>
 
 extern ULONG LibFuncTable[]; /* defined in helios_functable.library.c */
+struct Library* LIB_Init(struct HeliosBase *MyLibBase,
+                         BPTR SegList,
+                         struct ExecBase *SBase);
 
-struct HeliosBase * HeliosBase = NULL;
-struct ExecBase *   SysBase = NULL;
-struct DosLibrary * DOSBase = NULL;
-struct Library *    UtilityBase = NULL;
+DECLARE_LIBRARY(LIBNAME, struct HeliosBase,
+                LibFuncTable, LIB_Init,
+                VERSION, REVISION, VSTRING, VTAG);
 
-struct Library* LIB_Init(struct HeliosBase *    MyLibBase,
-                         BPTR                   SegList,
-                         struct ExecBase *      SBase);
+/*------------------ PRIVATE GLOBALS SECTION ----------------------*/
 
-struct LibInitStruct
-{
-    ULONG   LibSize;
-    APTR    FuncTable;
-    APTR    DataTable;
-    void    (*InitFunc)(void);
-};
+/*------------------ PUBLIC GLOBALS SECTION -----------------------*/
 
-struct LibInitStruct LibInitStruct=
-{
-    sizeof(struct HeliosBase),
-    LibFuncTable,
-    NULL,
-    (void (*)(void)) &LIB_Init
-};
-
-
-struct Resident LibResident=
-{
-    RTC_MATCHWORD,
-    &LibResident,
-    &LibResident + 1,
-    RTF_PPC | RTF_EXTENDED | RTF_AUTOINIT,
-    VERSION,
-    NT_LIBRARY,
-    0,
-    LIBNAME,
-    VSTRING,
-    &LibInitStruct,
-    /* New Fields */
-    REVISION,
-    NULL            /* No More Tags for now*/
-};
-
-/*
- * To tell the loader that this is a new abox elf and not
- * one for the ppc.library.
- * ** IMPORTANT **
- */
-ULONG __abox__ = 1;
-const STRPTR version = VERSTAG;
+struct ExecBase     *SysBase;
+struct DosLibrary   *DOSBase;
+struct Library      *UtilityBase;
+struct HeliosBase   *HeliosBase;
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
@@ -129,16 +94,6 @@ static ULONG LibExpunge(struct HeliosBase *base)
 }
 
 /*------------------ LIBRARY CODE SECTION -------------------------*/
-
-LONG NoExecute(void)
-{
-    return -1;
-}
-
-const struct NoExecute
-{
-    LONG (*NoExecuteFunc)(void);
-} NoExecuteRef __attribute__((section (".rodata"))) = { &NoExecute };
 
 struct Library* LIB_Init(struct HeliosBase * base,
                          BPTR                SegList,

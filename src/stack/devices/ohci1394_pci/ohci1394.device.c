@@ -30,7 +30,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include "ohci1394trans.h"
 #include "debug.h"
 
-#include <exec/resident.h>
 #include <exec/errors.h>
 #include <exec/lists.h>
 #include <devices/timer.h>
@@ -38,82 +37,24 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <proto/exec.h>
 #include <proto/utility.h>
 
-static OHCI1394Device *devInit(OHCI1394Device *base,
-                               BPTR seglist,
-                               struct ExecBase *sysbase);
-static OHCI1394Device *devOpen(void);
-static BPTR devExpunge(void);
-static BPTR devClose(void);
-static void devBeginIO(void);
-static void devAbortIO(void);
-static int devReserved(void);
-
-/*------------------ PRIVATE GLOBALS SECTION ----------------------*/
-
-static const ULONG devFuncTable[] =
-{
-    FUNCARRAY_32BIT_NATIVE,
-
-    (ULONG) devOpen,
-    (ULONG) devClose,
-    (ULONG) devExpunge,
-    (ULONG) devReserved,
-    (ULONG) devBeginIO,
-    (ULONG) devAbortIO,
-
-    ~0
-};
-
-static const struct
-{
-    ULONG  LibSize;
-    const void  *FuncTable;
-    const void  *DataTable;
-    void (*InitFunc)(void);
-} dev_init =
-{
-    sizeof(OHCI1394Device),
-    devFuncTable,
-    NULL,
-    (void (*)())devInit
-};
-
 /*------------------ PUBLIC GLOBALS SECTION -----------------------*/
 
-struct Resident LibResident=
-{
-    RTC_MATCHWORD,
-    &LibResident,
-    &LibResident + 1,
-    RTF_PPC | RTF_EXTENDED | RTF_AUTOINIT,
-    VERSION,
-    NT_DEVICE,
-    0,
-    DEVNAME,
-    VERSION_STR,
-    (APTR) &dev_init,
-    /* New Fields */
-    REVISION,
-    NULL            /* No More Tags for now*/
-};
-
-struct ExecBase *SysBase;
-struct DosLibrary *DOSBase;
-struct Library *PCIXBase;
-struct Library *UtilityBase;
-struct Library *HeliosBase;
-
-ULONG __abox__ = 1;
-const char *vers = "\0$VER:"DEVNAME" "VERSION_STR"."REVISION_STR" ("DATE") "COPYRIGHTS;
-
+struct ExecBase     *SysBase;
+struct DosLibrary   *DOSBase;
+struct Library      *UtilityBase;
+struct Library      *PCIXBase;
+struct Library      *HeliosBase;
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
-static int devReserved(void) { return 0; }
+static int DEV_Reserved(void)
+{
+    return 0;
+}
 
-static OHCI1394Device *devInit(OHCI1394Device *base,
-                               BPTR seglist,
-                               struct ExecBase *sysbase)
+static OHCI1394Device *DEV_Init(OHCI1394Device *base,
+                                BPTR seglist,
+                                struct ExecBase *sysbase)
 {
     _INFO("+ base=%lx, seglist=%lx, sysbase=%lx\n", base, seglist, sysbase);
 
@@ -173,7 +114,7 @@ static OHCI1394Device *devInit(OHCI1394Device *base,
     return NULL;
 }
 
-OHCI1394Device *devOpen(void)
+OHCI1394Device *DEV_Open(void)
 {
     LONG unit = REG_D0;
     IOHeliosHWReq  *ioreq = (APTR) REG_A1;
@@ -202,7 +143,7 @@ OHCI1394Device *devOpen(void)
         _ERR("Invalid unit number: %ld\n", unit);
         goto end;
     }
-    
+
     /* Open the unit (initialize PCI and 1394 HW at first open) */
     err = ohci_OpenUnit(base, ioreq, unit);
     if (err)
@@ -218,7 +159,7 @@ OHCI1394Device *devOpen(void)
     base->hd_Library.lib_Flags &= ~LIBF_DELEXP;
     ++base->hd_Library.lib_OpenCnt;
 
-  end:
+end:
     --base->hd_Library.lib_OpenCnt;
     ioreq->iohh_Req.io_Error = err;
 
@@ -226,7 +167,8 @@ OHCI1394Device *devOpen(void)
     return ret;
 }
 
-static BPTR internalExpunge(OHCI1394Device *base) {
+static BPTR internalExpunge(OHCI1394Device *base)
+{
     BPTR ret = 0;
 
     _INFO("+ base=%lx\n", base);
@@ -245,13 +187,13 @@ static BPTR internalExpunge(OHCI1394Device *base) {
     return ret;
 }
 
-static BPTR devExpunge(void)
+static BPTR DEV_Expunge(void)
 {
     OHCI1394Device *base = (APTR) REG_A6;
     return internalExpunge(base);
 }
 
-static BPTR devClose(void)
+static BPTR DEV_Close(void)
 {
     IOHeliosHWReq *ioreq = (APTR) REG_A1;
     OHCI1394Device *base = (APTR) REG_A6;
@@ -282,7 +224,7 @@ static BPTR devClose(void)
     return ret;
 }
 
-static void devBeginIO(void)
+static void DEV_BeginIO(void)
 {
     IOHeliosHWReq *ioreq = (APTR) REG_A1;
     OHCI1394Device *base = (APTR) REG_A6;
@@ -336,7 +278,7 @@ static void devBeginIO(void)
             case HHIOCMD_SENDPHY:
                 ret = cmdSendPhy(ioreq, unit, base);
                 break;
-                
+
             case HHIOCMD_SENDREQUEST:
                 ret = cmdSendRequest(ioreq, unit, base);
                 break;
@@ -385,7 +327,7 @@ static void devBeginIO(void)
     _INFO("- ret=%lu\n", ret);
 }
 
-static void devAbortIO(void)
+static void DEV_AbortIO(void)
 {
     IOHeliosHWReq *ioreq = (APTR) REG_A1;
     OHCI1394Device *base = (APTR) REG_A6;
@@ -412,14 +354,26 @@ static void devAbortIO(void)
     _INFO("-\n");
 }
 
-/*------------------ LIBRARY CODE SECTION -------------------------*/
+/*------------------ SYSTEM DEVICE SECTION ------------------------*/
 
-LONG NoExecute(void)
-{
-    return -1;
-}
+#include "libutils.h"
 
-const struct NoExecute
+static const ULONG devFuncTable[] =
 {
-    LONG (*NoExecuteFunc)(void);
-} NoExecuteRef __attribute__((section (".rodata"))) = { &NoExecute };
+    FUNCARRAY_BEGIN,
+
+    FUNCARRAY_32BIT_NATIVE,
+    (ULONG) DEV_Open,
+    (ULONG) DEV_Close,
+    (ULONG) DEV_Expunge,
+    (ULONG) DEV_Reserved,
+    (ULONG) DEV_BeginIO,
+    (ULONG) DEV_AbortIO,
+    -1,
+
+    FUNCARRAY_END
+};
+
+DECLARE_DEVICE(DEVNAME, OHCI1394Device,
+               devFuncTable, DEV_Init,
+               VERSION, REVISION, VSTRING, VTAG);

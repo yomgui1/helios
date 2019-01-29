@@ -47,8 +47,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "private.h"
 
-#define VSTRING LIBNAME" "VR_ST" ("DATE") "COPYRIGHTS"\r\n"
-
 struct SBP2ClassLib
 {
     struct Library      hc_Lib;

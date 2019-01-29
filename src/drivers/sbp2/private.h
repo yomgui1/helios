@@ -26,6 +26,22 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef SBP2_PRIVATE_H
 #define SBP2_PRIVATE_H
 
+#if !defined(BUILD_DATE)
+#error "BUILD_DATE are not defined but are mandatory"
+#endif
+
+#ifndef SCM_REV
+#define SCM_REV "private"
+#endif
+
+#define VERSION 50
+#define REVISION 2
+#define VR_ST "52.2"
+#define VERS    LIBNAME" "VR_ST
+#define VSTRING LIBNAME" "VR_ST" ("BUILD_DATE") "COPYRIGHTS"\r\n"
+#define VTAG "\0$VER: "LIBNAME" "VR_ST" ("BUILD_DATE") "COPYRIGHTS
+#define COPYRIGHTS "\xa9\x20Guillaume\x20Roguez\x20[" SCM_REV "]"
+
 #ifndef NDEBUG
 #   ifdef DEBUG_LIB
 #       define _INFO_LIB _INFO

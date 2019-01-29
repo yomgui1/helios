@@ -35,28 +35,21 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <utility/utility.h>
 #include <devices/timer.h>
 
-#ifndef DEVNAME
-#   define DEVNAME          "ohci1394_pci.device"
-#endif
-#ifndef VERSION
-#   define VERSION          50
-#endif
-#ifndef REVISION
-#   define REVISION         0
-#endif
-#ifndef VERSION_STR
-#   define VERSION_STR      "50"
-#endif
-#ifndef REVISION_STR
-#   define REVISION_STR     "0"
-#endif
-#ifndef DATE
-#   define DATE             __DATE__
-#endif
-#ifndef COPYRIGHTS
-#   define COPYRIGHTS       "(C) Guillaume ROGUEZ"
+#if !defined(BUILD_DATE)
+#error "BUILD_DATE are not defined but are mandatory"
 #endif
 
+#ifndef SCM_REV
+#define SCM_REV "private"
+#endif
+
+#define COPYRIGHTS "\xa9\x20Guillaume\x20Roguez\x20[" SCM_REV "]"
+#define VERSION 50
+#define REVISION 3
+#define VR_ST "50.3"
+#define VERS    DEVNAME" "VR_ST
+#define VSTRING DEVNAME" "VR_ST" ("BUILD_DATE") "COPYRIGHTS"\r\n"
+#define VTAG "\0$VER: "DEVNAME" "VR_ST" ("BUILD_DATE") "COPYRIGHTS
 
 /*----------------------------------------------------------------------------*/
 /*--- STRUCTURES SECTION -----------------------------------------------------*/

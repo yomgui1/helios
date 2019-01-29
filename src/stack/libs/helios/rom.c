@@ -213,7 +213,7 @@ QUADLET *Helios_CreateROMTagList(APTR pool, CONST struct TagItem *tags)
             CopyMemQuick(data, rom, len);
             if (len < CSR_CONFIG_ROM_SIZE)
             {
-                bzero((APTR)rom + len, len-CSR_CONFIG_ROM_SIZE);
+                bzero((APTR)rom + len, CSR_CONFIG_ROM_SIZE - len);
             }
         }
         else

@@ -60,7 +60,7 @@ DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"HELIOS"'
 
 .PHONY: sdk
 
-all: $(LIBS_DIR)/$(LIBNAME) sdk
+all: sdk $(LIBS_DIR)/$(LIBNAME)
 
 local-clean:
 	rm -vf $(LIBS_DIR)/$(LIBNAME)* $(GLUELIB) $(GEN_INCLUDES)

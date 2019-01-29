@@ -102,7 +102,8 @@ static inline void _log_APIError(CONST_STRPTR fname, CONST_STRPTR msg)
 ** Private Types and Structures
 */
 
-typedef struct PyHeliosOHCIDevice {
+typedef struct PyHeliosOHCIDevice
+{
     PyObject_HEAD
 
     struct MsgPort * Port;
@@ -129,7 +130,8 @@ static PyTypeObject PyHeliosOHCIDevice_Type;
 */
 
 static int
-all_ins(PyObject *m) {
+all_ins(PyObject *m)
+{
     /* Bus speeds */
     INSI(m, "S100", S100);
     INSI(m, "S200", S200);
@@ -163,7 +165,10 @@ loop:
     asm volatile ("mftbu %0" : "=r" (tbu) );
     asm volatile ("mftb  %0" : "=r" (tb)  );
     asm volatile ("mftbu %0" : "=r" (tbu2));
-    if (tbu != tbu2) goto loop;
+    if (tbu != tbu2)
+    {
+        goto loop;
+    }
 
     /* The slightly peculiar way of writing the next lines is
        compiled better by GCC than any other way I tried. */
@@ -194,7 +199,7 @@ static LONG do_ioreq(struct IORequest *ioreq)
         GetMsg(port);
         return 0;
     }
-    
+
     if (!CheckIO(ioreq))
     {
         AbortIO(ioreq);
@@ -222,7 +227,9 @@ ohcidev_new(PyTypeObject *type, PyObject *args)
     IOHeliosHWReq *ioreq;
 
     if (!PyArg_ParseTuple(args, "|I", &unit))
+    {
         return NULL;
+    }
 
     port = CreateMsgPort();
     if (NULL != port)
@@ -244,17 +251,23 @@ ohcidev_new(PyTypeObject *type, PyObject *args)
                 }
             }
             else
+            {
                 PyErr_Format(PyExc_SystemError, "OpenDevice(\"Helios/ohci1394_pci.device\", %lu) failed", unit);
+            }
 
             DeleteExtIO((struct IORequest *)ioreq);
         }
         else
+        {
             PyErr_SetString(PyExc_SystemError, "CreateExtIO() failed");
+        }
 
         DeleteMsgPort(port);
     }
     else
+    {
         PyErr_SetString(PyExc_SystemError, "CreateMsgPort() failed");
+    }
 
     return NULL;
 }
@@ -279,7 +292,7 @@ ohcidev_dealloc(PyHeliosOHCIDevice *self)
             DB("BUG: msg linked on itself!\n");
             break;
         }
-        
+
         oldm = msg;
     }
     DeleteMsgPort(self->Port);
@@ -293,10 +306,12 @@ ohcidev_BusReset(PyHeliosOHCIDevice *self, PyObject *args)
 {
     IOHeliosHWReq ioreq;
     ULONG isshort = TRUE;
-    
+
     if (!PyArg_ParseTuple(args, "|i", &isshort))
+    {
         return NULL;
-    
+    }
+
     copy_ioreq(self->IOReq, &ioreq, sizeof(ioreq));
 
     ioreq.iohh_Req.io_Command = HHIOCMD_BUSRESET;
@@ -310,7 +325,9 @@ ohcidev_BusReset(PyHeliosOHCIDevice *self, PyObject *args)
 
     DB("err=%d\n", ioreq.iohh_Req.io_Error);
     if (HHIOERR_NO_ERROR != ioreq.iohh_Req.io_Error)
+    {
         return PyErr_Format(PyExc_IOError, "BusReset failed");
+    }
 
     Py_RETURN_NONE;
 }
@@ -320,10 +337,12 @@ ohcidev_WritePHY(PyHeliosOHCIDevice *self, PyObject *args)
 {
     QUADLET data;
     IOHeliosHWReq ioreq;
-    
+
     if (!PyArg_ParseTuple(args, "k", &data))
+    {
         return NULL;
-    
+    }
+
     copy_ioreq(self->IOReq, &ioreq, sizeof(ioreq));
 
     ioreq.iohh_Req.io_Command = HHIOCMD_SENDPHY;
@@ -352,14 +371,16 @@ ohcidev_ReadQ(PyHeliosOHCIDevice *self, PyObject *args)
     HeliosOffset offset;
     QUADLET q = 0;
     int speed = S100;
-    
+
     if (!PyArg_ParseTuple(args, "HK|", &destid, &offset, &speed))
+    {
         return NULL;
+    }
 
     p = &ioreq.iohhe_Transaction.htr_Packet;
     Helios_FillReadQuadletPacket(p, speed & 3, offset);
     p->DestID = (destid & 0x3f) | HELIOS_LOCAL_BUS;
-    
+
     copy_ioreq(self->IOReq, &ioreq.iohhe_Req, sizeof(ioreq));
     ioreq.iohhe_Req.iohh_Req.io_Command = HHIOCMD_SENDREQUEST;
     ioreq.iohhe_Device = NULL; /* use direct call */
@@ -385,20 +406,24 @@ ohcidev_Read(PyHeliosOHCIDevice *self, PyObject *args)
     HeliosOffset offset;
     PyObject *buffer;
     int speed = S100;
-    
+
     if (!PyArg_ParseTuple(args, "HKH|i", &destid, &offset, &len, &speed))
+    {
         return NULL;
+    }
 
     buffer = PyString_FromStringAndSize(NULL, len);
     if (NULL == buffer)
+    {
         return NULL;
+    }
 
     memset(PyString_AS_STRING(buffer), 0, len);
 
     p = &ioreq.iohhe_Transaction.htr_Packet;
     Helios_FillReadBlockPacket(p, speed & 3, offset, len);
     p->DestID = (destid & 0x3f) | HELIOS_LOCAL_BUS;
-    
+
     copy_ioreq(self->IOReq, &ioreq.iohhe_Req, sizeof(ioreq));
     ioreq.iohhe_Req.iohh_Req.io_Command = HHIOCMD_SENDREQUEST;
     ioreq.iohhe_Device = NULL; /* use direct call */
@@ -426,12 +451,14 @@ ohcidev_WriteQ(PyHeliosOHCIDevice *self, PyObject *args)
     int speed = S100;
 
     if (!PyArg_ParseTuple(args, "HKk|i", &destid, &offset, &q, &speed))
+    {
         return NULL;
+    }
 
     p = &ioreq.iohhe_Transaction.htr_Packet;
     Helios_FillWriteQuadletPacket(p, speed & 3, offset, q);
     p->DestID = (destid & 0x3f) | HELIOS_LOCAL_BUS;
-    
+
     copy_ioreq(self->IOReq, &ioreq.iohhe_Req, sizeof(ioreq));
     ioreq.iohhe_Req.iohh_Req.io_Command = HHIOCMD_SENDREQUEST;
     ioreq.iohhe_Device = NULL; /* use direct call */
@@ -471,15 +498,15 @@ static PyTypeObject PyHeliosOHCIDevice_Type =
 {
     PyObject_HEAD_INIT(NULL)
 
-    tp_name         : "helios.OHCIDevice",
-    tp_basicsize    : sizeof(PyHeliosOHCIDevice_Type),
-    tp_flags        : Py_TPFLAGS_DEFAULT,
-    tp_doc          : PyHeliosOHCIDevice_Type__doc__,
+tp_name         : "helios.OHCIDevice",
+tp_basicsize    : sizeof(PyHeliosOHCIDevice_Type),
+tp_flags        : Py_TPFLAGS_DEFAULT,
+tp_doc          : PyHeliosOHCIDevice_Type__doc__,
 
-    tp_new          : (newfunc) ohcidev_new,
-    tp_dealloc      : (destructor) ohcidev_dealloc,
+tp_new          : (newfunc) ohcidev_new,
+tp_dealloc      : (destructor) ohcidev_dealloc,
 
-    tp_methods      : ohcidev_methods,
+tp_methods      : ohcidev_methods,
 };
 
 
@@ -489,7 +516,8 @@ static PyTypeObject PyHeliosOHCIDevice_Type =
 ** List of functions exported by this module reside here
 */
 
-static PyMethodDef module_methods[] = {
+static PyMethodDef module_methods[] =
+{
     {NULL, NULL} /* Sentinel */
 };
 
@@ -501,7 +529,8 @@ PyDoc_STRVAR(module__doc__, "This module provides a complete binding to the IEEE
 */
 
 void
-PyMorphOS_TermModule(void) {
+PyMorphOS_TermModule(void)
+{
     DB("Closing module...\n");
 
     if (NULL != HeliosBase)
@@ -519,14 +548,23 @@ INITFUNC(void)
     PyObject *m;
 
     HeliosBase = OpenLibrary("helios.library", 0);
-    if (!HeliosBase) return;
+    if (!HeliosBase)
+    {
+        return;
+    }
 
-    if (PyType_Ready(&PyHeliosOHCIDevice_Type) < 0) return;
+    if (PyType_Ready(&PyHeliosOHCIDevice_Type) < 0)
+    {
+        return;
+    }
 
     /* Module creation/initialization */
     m = Py_InitModule3(MODNAME, module_methods, module__doc__);
 
-    if (all_ins(m)) return;
+    if (all_ins(m))
+    {
+        return;
+    }
 
     ADD_TYPE(m, "OHCIDev", &PyHeliosOHCIDevice_Type);
 }

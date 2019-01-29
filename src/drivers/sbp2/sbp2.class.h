@@ -51,8 +51,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 struct SBP2ClassLib
 {
-	struct Library      hc_Lib;
-	BPTR                hc_SegList;
+    struct Library      hc_Lib;
+    BPTR                hc_SegList;
     LOCK_VARIABLE;
     APTR                hc_MemPool;
     struct ExecBase *   hc_SysBase;

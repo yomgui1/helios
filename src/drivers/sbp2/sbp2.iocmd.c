@@ -587,7 +587,9 @@ send_cmd:
             FreeVec(sensedata);
         }
         else
+        {
             cmd->scsi_Actual = scsicmd10.scsi_Actual;
+        }
 
         cmd->scsi_CmdActual = scsicmd10.scsi_CmdActual;
         cmd->scsi_Status = scsicmd10.scsi_Status;
@@ -635,7 +637,7 @@ LONG sbp2_iocmd_start_stop(SBP2Unit *unit, struct IOStdReq *ioreq)
             cmd6[4] = ioreq->io_Length ? 0x03 : 0x02;
             break;
     }
-    
+
     _INFO_SCSI("do SCSI_DA_START_STOP_UNIT...\n");
     ioreq->io_Error = sbp2_do_scsi_cmd(unit, &scsicmd, ORB_TIMEOUT);
     return ioreq->io_Error;
@@ -686,7 +688,9 @@ LONG sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
     if (unit->u_OneBlockSize < unit->u_BlockSize)
     {
         if (NULL != unit->u_OneBlock)
+        {
             FreePooled(unit->u_SBP2ClassBase->hc_MemPool, unit->u_OneBlock, unit->u_OneBlockSize);
+        }
         unit->u_OneBlock = AllocPooled(unit->u_SBP2ClassBase->hc_MemPool, unit->u_BlockSize);
         if (NULL == unit->u_OneBlock)
         {
@@ -731,7 +735,9 @@ LONG sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
         {
             /* now limit xfert size to the block size */
             if (datalen > unit->u_BlockSize - insideblockoffset)
+            {
                 datalen = unit->u_BlockSize - insideblockoffset;
+            }
 
             scsicmd.scsi_Data = (UWORD *) unit->u_OneBlock;
             scsicmd.scsi_Length = unit->u_BlockSize;
@@ -758,7 +764,9 @@ LONG sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
             if (((ULONG)&unit->u_OneBlock[insideblockoffset] & 3) ||
                 ((ULONG)&(((UBYTE *) ioreq->io_Data)[dataoffset]) & 3) ||
                 (datalen & 3))
+            {
                 _WARN("CopyMemQuick() will fails\n");
+            }
             CopyMemQuick(&unit->u_OneBlock[insideblockoffset],
                          &(((UBYTE *) ioreq->io_Data)[dataoffset]),
                          datalen);
@@ -846,7 +854,9 @@ LONG sbp2_iocmd_write64(SBP2Unit *unit, struct IOStdReq *ioreq)
     if (unit->u_OneBlockSize < unit->u_BlockSize)
     {
         if (NULL != unit->u_OneBlock)
+        {
             FreePooled(unit->u_SBP2ClassBase->hc_MemPool, unit->u_OneBlock, unit->u_OneBlockSize);
+        }
         unit->u_OneBlock = AllocPooled(unit->u_SBP2ClassBase->hc_MemPool, unit->u_BlockSize);
         if (NULL == unit->u_OneBlock)
         {
@@ -875,7 +885,9 @@ LONG sbp2_iocmd_write64(SBP2Unit *unit, struct IOStdReq *ioreq)
         {
             /* now limit xfert size to the block size */
             if (datalen > unit->u_BlockSize - insideblockoffset)
+            {
                 datalen = unit->u_BlockSize - insideblockoffset;
+            }
 
             scsicmd.scsi_Data = (UWORD *) unit->u_OneBlock;
             scsicmd.scsi_Length = unit->u_BlockSize;
@@ -991,7 +1003,9 @@ LONG sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
     length = MIN(ioreq->io_Length, sizeof(struct DriveGeometry));
 
     if (unit->u_Geometry.dg_Cylinders > 0)
+    {
         goto geo_ok;
+    }
 
 #if 0
     if (sbp2_scsi_read_capacity(unit, dev))
@@ -1021,7 +1035,9 @@ LONG sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
             gotsect = TRUE;
 
             if (!unit->u_Geometry.dg_Cylinders)
+            {
                 unit->u_Geometry.dg_Cylinders = unit->u_Geometry.dg_TotalSectors;
+            }
         }
     }
 
@@ -1055,7 +1071,9 @@ LONG sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
                     unit->u_BlockSize = unit->u_Geometry.dg_SectorSize = (unit->u_ModePageBuf[6] << 8) + unit->u_ModePageBuf[7];
                     unit->u_BlockShift = 0;
                     while ((1ul << unit->u_BlockShift) < unit->u_BlockSize)
+                    {
                         unit->u_BlockShift++;
+                    }
 
                     _ERR("Capacity: %lu blocks of %lu bytes\n", unit->u_Geometry.dg_TotalSectors, unit->u_BlockSize);
                 }
@@ -1068,8 +1086,8 @@ LONG sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
 #endif
 
     _INFO("Capacity (temp): Cylinders=%lu, Heads=%lu, TrackSectors=%u\n",
-           unit->u_Geometry.dg_Cylinders, unit->u_Geometry.dg_Heads,
-           unit->u_Geometry.dg_TrackSectors);
+          unit->u_Geometry.dg_Cylinders, unit->u_Geometry.dg_Heads,
+          unit->u_Geometry.dg_TrackSectors);
 
     /* missing total sectors? */
     if ((!gotblks) && gotcyl && gotheads && gotsect)
@@ -1103,7 +1121,7 @@ LONG sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
      * though the total number of blocks is correct.
      */
     if (((unit->u_Geometry.dg_Cylinders == 500) && (unit->u_Geometry.dg_TrackSectors == 32) && (unit->u_Geometry.dg_Heads == 8)) ||
-       ((unit->u_Geometry.dg_Cylinders == 16383) && (unit->u_Geometry.dg_TrackSectors == 63) && (unit->u_Geometry.dg_Heads == 16)))
+        ((unit->u_Geometry.dg_Cylinders == 16383) && (unit->u_Geometry.dg_TrackSectors == 63) && (unit->u_Geometry.dg_Heads == 16)))
     {
         _ERR("Firmware returns known bogus geometry, will fall back to faked geometry!\n");
         gotheads = gotcyl = gotsect = FALSE;
@@ -1111,17 +1129,27 @@ LONG sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
 
     /* missing more than one? */
     if (gotblks && !(gotheads && gotcyl && gotsect))
+    {
         sbp2_fakegeometry(unit);
+    }
 
     if (!gotcylsect)
+    {
         unit->u_Geometry.dg_CylSectors = unit->u_Geometry.dg_TrackSectors * unit->u_Geometry.dg_Heads;
+    }
 
     if (unit->u_DeviceType == PDT_SIMPLE_DIRECT_ACCESS)
+    {
         unit->u_Geometry.dg_DeviceType = DG_DIRECT_ACCESS;
+    }
     else if (unit->u_DeviceType < 10)
+    {
         unit->u_Geometry.dg_DeviceType = unit->u_DeviceType;
+    }
     else
+    {
         unit->u_Geometry.dg_DeviceType = DG_UNKNOWN;
+    }
 
     unit->u_Geometry.dg_Flags = unit->u_Flags.Removable ? DGF_REMOVABLE : 0;
     unit->u_Geometry.dg_BufMemType = MEMF_PUBLIC;

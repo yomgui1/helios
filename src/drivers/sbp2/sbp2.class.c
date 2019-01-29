@@ -188,21 +188,27 @@ struct Library* LIB_Init(SBP2ClassLib *base,
                     base->hc_DevBase->dv_SBP2ClassBase = base;
                     return &base->hc_Lib;
                 }
-                    
+
                 CloseLibrary(UtilityBase);
             }
             else
+            {
                 SysError_NeedLibrary("utility.library", 39);
+            }
 
             CloseLibrary((struct Library *)DOSBase);
         }
         else
+        {
             SysError_NeedLibrary("dos.library", 39);
+        }
 
         DeletePool(base->hc_MemPool);
     }
     else
+    {
         _ERR("CreatePool() failed\n");
+    }
 
     FreeMem((APTR)((ULONG)(base) - (ULONG)(base->hc_Lib.lib_NegSize)),
             base->hc_Lib.lib_NegSize + base->hc_Lib.lib_PosSize);
@@ -228,15 +234,21 @@ struct Library* LIB_Open(void)
 
         base->hc_HeliosBase = OpenLibrary(HELIOS_LIBNAME, HELIOS_LIBVERSION);
         if (NULL != base->hc_HeliosBase)
+        {
             return &base->hc_Lib;
+        }
         else
+        {
             SysError_NeedLibrary(HELIOS_LIBNAME, HELIOS_LIBVERSION);
+        }
 
         --base->hc_Lib.lib_OpenCnt;
         base->hc_Lib.lib_Flags |= LIBF_DELEXP;
     }
     else
+    {
         return &base->hc_Lib;
+    }
 
     return NULL;
 }
@@ -251,14 +263,18 @@ ULONG LIB_Close(void)
     UNLOCK_REGION(base);
 
     if (cnt > 0)
+    {
         _INFO_LIB("Not yet, OpenCount=%ld\n", base->hc_Lib.lib_OpenCnt);
+    }
     else
     {
         CloseLibrary(base->hc_HeliosBase);
         base->hc_HeliosBase = NULL;
 
         if (base->hc_Lib.lib_Flags & LIBF_DELEXP)
+        {
             return LibExpunge(base);
+        }
 
         _INFO_LIB("Ready for expunge\n");
     }

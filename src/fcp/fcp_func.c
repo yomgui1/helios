@@ -32,7 +32,7 @@ typedef struct FCPCommandNode
 {
     struct MinNode SysNode;
     ULONG          Length;
-    QUADLET *      Cmd;   
+    QUADLET *      Cmd;
 } FCPCommandNode;
 
 UWORD fcp_ComputResponseTimeStamp(HeliosPacket *request, UWORD offset)
@@ -41,11 +41,15 @@ UWORD fcp_ComputResponseTimeStamp(HeliosPacket *request, UWORD offset)
 
     timestamp = (request->TimeStamp & 0x1fff) + offset;
     /* 13bit overflow => add one second */
-    if (timestamp >= 8000) {
+    if (timestamp >= 8000)
+    {
         timestamp -= 8000;
         timestamp += (request->TimeStamp & ~0x1fff) + 0x2000;
-    } else
+    }
+    else
+    {
         timestamp += (request->TimeStamp & ~0x1fff);
+    }
     return timestamp;
 }
 
@@ -61,7 +65,8 @@ void fcp_RequestHandler(HeliosBus *    bus,
     LONG length = 0, rcode = HELIOS_RCODE_TYPE_ERROR;
     UWORD timestamp = 0;
 
-    if (!no_response) {
+    if (!no_response)
+    {
         Helios_FillResponseFromRequest(request, response, rcode, timestamp, payload, length);
         Helios_SendResponse(bus, response);
     }
@@ -80,7 +85,8 @@ void fcp_ResponseHandler(HeliosBus *    bus,
     UBYTE tcode;
 
     tcode = request->TCode;
-    switch (tcode) {
+    switch (tcode)
+    {
         case TCODE_WRITE_BLOCK_REQUEST:
             data = &HELIOS_GET_QDATA(request);
             length = 4;
@@ -98,15 +104,19 @@ void fcp_ResponseHandler(HeliosBus *    bus,
             rcode = HELIOS_RCODE_TYPE_ERROR;
     }
 
-    if (NULL != data) {
+    if (NULL != data)
+    {
         FCPCommand *cmd = REMHEAD(cmdlist);
 
-        if (NULL != cmd) {
-        } else
+        if (NULL != cmd)
+        {
+        }
+        else
             rcode = HELIOS_RCODE_DATA_ERROR
-    }
+        }
 
-    if (!no_response) {
+    if (!no_response)
+    {
         UWORD timestamp = fcp_ComputResponseTimeStamp(request, 0x4000);
 
         Helios_FillResponseFromRequest(request, response, rcode, timestamp, NULL, 0);

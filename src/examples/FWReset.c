@@ -84,9 +84,13 @@ int main(int argc, char **argv)
     if (NULL != rdargs)
     {
         if (NULL != args.hwno)
+        {
             hwno = *args.hwno;
+        }
         if (NULL != args.nodeid)
+        {
             nodeid = *args.nodeid;
+        }
     }
     else
     {
@@ -118,7 +122,9 @@ int main(int argc, char **argv)
                                                  TAG_DONE))
                         {
                             if (value == nodeid)
+                            {
                                 break;
+                            }
                         }
 
                         Helios_ReleaseDevice(dev);
@@ -139,10 +145,14 @@ int main(int argc, char **argv)
             Helios_ReleaseDevice(dev);
         }
         else
+        {
             res = RETURN_FAIL;
+        }
 
         if (NULL != hw)
+        {
             Helios_ReleaseHardware(hw);
+        }
 
         CloseLibrary(HeliosBase);
     }

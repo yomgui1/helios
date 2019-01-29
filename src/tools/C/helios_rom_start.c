@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     struct Library *HeliosBase;
     struct Task *task;
     LONG result=-1;
-    
+
     task = FindTask(NULL);
     task->tc_UserData = (APTR)0x837105; /* The magic key */
 
@@ -44,12 +44,14 @@ int main(int argc, char **argv)
     if (NULL != HeliosBase)
     {
         ULONG cnt;
-        
+
         Helios_AddClass("Helios/sbp2.class", 50);
-        
+
         for (cnt=0; cnt<MAX_HW_UNITS; cnt++)
+        {
             Helios_AddHardware("Helios/ohci1394_pci.device", cnt);
-        
+        }
+
         CloseLibrary(HeliosBase);
         result = 0;
     }

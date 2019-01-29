@@ -82,12 +82,18 @@ STRPTR utils_DupStr(APTR pool, CONST_STRPTR src)
     STRPTR dest;
 
     if (NULL != pool)
+    {
         dest = AllocVecPooled(pool, len);
+    }
     else
+    {
         dest = AllocVec(len, MEMF_PUBLIC);
+    }
 
     if (NULL != dest)
+    {
         CopyMem((STRPTR)src, dest, len);
+    }
 
     return dest;
 }

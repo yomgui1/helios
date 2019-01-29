@@ -29,7 +29,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define FRAME_COUNT 2
 #define FRAME_BUFFER_LENGTH (FRAME_MAX_WIDTH*FRAME_MAX_HEIGHT*FRAME_PIXEL_BYTELENGTH)
 
-typedef struct MCCData {
+typedef struct MCCData
+{
     Object * RingBufferObj;
     UBYTE *  FrameBuffer;
     UBYTE *  DisplayedFrame;
@@ -48,24 +49,33 @@ static ULONG mNew(struct IClass *cl, Object *obj, struct opSet *msg)
     struct TagItem *tag, *tags = msg->ops_AttrList;
 
     obj = (Object *) DoSuperMethodA(cl, obj, msg);
-    if (NULL == obj) return 0;
+    if (NULL == obj)
+    {
+        return 0;
+    }
 
     data = INST_DATA(cl, obj);
     memset(data, 0, sizeof(*data));
 
     /* parse initial taglist */
-    while ((tag = NextTagItem(&tags)) != NULL) {
-        switch (tag->ti_Tag) {
+    while ((tag = NextTagItem(&tags)) != NULL)
+    {
+        switch (tag->ti_Tag)
+        {
         }
     }
 
+    // *INDENT-OFF*
     data->RingBufferObj = RingBufferObject,
         MA_RingBuffer_Length, RINGBUFFER_LENGTH,
     End;
+    // *INDENT-ON*
 
-    if (NULL != data->RingBufferObj) {
+    if (NULL != data->RingBufferObj)
+    {
         data->FrameBuffer = AllocMem(FRAME_COUNT * FRAME_BUFFER_LENGTH, MEMF_PUBLIC);
-        if (NULL != data->FrameBuffer) {
+        if (NULL != data->FrameBuffer)
+        {
             data->DisplayedFrame = data->FrameBuffer;
             data->ModifiedFrame = data->FrameBuffer + FRAME_BUFFER_LENGTH;
 
@@ -82,10 +92,14 @@ static ULONG mDispose(struct IClass *cl, Object *obj, Msg msg)
     MCCData *data = INST_DATA(cl, obj);
 
     if (NULL != data->FrameBuffer)
+    {
         FreeMem(data->FrameBuffer, FRAME_COUNT * FRAME_BUFFER_LENGTH);
+    }
 
     if (NULL != data->RingBufferObj)
+    {
         MUI_DisposeObject(data->RingBufferObj);
+    }
 
     return DoSuperMethodA(cl, obj, msg);
 }
@@ -102,12 +116,14 @@ static ULONG mProcess(struct IClass *cl, Object *obj, struct MUIP_Process_Proces
     myproc->pr_WindowPtr = (APTR) -1;
 
     data_ready = AllocSignal(-1);
-    if (-1 == data_ready) {
+    if (-1 == data_ready)
+    {
         ObtainSemaphore((struct SignalSemaphore *) obj);
         data->DataReadySignal = data_ready;
         ReleaseSemaphore((struct SignalSemaphore *) obj);
 
-        while (!*msg->kill) {
+        while (!*msg->kill)
+        {
             ULONG sig = 0;
 
             sig = Wait(SIGBREAKF_CTRL_C | data_ready);
@@ -130,7 +146,9 @@ static ULONG mPush(struct IClass *cl, Object *obj, struct MP_Decoder_Push *msg)
 
     /* Need to detect where a StartOfFrame starts ? */
     if (NULL != msg->SOF)
+    {
         *msg->SOF = (0 == (msg->Buffer[0] >> 5)) && (0 == (msg->Buffer[1] >> 4));
+    }
 
     return DoMethod(data->RingBufferObj, MM_RingBuffer_Write, msg->Buffer, msg->Length);
 }
@@ -138,7 +156,8 @@ static ULONG mPush(struct IClass *cl, Object *obj, struct MP_Decoder_Push *msg)
 
 DISPATCHER(MyMCC)
 {
-    switch (msg->MethodID) {
+    switch (msg->MethodID)
+    {
         case OM_NEW               : mNew(cl, obj, (APTR) msg);
         case OM_DISPOSE           : mDispose(cl, obj, (APTR) msg);
         case MUIM_Process_Process : return mProcess(cl, obj, (APTR) msg);

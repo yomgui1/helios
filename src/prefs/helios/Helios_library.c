@@ -53,23 +53,23 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 //#include "BoardList_class.h"
 
-#define CLASS				MUIC_HeliosPrefs
-#define SUPERCLASS			MUIC_Group
+#define CLASS               MUIC_HeliosPrefs
+#define SUPERCLASS          MUIC_Group
 
-#define	Data				HeliosPrefs_Data
-#define	_Dispatcher			HeliosPrefs_dispatch
+#define Data                HeliosPrefs_Data
+#define _Dispatcher         HeliosPrefs_dispatch
 
-#define UserLibID			"$VER: " MUIC_HeliosPrefs " " LIB_REV_STRING " (" LIB_DATE ") " LIB_COPYRIGHT "\0\0"
-#define MASTERVERSION	    19
+#define UserLibID           "$VER: " MUIC_HeliosPrefs " " LIB_REV_STRING " (" LIB_DATE ") " LIB_COPYRIGHT "\0\0"
+#define MASTERVERSION       19
 
 #define PreClassInit
 #define PostClassExit
 
-#define	LIBQUERYCLASS			QUERYCLASS_PREFSCLASS
-#define	LIBQUERYID			    CLASS " " LIB_REV_STRING " (" LIB_DATE ") " LIB_COPYRIGHT
-#define	LIBQUERYSUBCLASS		QUERYSUBCLASS_PREFSCLASS_DEVICES
-#define	LIBQUERYSUBCLASSPRI		994
-#define	LIBQUERYDESCRIPTION		"Helios System Prefs"
+#define LIBQUERYCLASS           QUERYCLASS_PREFSCLASS
+#define LIBQUERYID              CLASS " " LIB_REV_STRING " (" LIB_DATE ") " LIB_COPYRIGHT
+#define LIBQUERYSUBCLASS        QUERYSUBCLASS_PREFSCLASS_DEVICES
+#define LIBQUERYSUBCLASSPRI     994
+#define LIBQUERYDESCRIPTION     "Helios System Prefs"
 
 struct Library *LocaleBase;
 struct Library *HeliosBase;
@@ -86,15 +86,18 @@ BOOL PreClassInitFunc(void)
 {
     HeliosBase = OpenLibrary("helios.library", 50);
     if (NULL != HeliosBase)
+    {
         return FALSE;
+    }
 
-    if (!SetupClasses()) {
+    if (!SetupClasses())
+    {
         CloseLibrary(HeliosBase);
         return FALSE;
     }
 
-  	LocaleBase = OpenLibrary("locale.library", 40);
-  	//OpenHeliosCatalog();
+    LocaleBase = OpenLibrary("locale.library", 40);
+    //OpenHeliosCatalog();
 
     return TRUE;
 }
@@ -104,12 +107,16 @@ VOID PostClassExitFunc(void)
     CleanupClasses();
 
     if (HeliosBase)
+    {
         CloseLibrary(HeliosBase);
+    }
 
     //CloseHeliosCatalog();
 
     if (LocaleBase)
+    {
         CloseLibrary(LocaleBase);
+    }
 }
 
 

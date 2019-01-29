@@ -38,21 +38,22 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <string.h>
 
-#define SELFID_PORT_CHILD	0x3
-#define SELFID_PORT_PARENT	0x2
-#define SELFID_PORT_NCONN	0x1
-#define SELFID_PORT_NOPORT	0x0
+#define SELFID_PORT_CHILD   0x3
+#define SELFID_PORT_PARENT  0x2
+#define SELFID_PORT_NCONN   0x1
+#define SELFID_PORT_NOPORT  0x0
 
 /* Bits definition of Self-ID packets */
 typedef union SelfIDPkt
 {
     QUADLET Value;
 
-    struct {
+    struct
+    {
         QUADLET PckID:2;        // should be 2
         QUADLET PhyID:6;        // Physical ID
         QUADLET Type:1;         // Packet type: 0 for packets #0, 1 for extended packets (#2, #3, #4)
-                                // As it's a packet type #0 structure, should always be 0
+        // As it's a packet type #0 structure, should always be 0
         QUADLET ActiveLink:1;   // Active Link and Transaction Layer flag
         QUADLET GapCount:6;     // Gap count
         QUADLET PhySpeed:2;     // Speed capabilities
@@ -66,11 +67,12 @@ typedef union SelfIDPkt
         QUADLET More:1;         // Nex packet should be a extended packet for this node
     } Packet0;
 
-    struct {
+    struct
+    {
         QUADLET PckID:2;        // should be 2
         QUADLET PhyID:6;        // Physical ID
         QUADLET Type:1;         // Packet type: 0 for packets #0, 1 for extended packets (#2, #3, #4)
-                                // As it's a packet type #0 structure, should always be 0
+        // As it's a packet type #0 structure, should always be 0
         QUADLET N:3;            // Extended Self-ID packet sequence number (0..2 defined, others are reserved)
         QUADLET Pa:2;           // Port Status, port  3+N*8
         QUADLET Pb:2;           //     ''     , port  4+N*8
@@ -92,10 +94,10 @@ typedef union SelfIDPkt
 
 static SelfIDPkt * topo_count_ports(SelfIDPkt *sid, ULONG *total_port_count, ULONG *child_port_count)
 {
-	ULONG shift, seq;
+    ULONG shift, seq;
 
-	*total_port_count = 0;
-	*child_port_count = 0;
+    *total_port_count = 0;
+    *child_port_count = 0;
 
     /* We should start with a Packet #0 */
     if (0 != sid->Packet0.Type)
@@ -104,14 +106,14 @@ static SelfIDPkt * topo_count_ports(SelfIDPkt *sid, ULONG *total_port_count, ULO
         return NULL;
     }
 
-	shift = 6; /* p0 */
-	seq = 0;
+    shift = 6; /* p0 */
+    seq = 0;
 
     for (;;)
     {
-		ULONG status = (sid->Value >> shift) & 3;
+        ULONG status = (sid->Value >> shift) & 3;
 
-		switch (status)
+        switch (status)
         {
             case SELFID_PORT_CHILD:
                 (*child_port_count)++;
@@ -120,28 +122,30 @@ static SelfIDPkt * topo_count_ports(SelfIDPkt *sid, ULONG *total_port_count, ULO
                 (*total_port_count)++;
             case SELFID_PORT_NOPORT:
                 break;
-		}
+        }
 
-		shift -= 2;
-		if (0 == shift)
+        shift -= 2;
+        if (0 == shift)
         {
             /* No more than 3 ports (i.e. no more packets for one node) ? */
-			if (!sid->Packet0.More)
-				return sid + 1;
-
-			shift = 16; /* p3 and p11 */
-			sid++;
-
-            /* Check for consistency over packets */
-			if ((seq > 2) || (1 != sid->PacketN.Type) || (seq != sid->PacketN.N))
+            if (!sid->Packet0.More)
             {
-                _ERR("SelfID packet inconsistency\n");
-				return NULL;
+                return sid + 1;
             }
 
-			seq++;
-		}
-	}
+            shift = 16; /* p3 and p11 */
+            sid++;
+
+            /* Check for consistency over packets */
+            if ((seq > 2) || (1 != sid->PacketN.Type) || (seq != sid->PacketN.N))
+            {
+                _ERR("SelfID packet inconsistency\n");
+                return NULL;
+            }
+
+            seq++;
+        }
+    }
 }
 
 static HeliosNode *topo_fill_node(HeliosTopology *topo, SelfIDPkt *sid, UBYTE phy_id, ULONG port_count)
@@ -185,20 +189,27 @@ static void topo_compute_hop_count(HeliosTopology *topo, HeliosNode *node)
     for (i=0; i < node->n_PortCount; i++)
     {
         if (node->n_Ports[i] < 0)
+        {
             continue;
+        }
 
         child = &topo->ht_Nodes[node->n_Ports[i]];
 
         if (child->n_MaxHops > max_hops)
+        {
             max_hops = child->n_MaxHops;
+        }
 
         /* get the two maximal depths */
-        if (child->n_MaxDepth > max_depths[0]) {
+        if (child->n_MaxDepth > max_depths[0])
+        {
             max_depths[1] = max_depths[0];
             max_depths[0] = child->n_MaxDepth;
         }
         else if (child->n_MaxDepth > max_depths[1])
+        {
             max_depths[1] = child->n_MaxDepth;
+        }
     }
 
     node->n_MaxDepth = max_depths[0] + 1;
@@ -217,7 +228,8 @@ static void topo_set_max_speed(HeliosTopology *topo,
         current->n_MaxSpeed = MIN(parent->n_MaxSpeed, current->n_PhySpeed);
     }
     else
-    { /* root node (no parent) */
+    {
+        /* root node (no parent) */
         current->n_MaxSpeed = current->n_PhySpeed;
     }
 
@@ -235,11 +247,15 @@ static void topo_set_max_speed(HeliosTopology *topo,
         HeliosNode *child;
 
         if (current->n_Ports[i] < 0)
+        {
             continue;
+        }
 
         child = &topo->ht_Nodes[current->n_Ports[i]];
         if (child == parent)
+        {
             continue;
+        }
 
         topo_set_max_speed(topo, child, current);
     }
@@ -260,11 +276,15 @@ static void topo_for_each_node(OHCI1394Unit *unit,
         HeliosNode *child;
 
         if (node->n_Ports[i] < 0)
+        {
             continue;
+        }
 
         child = &unit->hu_Topology->ht_Nodes[node->n_Ports[i]];
         if (child == parent)
+        {
             continue;
+        }
 
         topo_for_each_node(unit, child, node, func);
     }
@@ -280,11 +300,15 @@ static void topo_compare_trees(OHCI1394Unit *unit,
 
     /* Inform the devices layer */
     if (!previous->n_Flags.LinkOn && current->n_Flags.LinkOn)
+    {
         dev_OnNewNode(unit, current);
+    }
     else
     {
         if (previous->n_Flags.LinkOn && !current->n_Flags.LinkOn)
+        {
             dev_OnRemovedNode(unit, previous);
+        }
         else
         {
             current->n_Device = previous->n_Device;
@@ -303,13 +327,17 @@ static void topo_compare_trees(OHCI1394Unit *unit,
 
         /* NOT CONNECTED */
         if (-1 == curr_id)
+        {
             continue;
+        }
 
         child = &node_array[curr_id];
 
         /* PARENT NODE */
         if (child == parent)
+        {
             continue;
+        }
 
         /* PORT WASN'T EXIST BEFORE */
         prev_id = previous->n_Ports[i];
@@ -355,7 +383,9 @@ void ohci_ResetTopology(OHCI1394Unit *unit)
         unit->hu_Topology = NULL;
     }
     if (NULL != unit->hu_OldTopology)
+    {
         unit->hu_OldTopology->ht_NodeCount = 0;
+    }
 }
 
 /* WARNING: w-lock unit before call */
@@ -364,9 +394,11 @@ void ohci_InvalidTopology(OHCI1394Unit *unit)
     if (NULL != unit->hu_Topology)
     {
         if (NULL != unit->hu_OldTopology)
+        {
             FreePooled(unit->hu_MemPool, unit->hu_OldTopology, sizeof(HeliosTopology));
+        }
 
-        unit->hu_OldTopology = unit->hu_Topology;        
+        unit->hu_OldTopology = unit->hu_Topology;
         unit->hu_Topology = NULL; /* will be regenerated later */
     }
 }
@@ -413,16 +445,20 @@ BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid
          */
         next_sid = topo_count_ports(sid, &port_count, &child_port_count);
         if (NULL == next_sid)
+        {
             goto failed;
+        }
 
         /* Check if the PhyIDs sequence is logical */
-        if (phy_id != sid->Packet0.PhyID) {
+        if (phy_id != sid->Packet0.PhyID)
+        {
             _ERR_UNIT(unit, "Bad phy_id in SelfID packet: get %u, expected %u\n", sid->Packet0.PhyID, phy_id);
             goto failed;
         }
 
         /* Children nodes stack shall be suffisently filled */
-        if (child_port_count > stack_idx) {
+        if (child_port_count > stack_idx)
+        {
             _ERR_UNIT(unit, "Topology stack underflow!\n");
             goto failed;
         }
@@ -437,10 +473,14 @@ BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid
 
         /* Identify special nodes */
         if (phy_id == local_phyid)
-			topo->ht_LocalNodeID = phy_id;
+        {
+            topo->ht_LocalNodeID = phy_id;
+        }
 
-		if (sid->Packet0.Contender)
-			topo->ht_IRMNodeID = phy_id;
+        if (sid->Packet0.Contender)
+        {
+            topo->ht_IRMNodeID = phy_id;
+        }
 
         parent_count = FALSE;
         memset(node->n_Ports, -1, sizeof(node->n_Ports));
@@ -462,7 +502,7 @@ BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid
                     /* Associate nodes */
                     node->n_Ports[i-1] = child->n_PhyID;
                     child->n_Ports[child->n_ParentPort] = phy_id;
-                    break;                    
+                    break;
             }
         }
 
@@ -475,13 +515,19 @@ BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid
         }
 
         if (parent_count > 0)
+        {
             stack[stack_idx++] = node;
+        }
         else /* it's the root node */
+        {
             topo->ht_RootNodeID = phy_id;
+        }
 
         /* Use an invalid gap count when PHY layer reports differents gap counts */
         if (sid->Packet0.GapCount != bus_gapcount)
+        {
             gap_count = 0;
+        }
 
         /* Computing the maximal hop count for this node */
         topo_compute_hop_count(topo, node);
@@ -530,7 +576,7 @@ BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid
             if (old_count > 0)
             {
                 ULONG i;
-            
+
                 /* Compare previous and new topology trees and set Updated node flags when needed */
                 topo_compare_trees(unit,
                                    &topo->ht_Nodes[topo->ht_LocalNodeID],
@@ -543,7 +589,9 @@ BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid
                     HeliosNode *node = &unit->hu_OldTopology->ht_Nodes[i];
 
                     if (NULL != node->n_Device)
+                    {
                         dev_OnRemovedNode(unit, node);
+                    }
                 }
             }
             else
@@ -552,7 +600,7 @@ BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid
 
                 /* Remove everythings (possible if non-consecutives BR happen) */
                 ForeachNodeSafe(&unit->hu_Devices, dev, next)
-                    Helios_RemoveDevice(dev);
+                Helios_RemoveDevice(dev);
 
                 /* Create devices from the new nodes list */
                 topo_for_each_node(unit, &topo->ht_Nodes[topo->ht_LocalNodeID], NULL, dev_OnNewNode);

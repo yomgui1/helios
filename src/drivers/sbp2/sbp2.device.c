@@ -79,21 +79,21 @@ const ULONG devFuncTable[] =
 
 static struct TagItem QueryTags[] =
 {
-	{QUERYINFOATTR_NAME, (ULONG) DEVNAME},
-	{QUERYINFOATTR_IDSTRING, (ULONG) VSTRING},
+    {QUERYINFOATTR_NAME, (ULONG) DEVNAME},
+    {QUERYINFOATTR_IDSTRING, (ULONG) VSTRING},
     {QUERYINFOATTR_COPYRIGHT, (ULONG) "(c) 2008-2010 by Guillaume ROGUEZ"},
     {QUERYINFOATTR_AUTHOR, (ULONG) "Guillaume ROGUEZ"},
     {QUERYINFOATTR_RELEASETAG, (ULONG) "beta"},
-	{QUERYINFOATTR_DESCRIPTION, (ULONG) "SBP2 class for Helios"},
-	{QUERYINFOATTR_VERSION, VERSION},
-	{QUERYINFOATTR_REVISION, REVISION},
-	{QUERYINFOATTR_CODETYPE, MACHINE_PPC},
-	{QUERYINFOATTR_SUBTYPE, QUERYSUBTYPE_DEVICE},
-	{QUERYINFOATTR_CLASS, QUERYCLASS_STORAGE},
+    {QUERYINFOATTR_DESCRIPTION, (ULONG) "SBP2 class for Helios"},
+    {QUERYINFOATTR_VERSION, VERSION},
+    {QUERYINFOATTR_REVISION, REVISION},
+    {QUERYINFOATTR_CODETYPE, MACHINE_PPC},
+    {QUERYINFOATTR_SUBTYPE, QUERYSUBTYPE_DEVICE},
+    {QUERYINFOATTR_CLASS, QUERYCLASS_STORAGE},
     {QUERYINFOATTR_SUBCLASS, QUERYSUBCLASS_STORAGE_FIREWIRE},
-	{QUERYINFOATTR_DEVICE_UNITS, 64},
-	{QUERYINFOATTR_DEVICE_LUNS, 1},
-	{TAG_DONE,0}
+    {QUERYINFOATTR_DEVICE_UNITS, 64},
+    {QUERYINFOATTR_DEVICE_LUNS, 1},
+    {TAG_DONE,0}
 };
 
 /*------------------- PUBLIC CODE SECTION -------------------------*/
@@ -107,7 +107,9 @@ SBP2Device *devInit(SBP2Device *base,
 
     MountBase = OpenLibrary("mount.library", 50);
     if (NULL == MountBase)
+    {
         return NULL;
+    }
 
     return base;
 }
@@ -147,22 +149,24 @@ static LONG sbp2_io_addchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdR
         if (NULL != unit->u_NotifyUnit)
         {
             node = MountCreateNotifyNodeTags(unit->u_NotifyUnit,
-                 							 MOUNTATTR_INTERRUPT,   (ULONG)intr,
-                 							 MOUNTATTR_IOREQUEST,   (ULONG)ioreq,
-                 							 MOUNTATTR_TASK,        (ULONG)ioreq->io_Message.mn_ReplyPort->mp_SigTask,
-                 							 MOUNTATTR_CHANGESTATE, unit->u_Flags.Ready ? 0:~0,
-                 							 TAG_END);
+                                             MOUNTATTR_INTERRUPT,   (ULONG)intr,
+                                             MOUNTATTR_IOREQUEST,   (ULONG)ioreq,
+                                             MOUNTATTR_TASK,        (ULONG)ioreq->io_Message.mn_ReplyPort->mp_SigTask,
+                                             MOUNTATTR_CHANGESTATE, unit->u_Flags.Ready ? 0:~0,
+                                             TAG_END);
         }
         else
+        {
             node = NULL;
+        }
     }
     UNLOCK_REGION_SHARED(unit);
 
     if (NULL != node)
     {
         sbp2_incref(unit);
-        ioreq->io_Error	= 0;
-	    return RC_DONTREPLY;
+        ioreq->io_Error = 0;
+        return RC_DONTREPLY;
     }
 
     return (ioreq->io_Error = TDERR_NoMem);
@@ -177,8 +181,8 @@ static LONG sbp2_io_remchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdR
         if (NULL != unit->u_NotifyUnit)
         {
             node = MountFindNotifyNodeTags(unit->u_NotifyUnit,
-						                   MOUNTATTR_IOREQUEST, (ULONG) ioreq,
-						                   TAG_END);
+                                           MOUNTATTR_IOREQUEST, (ULONG) ioreq,
+                                           TAG_END);
         }
     }
     UNLOCK_REGION_SHARED(unit);
@@ -189,10 +193,10 @@ static LONG sbp2_io_remchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdR
         sbp2_decref(unit);
     }
 
-	/* clear QuickIO */
+    /* clear QuickIO */
     ioreq->io_Actual = 0;
     ioreq->io_Error = 0;
-	
+
     return RC_OK;
 }
 
@@ -232,7 +236,7 @@ SBP2Device *devOpen(void)
         /* default values */
         err = IOERR_OPENFAIL;
         ioreq->io_Unit = NULL;
-        
+
         /* Search for the given unitno */
         LOCK_REGION(base->dv_SBP2ClassBase);
         {
@@ -261,7 +265,9 @@ SBP2Device *devOpen(void)
             ++base->dv_Library.lib_OpenCnt;
         }
         else
+        {
             _ERR("UnitNo %ld not found\n", unitno);
+        }
     }
 
     --base->dv_Library.lib_OpenCnt;
@@ -343,7 +349,7 @@ static void devBeginIO(void)
             UNLOCK_REGION_SHARED(sbp2_unit);
             break;
 
-            /* NOPs */
+        /* NOPs */
         case CMD_CLEAR:
         case CMD_UPDATE:
         case TD_MOTOR:
@@ -386,7 +392,9 @@ static void devBeginIO(void)
                     ret = RC_OK;
                 }
                 else
+                {
                     ret = TDERR_DiskChanged;
+                }
             }
             UNLOCK_REGION_SHARED(sbp2_unit);
             break;
@@ -404,12 +412,16 @@ static void devBeginIO(void)
         {
             ioreq->io_Error = ret & 0xff;
             if (IOERR_NOCMD != ret)
+            {
                 _ERR("IO cmd %d failed: ret=%ld\n", ioreq->io_Command, ret);
+            }
         }
-        
+
         /* If not quick I/O, reply the message */
         if(!(ioreq->io_Flags & IOF_QUICK))
+        {
             ReplyMsg(&ioreq->io_Message);
+        }
     }
 }
 
@@ -435,40 +447,40 @@ static int devQuery(void)
 {
     SBP2Device *base = (APTR) REG_A6;
     ULONG *data = (ULONG *)REG_A0;
-	ULONG attr = REG_D0;
+    ULONG attr = REG_D0;
     struct TagItem *ti;
 
     _INFO_LIB("base=%p, data=$%08x, attr=$%08x\n", base, data, attr);
 
-	if ((NULL != UtilityBase) && (NULL != data))
-	{
+    if ((NULL != UtilityBase) && (NULL != data))
+    {
         /* Device only queries */
-		if (QUERYINFOATTR_DEVICE_UNITS == attr)
-		{
+        if (QUERYINFOATTR_DEVICE_UNITS == attr)
+        {
             LOCK_REGION(base->dv_SBP2ClassBase);
             *data = base->dv_SBP2ClassBase->hc_MaxUnitNo + 1;
             UNLOCK_REGION(base->dv_SBP2ClassBase);
-			
+
             _INFO("QUERYINFOATTR_DEVICE_UNITS %lu\n", *data);
-			return TRUE;
-		}
+            return TRUE;
+        }
         else if (NULL != (ti = FindTagItem(attr, QueryTags)))
-		{
-			_INFO("$%08x -> $%08x\n", attr, ti->ti_Data);
-			*data = ti->ti_Data;
-			return TRUE;
-		}
+        {
+            _INFO("$%08x -> $%08x\n", attr, ti->ti_Data);
+            *data = ti->ti_Data;
+            return TRUE;
+        }
         else if (QUERYINFOATTR_DEVICE_MASK == attr)
         {
             *data = 0xfffffffe;
             _INFO("QUERYINFOATTR_DEVICE_MASK $%08x\n", *data);
-			return TRUE;
+            return TRUE;
         }
         else if (QUERYINFOATTR_DEVICE_MAXTRANSFER == attr)
         {
             *data = (1ul<<21)-1;
             _INFO("QUERYINFOATTR_DEVICE_MAXTRANSFER $%08x\n", *data);
-			return TRUE;
+            return TRUE;
         }
         else
         {
@@ -482,18 +494,18 @@ static int devQuery(void)
             {
                 MyUnitID->ID = sbp2_unit->u_UnitNo;
                 _INFO("QUERYINFOATTR_DEVICE_UNIT_UNIT %lu\n", MyUnitID->ID);
-    			return TRUE;
+                return TRUE;
             }
             else if (QUERYINFOATTR_DEVICE_UNIT_LUN == attr)
             {
                 MyUnitID->ID = sbp2_unit->u_LUN;
                 _INFO("QUERYINFOATTR_DEVICE_UNIT_LUN %u\n", MyUnitID->ID);
-    			return TRUE;
+                return TRUE;
             }
         }
 
         _WARN("Unmanaged attr: $%08lx (QUERYINFOATTR_Dummy+%lu)\n", attr, attr-QUERYINFOATTR_Dummy);
-	}
+    }
 
     return FALSE;
 }
@@ -544,7 +556,7 @@ static void devDisMount(void)
     //SBP2Device *base = (APTR) REG_A6;
     struct IOStdReq *ioreq = (APTR) REG_A0;
     SBP2Unit *sbp2_unit = (APTR)ioreq->io_Unit;
-    
+
     sbp2_unmount_all(sbp2_unit);
 }
 

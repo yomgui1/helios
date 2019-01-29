@@ -28,7 +28,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 struct Library *HeliosBase;
 static const UBYTE template[] = "HW_UNIT/N,LBR=LONGBUSRESET/S";
 
-static struct {
+static struct
+{
     LONG *unitno;
     BOOL shortbr;
 } args;
@@ -42,7 +43,9 @@ int main(int argc, char **argv)
     if (NULL != rdargs)
     {
         if (NULL != args.unitno)
+        {
             unitno = *args.unitno;
+        }
     }
     else
     {
@@ -61,7 +64,9 @@ int main(int argc, char **argv)
             while (NULL != (hw = Helios_GetNextHardware(hw)))
             {
                 if (unitno == cnt++)
+                {
                     break;
+                }
 
                 Helios_ReleaseHardware(hw);
             }
@@ -77,7 +82,9 @@ int main(int argc, char **argv)
         CloseLibrary(HeliosBase);
     }
     else
+    {
         return RETURN_FAIL;
+    }
 
     return RETURN_OK;
 }

@@ -37,7 +37,7 @@ extern AVC1394_ServerMsg *  AVC1394_GetUnitInfo( HeliosBus *bus, UWORD nodeid );
 extern LONG                 AVC1394_GetSubUnitInfo( HeliosBus *bus, UWORD nodeid, QUADLET *table );
 extern LONG                 AVC1394_CheckSubUnitType( HeliosBus *bus, UWORD nodeid, LONG type );
 
-extern LONG AVC1394_VCR_IsPlaying( HeliosBus *bus, UWORD nodeid );    
+extern LONG AVC1394_VCR_IsPlaying( HeliosBus *bus, UWORD nodeid );
 extern LONG AVC1394_VCR_IsRecording( HeliosBus *bus, UWORD nodeid );
 extern LONG AVC1394_VCR_Eject( HeliosBus *bus, UWORD nodeid, QUADLET *status );
 extern LONG AVC1394_VCR_Stop( HeliosBus *bus, UWORD nodeid, QUADLET *status );

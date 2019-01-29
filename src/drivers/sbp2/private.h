@@ -102,14 +102,14 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define SBP2_DOORBELL           0x10
 #define SBP2_UNSOLICITED_STATUS_ENABLE  0x14
 
-#define STATUS_GET_ORB_HIGH(v)	 ((v).status & 0xffff)
+#define STATUS_GET_ORB_HIGH(v)   ((v).status & 0xffff)
 #define STATUS_GET_SBP_STATUS(v) (((v).status >> 16) & 0xff)
-#define STATUS_GET_LEN(v)		 (((v).status >> 24) & 0x07)
-#define STATUS_GET_DEAD(v)		 (((v).status >> 27) & 0x01)
-#define STATUS_GET_RESPONSE(v)	 (((v).status >> 28) & 0x03)
-#define STATUS_GET_SOURCE(v)	 (((v).status >> 30) & 0x03)
-#define STATUS_GET_ORB_LOW(v)	 ((v).orb_low)
-#define STATUS_GET_DATA(v)		 ((v).data)
+#define STATUS_GET_LEN(v)        (((v).status >> 24) & 0x07)
+#define STATUS_GET_DEAD(v)       (((v).status >> 27) & 0x01)
+#define STATUS_GET_RESPONSE(v)   (((v).status >> 28) & 0x03)
+#define STATUS_GET_SOURCE(v)     (((v).status >> 30) & 0x03)
+#define STATUS_GET_ORB_LOW(v)    ((v).orb_low)
+#define STATUS_GET_DATA(v)       ((v).data)
 
 #define ORB_PAGE_SIZE 0xfffc /* DataLen = 0xffff, but addresses must be 4-bytes aligned */
 #define ORB_SG_PAGES 64 /* enough for maxXfer=2MB and page_size=0xfffc */
@@ -124,21 +124,24 @@ typedef struct SBP2ClassLib SBP2ClassLib;
 
 typedef union ORBPointer
 {
-    struct {
+    struct
+    {
         ULONG hi;
         ULONG lo;
     } addr __attribute__((packed));
     UQUAD  q;
 } ORBPointer __attribute__((__aligned__(8)));
 
-typedef struct ORBStatus {
-	QUADLET status;
-	QUADLET orb_low;
+typedef struct ORBStatus
+{
+    QUADLET status;
+    QUADLET orb_low;
     UBYTE data[24];
 } ORBStatus;
 
 /* Optimization : writting length + addr_hi in single 32bits write */
-typedef struct SBP2SGPage {
+typedef struct SBP2SGPage
+{
     ULONG length_addr_hi;
     ULONG addr_lo;
 } SBP2SGPage __attribute__((__aligned__(8)));
@@ -230,7 +233,8 @@ typedef struct SBP2SCSICmdReq
     SBP2SGPage        sr_SGPages[ORB_SG_PAGES];
 } SBP2SCSICmdReq;
 
-typedef struct {
+typedef struct
+{
     ULONG Logged:1;
     ULONG Ordered:1;
     ULONG AcceptIO:1;
@@ -266,7 +270,7 @@ typedef struct SBP2Unit
     ULONG                u_ChangeCounter;
     APTR                 u_NotifyUnit;
     ULONG                u_AutoReconnect;
-    
+
     /* Transport info */
     HeliosHardware *     u_HeliosHW;
     HeliosDevice *       u_HeliosDevice;

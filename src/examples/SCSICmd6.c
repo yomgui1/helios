@@ -71,7 +71,9 @@ int main(int argc, char **argv)
         }
 
         if (argc > len)
+        {
             flags = strtoul(argv[len], NULL, 0)  & (~SCSIF_AUTOSENSE);
+        }
 
         printf("Sending SCSI cmd%lu, flags=$%lx:\n", len, flags);
         for (i=0; i<len; i++)
@@ -164,12 +166,16 @@ int main(int argc, char **argv)
                                 LONG k;
 
                                 for (k=0; k<4; k++, i++)
+                                {
                                     printf("%08lx%s", response_buf[i], k<3?" ":"\n");
+                                }
                             }
                             printf("\nSense Data result: %u\n", scsicmd.scsi_SenseActual);
                         }
                         else
+                        {
                             printf("done\n");
+                        }
 
                         res = RETURN_OK;
                     }
@@ -182,15 +188,19 @@ int main(int argc, char **argv)
                     CloseDevice((struct IORequest *)ioreq);
                 }
                 else
+                {
                     printf("OpenDevice(\"sbp2.device\") failed\n");
+                }
 
                 DeleteExtIO((struct IORequest *)ioreq);
             }
-        
+
             DeleteMsgPort(port);
         }
         else
+        {
             printf("Failed to create a new MsgPort structure\n");
+        }
     }
 
     return res;

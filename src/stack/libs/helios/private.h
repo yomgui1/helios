@@ -33,17 +33,17 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #if defined(USE_INLINE_STDARG) && !defined(__STRICT_ANSI__)
 #include <stdarg.h>
 #define Helios_SetAttrs(__p0, __p1, ...) \
-	({ULONG _tags[] = { __VA_ARGS__ }; \
-	Helios_SetAttrsA(__p0, __p1, (struct TagItem *)_tags);})
+    ({ULONG _tags[] = { __VA_ARGS__ }; \
+    Helios_SetAttrsA(__p0, __p1, (struct TagItem *)_tags);})
 #define Helios_CreateROM(__p0, ...) \
-	({ULONG _tags[] = { __VA_ARGS__ }; \
-	Helios_CreateROMTagList(__p0, (CONST struct TagItem *)_tags);})
+    ({ULONG _tags[] = { __VA_ARGS__ }; \
+    Helios_CreateROMTagList(__p0, (CONST struct TagItem *)_tags);})
 #define Helios_CreateSubTask(__p0, __p1, ...) \
-	({ULONG _tags[] = { __VA_ARGS__ }; \
-	Helios_CreateSubTaskA(__p0, __p1, (struct TagItem *)_tags);})
+    ({ULONG _tags[] = { __VA_ARGS__ }; \
+    Helios_CreateSubTaskA(__p0, __p1, (struct TagItem *)_tags);})
 #define Helios_GetAttrs(__p0, __p1, ...) \
-	({ULONG _tags[] = { __VA_ARGS__ }; \
-	Helios_GetAttrsA(__p0, __p1, (struct TagItem *)_tags);})
+    ({ULONG _tags[] = { __VA_ARGS__ }; \
+    Helios_GetAttrsA(__p0, __p1, (struct TagItem *)_tags);})
 #endif
 
 extern void _Helios_FreeDevice(HeliosDevice *dev);

@@ -170,17 +170,23 @@ struct Library* LIB_Init(struct HeliosBase * base,
                 CloseLibrary(UtilityBase);
             }
             else
+            {
                 SysError_NeedLibrary("utility.library", 39);
+            }
 
             CloseLibrary((struct Library *)DOSBase);
         }
         else
+        {
             SysError_NeedLibrary("dos.library", 39);
+        }
 
         DeletePool(base->hb_MemPool);
     }
     else
+    {
         _ERR("CreatePool() failed\n");
+    }
 
     FreeMem((APTR)((ULONG)(base) - (ULONG)(base->hb_Lib.lib_NegSize)),
             base->hb_Lib.lib_NegSize + base->hb_Lib.lib_PosSize);
@@ -226,7 +232,9 @@ struct Library* LIB_Open(void)
                 goto out;
             }
             else
+            {
                 _ERR("Timer device open failed\n");
+            }
         }
         else
         {
@@ -236,21 +244,24 @@ struct Library* LIB_Open(void)
             IntuitionBase = OpenLibrary("intuition.library", 0);
             if (NULL != IntuitionBase)
             {
-                static struct EasyStruct panic = {
+                static struct EasyStruct panic =
+                {
                     sizeof(struct EasyStruct),
                     0,
                     (UBYTE*)"helios.library",
                     0,
                     (UBYTE*)"Abort"
                 };
-                
+
                 panic.es_TextFormat = (UBYTE*)msg;
                 EasyRequestArgs(NULL, &panic, NULL, NULL);
-                
+
                 CloseLibrary((struct Library *) IntuitionBase);
             }
             else
+            {
                 kprintf(msg);
+            }
         }
 
         base->hb_Lib.lib_Flags |= LIBF_DELEXP;
@@ -276,7 +287,9 @@ ULONG LIB_Close(void)
     _INFO("+Base %p, OpenCount %ld\n", base, base->hb_Lib.lib_OpenCnt);
 
     if ((--base->hb_Lib.lib_OpenCnt) > 0)
+    {
         _INFO("done\n");
+    }
     else
     {
         HeliosReportMsg *msg;
@@ -284,7 +297,9 @@ ULONG LIB_Close(void)
 
         _INFO("Remove report msg...\n");
         ForeachNodeSafe(&base->hb_ReportList, msg, next)
+        {
             Helios_FreeReportMsg(msg);
+        }
 
         _INFO("Closing timer device...\n");
         CloseDevice((struct IORequest *) &base->hb_TimeReq);

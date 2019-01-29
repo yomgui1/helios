@@ -165,13 +165,15 @@ static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *);
 static void ohci_CheckAndScheduleIsoList(struct MinList *list, ULONG events);
 
 //+ Globals for debug
-typedef struct {
+typedef struct
+{
     HeliosOffset offset;
     const STRPTR label;
 } OHCI1394RegDescription;
 
-static const OHCI1394RegDescription ohci_reg_names[] = {
-    { OHCI1394_REG_VERSION ,                    "version" },
+static const OHCI1394RegDescription ohci_reg_names[] =
+{
+    { OHCI1394_REG_VERSION,                    "version" },
     { OHCI1394_REG_GUID_ROM,                    "guid rom" },
     { OHCI1394_REG_AT_RETRIES,                  "at retries" },
     { OHCI1394_REG_CSR_READ_DATA,               "csr read data" },
@@ -219,7 +221,8 @@ static const OHCI1394RegDescription ohci_reg_names[] = {
     { OHCI1394_REG_ARESR_CONTEXT_CONTROL,       "aresr context control" },
     { OHCI1394_REG_ARESR_COMMAND_PTR,           "aresr command ptr" },
 };
-const char *evt_strings[] = {
+const char *evt_strings[] =
+{
     [0x00] = "evt_no_status",   [0x01] = "-reserved-",
     [0x02] = "evt_long_packet", [0x03] = "evt_missing_ack",
     [0x04] = "evt_underrun",    [0x05] = "evt_overrun",
@@ -239,10 +242,12 @@ const char *evt_strings[] = {
     [0x20] = "pending/cancelled",
 };
 #ifndef NDEBUG
-static const char *speed_st[] = {
+static const char *speed_st[] =
+{
     [0] = "S100", [1] = "S200", [2] = "S400",    [3] = "beta",
 };
-static const char *power[] = {
+static const char *power[] =
+{
     [0] = "+0W",  [1] = "+15W", [2] = "+30W",    [3] = "+45W",
     [4] = "-3W",  [5] = " ?W",  [6] = "-3..-6W", [7] = "-3..-10W",
 };
@@ -437,19 +442,27 @@ static BOOL ohci_WritePHY(OHCI1394Unit *unit,
                 while (pending && --loop);
 
                 if (!pending)
+                {
                     return TRUE;
+                }
                 else
+                {
                     _ERR_UNIT(unit, "PHY write timeout\n");
+                }
             }
             else
                 _ERR_UNIT(unit, "PHY read addr mismatch: get %02x, %02x waited (PHY=%x)\n",
                           OHCI1394_PC_READ_ADDR(data), addr, data);
         }
         else
+        {
             _ERR_UNIT(unit, "PHY read timeout\n");
+        }
     }
     else
+    {
         _ERR_UNIT(unit, "PHY busy - can't read\n");
+    }
 
     return FALSE;
 }
@@ -467,18 +480,36 @@ static ULONG ohci_PCI_IrqHandler(APTR data)
 
     /* read masked version of interrupt events */
     events = ohci_RegRead(unit, OHCI1394_REG_INT_EVENT_CLEAR);
-    if (!events || !~events) return 0; /* go out if event = 0 or -1 */
+    if (!events || !~events)
+    {
+        return 0;    /* go out if event = 0 or -1 */
+    }
 
     /* OHCI 1.1, chapter 7.2.3.2 => don't clear BusReset int (done by the BusReset handler) */
     ohci_RegWrite(unit, OHCI1394_REG_INT_EVENT_CLEAR, events & ~OHCI1394_INTF_BUSRESET);
     log_IrqEvents(events);
 
     /* Handle Asynchronous events */
-    if (events & OHCI1394_INTF_SELFIDCOMPLETE) Helios_SignalSubTask(unit->hu_BusResetTask, unit->hu_BusResetSignal);
-    if (events & OHCI1394_INTF_REQTXCOMPLETE) Helios_SignalSubTask(unit->hu_ATRequestCtx.atc_Context.ctx_SubTask, unit->hu_ATRequestCtx.atc_Context.ctx_Signal);
-    if (events & OHCI1394_INTF_RESPTXCOMPLETE) Helios_SignalSubTask(unit->hu_ATResponseCtx.atc_Context.ctx_SubTask, unit->hu_ATResponseCtx.atc_Context.ctx_Signal);
-    if (events & OHCI1394_INTF_RQPKT) Helios_SignalSubTask(unit->hu_ARRequestCtx.arc_Context.ctx_SubTask, unit->hu_ARRequestCtx.arc_Context.ctx_Signal);
-    if (events & OHCI1394_INTF_RSPKT) Helios_SignalSubTask(unit->hu_ARResponseCtx.arc_Context.ctx_SubTask, unit->hu_ARResponseCtx.arc_Context.ctx_Signal);
+    if (events & OHCI1394_INTF_SELFIDCOMPLETE)
+    {
+        Helios_SignalSubTask(unit->hu_BusResetTask, unit->hu_BusResetSignal);
+    }
+    if (events & OHCI1394_INTF_REQTXCOMPLETE)
+    {
+        Helios_SignalSubTask(unit->hu_ATRequestCtx.atc_Context.ctx_SubTask, unit->hu_ATRequestCtx.atc_Context.ctx_Signal);
+    }
+    if (events & OHCI1394_INTF_RESPTXCOMPLETE)
+    {
+        Helios_SignalSubTask(unit->hu_ATResponseCtx.atc_Context.ctx_SubTask, unit->hu_ATResponseCtx.atc_Context.ctx_Signal);
+    }
+    if (events & OHCI1394_INTF_RQPKT)
+    {
+        Helios_SignalSubTask(unit->hu_ARRequestCtx.arc_Context.ctx_SubTask, unit->hu_ARRequestCtx.arc_Context.ctx_Signal);
+    }
+    if (events & OHCI1394_INTF_RSPKT)
+    {
+        Helios_SignalSubTask(unit->hu_ARResponseCtx.arc_Context.ctx_SubTask, unit->hu_ARResponseCtx.arc_Context.ctx_Signal);
+    }
 
     /* Handle Isochronous Receive events */
     iso_events = ohci_RegRead(unit, OHCI1394_REG_ISO_RECV_INT_EVENT_CLEAR);
@@ -508,10 +539,14 @@ static ULONG ohci_PCI_IrqHandler(APTR data)
 
     /* Log errors */
     if (0 != (events & OHCI1394_INTF_REGACCESSFAIL))
+    {
         log_IrqError("Register access failure", events);
+    }
 
     if (0 != (events & OHCI1394_INTF_POSTEDWRITEERR))
+    {
         log_IrqError("PCI posted write error", events);
+    }
 
     if (0 != (events & OHCI1394_INTF_UNRECOVERABLEERROR))
     {
@@ -532,7 +567,9 @@ static ULONG ohci_PCI_IrqHandler(APTR data)
 
         value = ohci_RegRead(unit, OHCI1394_REG_ISOCHRONOUS_CYCLE_TIMER);
         if (0 == (value & 0x80000000))
+        {
             ATOMIC_ADD((LONG*)&unit->hu_BusSeconds, 1);
+        }
     }
 
     return 0;
@@ -585,7 +622,8 @@ static LONG ohci_PCI_OpenUnit(OHCI1394Unit *unit)
 
             /* Get/check OHCI registers space size and address */
             size = PCIXGetBoardAttr(board, PCIXTAG_BASESIZE0);
-            if (size >= OHCI1394_REGISTERS_SPACE_SIZE) {
+            if (size >= OHCI1394_REGISTERS_SPACE_SIZE)
+            {
                 unit->hu_PCI_RegBase = (APTR) PCIXGetBoardAttr(board, PCIXTAG_BASEADDRESS0);
 
                 /* Check for alignement requirement */
@@ -596,25 +634,35 @@ static LONG ohci_PCI_OpenUnit(OHCI1394Unit *unit)
 
                     /* Enable the bridge and enable bus master */
                     if((PCIXReadConfigWord(board, PCIXCONFIG_COMMAND) & 7) == 0)
+                    {
                         PCIXWriteConfigWord(board, PCIXCONFIG_COMMAND, 7);
+                    }
 
                     return TRUE;
                 }
                 else
+                {
                     _ERR_UNIT(unit, "OHCI registers space is not aligned on %u bytes!\n", OHCI1394_REGISTERS_SPACE_SIZE);
+                }
             }
             else
+            {
                 _ERR_UNIT(unit, "OHCI registers space is too small! Only %u byte(s) found, should be >= %u\n", size, OHCI1394_REGISTERS_SPACE_SIZE);
+            }
 
             PCIXSetBoardAttr(board, PCIXTAG_OWNER, 0);
         }
         else
+        {
             _ERR_UNIT(unit, "OHCI1394 device %p already owned by '%s' (%p)\n", board, owner, owner);
+        }
 
         PCIXReleaseBoard(board);
     }
     else
+    {
         _ERR_UNIT(unit, "Can't obtain PCI access on OCH 1394 board %p\n", board);
+    }
 
     return FALSE;
 }
@@ -650,10 +698,14 @@ static UBYTE ohci_HandleLocalROM(OHCI1394Unit *unit,
     _INFO_UNIT(unit, "payload=%p, length=%lu\n", req->Payload, req->PayloadLength);
 
     if (csr > CSR_CONFIG_ROM_END)
+    {
         rcode = HELIOS_RCODE_ADDRESS_ERROR;
+    }
     else if ((req->TCode != TCODE_READ_QUADLET_REQUEST) &&
              (req->TCode != TCODE_READ_BLOCK_REQUEST))
+    {
         rcode = HELIOS_RCODE_TYPE_ERROR;
+    }
     else
     {
         rcode = HELIOS_RCODE_COMPLETE;
@@ -678,9 +730,9 @@ static UBYTE ohci_HandleLocalROM(OHCI1394Unit *unit,
 }
 
 static UBYTE ohci_HandleLocalCSRLock(OHCI1394Unit *unit,
-                                    ULONG csr,
-                                    HeliosAPacket *req,
-                                    HeliosAPacket *resp)
+                                     ULONG csr,
+                                     HeliosAPacket *req,
+                                     HeliosAPacket *resp)
 {
     QUADLET data, arg=0;
 
@@ -693,17 +745,25 @@ static UBYTE ohci_HandleLocalCSRLock(OHCI1394Unit *unit,
     {
         resp->PayloadLength = req->PayloadLength;
         if (resp->PayloadLength == 8)
+        {
             resp->Payload = req->Payload;
+        }
         else
+        {
             return HELIOS_RCODE_DATA_ERROR;
+        }
 
         arg  = req->Payload[0];
         data = req->Payload[1];
     }
     else if (TCODE_READ_QUADLET_REQUEST == req->TCode)
+    {
         data = arg;
+    }
     else
+    {
         return HELIOS_RCODE_TYPE_ERROR;
+    }
 
     if (CSR_BUS_MANAGER_ID == csr)
     {
@@ -724,7 +784,9 @@ static UBYTE ohci_HandleLocalCSRLock(OHCI1394Unit *unit,
 
     /* FIXME: bad! unit is locked here! */
     while (0 == (ohci_RegRead(unit, OHCI1394_REG_CSR_CONTROL) & OHCI1394_CSRCTRLF_DONE))
+    {
         Helios_DelayMS(5);
+    }
 
     data = ohci_RegRead(unit, OHCI1394_REG_CSR_READ_DATA);
     _INFO_UNIT(unit, "Lock old data=$%x\n", data);
@@ -789,7 +851,9 @@ static void ohci_Context_SubTask(HeliosSubTask *self, struct TagItem *tags)
         }
 
         if (sigs & ctx->ctx_Signal)
+        {
             ctx->ctx_Handler(ctx);
+        }
     }
 
 out:
@@ -815,7 +879,9 @@ static BOOL ohci_Context_Init(OHCI1394Unit *     unit,
                                             HA_UserData, (ULONG)ctx,
                                             TAG_DONE);
     if (NULL == ctx->ctx_SubTask)
+    {
         return FALSE;
+    }
 
     return 0 == Helios_WaitTaskReady(ctx->ctx_SubTask, SIGBREAKF_CTRL_E);
 }
@@ -843,11 +909,14 @@ static BOOL ohci_Context_Stop(OHCI1394Context *ctx)
     {
         QUADLET ctrl = ohci_RegRead(unit, CTX_CTRL_SET(regoff));
         if (0 == (ctrl & CTX_ACTIVE))
+        {
             return TRUE;
+        }
 
         _INFO_CTX(ctx, "context %08x still active\n", regoff);
         Helios_DelayMS(25);
-    } while (loop--);
+    }
+    while (loop--);
 
     /* Timeout */
     _ERR_CTX(ctx, "TIMEOUT, context %08x still active 50ms after STOP request\n", regoff);
@@ -867,7 +936,9 @@ static void ohci_ATContext_InitDMABuffers(OHCI1394ATCtx *ctx)
     NEWLIST((struct List *)&ctx->atc_UsedBufferList);
     NEWLIST((struct List *)&ctx->atc_DeadBufferList);
     for (i=0; i<cnt; i++)
+    {
         ADDTAIL((struct List *)&ctx->atc_BufferList, (struct Node *)&ctx->atc_CpuDMABuffers[i]);
+    }
 }
 
 static OHCI1394ATBuffer *ohci_ATContext_GetBuffer(OHCI1394ATCtx *ctx)
@@ -879,7 +950,7 @@ static OHCI1394ATBuffer *ohci_ATContext_GetBuffer(OHCI1394ATCtx *ctx)
     ctx->atc_BufferUsage--;
 
     _INFO_CTX(ctx, "DMA usage: %lu\n", ctx->atc_BufferUsage);
-    
+
     return buf;
 }
 
@@ -953,7 +1024,7 @@ static void ohci_ATContext_AppendBuffer(OHCI1394ATCtx *    ctx,
     d_phy_addr = ohci_ATContext_GetPhyAddress(ctx, d); /* normally aligned on 16-bytes */
 
     _INFO_CTX(ctx, "CmdPtr=$%p, Reg=$%p\n", ctx->atc_CommandPtr,
-        ohci_RegRead(unit, CTX_CTRL_CMDPTR(regoff)));
+              ohci_RegRead(unit, CTX_CTRL_CMDPTR(regoff)));
 
     /* DMA already programmed ? */
     if (NULL != ctx->atc_LastBuffer)
@@ -964,18 +1035,22 @@ static void ohci_ATContext_AppendBuffer(OHCI1394ATCtx *    ctx,
         ctx->atc_LastBuffer->atb_LastDescriptor->d_BranchAddress = BE_SWAPLONG( d_phy_addr | z);
 
         if (0 == ctx->atc_CommandPtr)
+        {
             ohci_ATContext_ReleaseBuffer(ctx, ctx->atc_LastBuffer);
+        }
     }
 
     if (0 == ctx->atc_CommandPtr)
+    {
         ctx->atc_CommandPtr = d_phy_addr | z;
+    }
 
     /* This buffer becomes the last buffer in the DMA program */
     ctx->atc_LastBuffer = buffer;
 
     _INFO_CTX(ctx, "%u descriptor(s) filled: d=%p, last=#%u, ba=%x\n",
-               z, d, (ctx->atc_LastBuffer->atb_LastDescriptor - d) / sizeof(OHCI1394Descriptor),
-               d_phy_addr);
+              z, d, (ctx->atc_LastBuffer->atb_LastDescriptor - d) / sizeof(OHCI1394Descriptor),
+              d_phy_addr);
 
     log_DumpMem(d, sizeof(OHCI1394Descriptor)*z, TRUE, "Dumping context descriptors:\n");
 
@@ -997,7 +1072,8 @@ static BOOL ohci_ATContext_Init(OHCI1394Unit *        unit,
 
     /* Allocate DMA buffers space, 16-bytes aligned */
     ctx->atc_AllocDMABuffers = AllocVecDMA(size + 15, MEMF_PUBLIC | MEMF_CLEAR);
-    if (NULL == ctx->atc_AllocDMABuffers) {
+    if (NULL == ctx->atc_AllocDMABuffers)
+    {
         _ERR_UNIT(unit, "AT-DMA buffer allocation failed\n");
         return FALSE;
     }
@@ -1010,7 +1086,7 @@ static BOOL ohci_ATContext_Init(OHCI1394Unit *        unit,
 
     /* Init. all AT buffers */
     ohci_ATContext_InitDMABuffers(ctx);
-    
+
     if (!ohci_Context_Init(unit, &ctx->atc_Context, regoffset,
                            task_name, ohci_ATContext_ATCompleteHandler,
                            TASK_PRIO_ATCTX))
@@ -1037,19 +1113,27 @@ static BOOL ohci_ATContexts_Init(OHCI1394Unit *unit)
 {
     if (ohci_ATContext_Init(unit, &unit->hu_ATRequestCtx,
                             OHCI1394_REG_AREQT_CONTEXT_CONTROL,
-                            "["DEVNAME"] AT Requests Handler")) {
+                            "["DEVNAME"] AT Requests Handler"))
+    {
         _INFO_UNIT(unit, "AT request context %p created!\n", &unit->hu_ATRequestCtx);
         if (ohci_ATContext_Init(unit, &unit->hu_ATResponseCtx,
                                 OHCI1394_REG_AREST_CONTEXT_CONTROL,
-                                "["DEVNAME"] AT Responses Handler")) {
+                                "["DEVNAME"] AT Responses Handler"))
+        {
             _INFO_UNIT(unit, "AT response context %p created!\n", &unit->hu_ATResponseCtx);
             return TRUE;
-        } else
+        }
+        else
+        {
             _ERR_UNIT(unit, "AT response context creation failed\n");
+        }
 
         ohci_ATContext_Term(&unit->hu_ATRequestCtx);
-    } else
+    }
+    else
+    {
         _ERR_UNIT(unit, "AT request context creation failed\n");
+    }
     return FALSE;
 }
 
@@ -1061,11 +1145,11 @@ static void ohci_ATContexts_Term(OHCI1394Unit *unit)
 
 static void ohci_ATContexts_Stop(OHCI1394Unit *unit)
 {
-    LOCK_CTX(&unit->hu_ATRequestCtx); 
+    LOCK_CTX(&unit->hu_ATRequestCtx);
     ohci_Context_Stop(&unit->hu_ATRequestCtx.atc_Context);
-    UNLOCK_CTX(&unit->hu_ATRequestCtx);         
-    
-    LOCK_CTX(&unit->hu_ATResponseCtx);                    
+    UNLOCK_CTX(&unit->hu_ATRequestCtx);
+
+    LOCK_CTX(&unit->hu_ATResponseCtx);
     ohci_Context_Stop(&unit->hu_ATResponseCtx.atc_Context);
     UNLOCK_CTX(&unit->hu_ATResponseCtx);
 }
@@ -1095,9 +1179,13 @@ static void ohci_ARContext_SetupBuffer(OHCI1394ARCtx *    ctx,
     d->d_DataAddress = BE_SWAPLONG(phy_page);
 
     if (NULL != next)
+    {
         d->d_BranchAddress = BE_SWAPLONG(ohci_ARContext_GetPhyAddress(ctx, &next->arb_Descriptor) | z);
+    }
     else
+    {
         d->d_BranchAddress = 0;
+    }
 
     d->d_TransferStatus = 0;
     d->d_ResCount = d->d_ReqCount = BE_SWAPWORD(ARBUFFER_PAGE_SIZE);
@@ -1118,8 +1206,11 @@ static void ohci_ARContext_Reset(OHCI1394ARCtx *ctx)
     for (i=0; i < ARBUFFER_PAGE_COUNT; i++, buf++)
     {
         if (i < (ARBUFFER_PAGE_COUNT-1))
+        {
             next = buf + 1;
-        else {
+        }
+        else
+        {
             next = ctx->arc_CpuDMABuffers;
             z = 0;
         }
@@ -1145,7 +1236,10 @@ static void ohci_ARContext_Start(OHCI1394ARCtx *ctx)
     /* Already running ? */
     reg = ohci_RegRead(unit, CTX_CTRL_SET(regoff));
     _INFO_ARDMA_CTX(ctx, "+ ctrl=$%08x\n", reg);
-    if (reg & CTX_RUN) return;
+    if (reg & CTX_RUN)
+    {
+        return;
+    }
 
     _INFO_ARDMA_CTX(ctx, "Running AR context $%x: CmdPtr: %p\n", bus);
 
@@ -1188,7 +1282,7 @@ static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
     p.Header[0] = BE_SWAPLONG(data[0]);
     p.Header[1] = BE_SWAPLONG(data[1]);
     p.Header[2] = BE_SWAPLONG(data[2]);
-    
+
     /* Partial packet decoding based on read TCode */
     p.TCode = AT_GET_HEADER_TCODE(p.Header[0]);
     switch (p.TCode)
@@ -1218,7 +1312,9 @@ static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
             p.QuadletData = p.Header[3] = data[3];
 #ifdef WARN_DOUBLE_TL
             if (AT_GET_HEADER_TLABEL(BE_SWAPLONG(data[0])) == _prev_tl)
+            {
                 kprintf("[WRN] Double TL detected (DestID=$%04x)\n", AT_GET_HEADER_DEST_ID(BE_SWAPLONG(data[0])));
+            }
             _prev_tl = AT_GET_HEADER_TLABEL(BE_SWAPLONG(data[0]));
 #endif
             data[0] = 0;
@@ -1233,7 +1329,7 @@ static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
             break;
 
         case TCODE_LOCK_REQUEST:
-        case TCODE_WRITE_BLOCK_REQUEST:        
+        case TCODE_WRITE_BLOCK_REQUEST:
         case TCODE_LOCK_RESPONSE:
         case TCODE_READ_BLOCK_RESPONSE:
             p.HeaderLength = 16;
@@ -1249,9 +1345,9 @@ static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
             return NULL; /* return an error */
     }
 
-    
+
     /* header + payload length (without trailer) rounded to quadlet */
-    len = (p.HeaderLength + p.PayloadLength + 3) / 4; 
+    len = (p.HeaderLength + p.PayloadLength + 3) / 4;
     _INFO_ARDMA_CTX(ctx, "Packet length: %lu quadlet(s) (%u for header)\n", len, p.HeaderLength/4);
 
     /* Trailer packet (XFertStatus & TimeStamp) */
@@ -1283,7 +1379,7 @@ static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
     {
         UBYTE packet_gen;
         BOOL gen_ok;
-        
+
         p.TLabel   = AT_GET_HEADER_TLABEL(p.Header[0]);
         p.DestID   = AT_GET_HEADER_DEST_ID(p.Header[0]);
         p.SourceID = AT_GET_HEADER_SOURCE_ID(p.Header[1]);
@@ -1304,7 +1400,10 @@ static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
         UNLOCK_REGION_SHARED(unit);
 
         /* drop outdated incomming packets */
-        if (!gen_ok) goto bye;
+        if (!gen_ok)
+        {
+            goto bye;
+        }
 
         if (isrequest)
         {
@@ -1377,9 +1476,13 @@ static void ohci_ARContext_PktHandler(OHCI1394Context *_ctx)
         /* Next buffer as current buffer */
         at_end = buf == ctx->arc_RealLastBuffer;
         if (at_end)
+        {
             ctx->arc_FirstBuffer = ctx->arc_CpuDMABuffers;
+        }
         else
+        {
             ctx->arc_FirstBuffer = buf+1;
+        }
 
         /* Next buffer contains data ? */
         if (0 != ctx->arc_FirstBuffer->arb_Descriptor.d_TransferStatus)
@@ -1411,7 +1514,9 @@ static void ohci_ARContext_PktHandler(OHCI1394Context *_ctx)
             len += rest;
         }
         else
+        {
             ctx->arc_FirstQuadlet = ctx->arc_FirstBuffer->arb_Page;
+        }
 
         _INFO_ARDMA_CTX(ctx, "data len=%lu\n", len);
         log_DumpMem(start, len, TRUE, "Dumping AR data:\n");
@@ -1419,10 +1524,12 @@ static void ohci_ARContext_PktHandler(OHCI1394Context *_ctx)
         while (start < end)
         {
             start = ohci_ARContext_ParsePacket(ctx, unit, start);
-            
+
             /* if errors, we drop the rest of data */
             if (NULL == start)
+            {
                 break;
+            }
         }
 
         _INFO_ARDMA_CTX(ctx, "New FQ: $%p, new FB: $%p\n", ctx->arc_FirstQuadlet, ctx->arc_FirstBuffer);
@@ -1451,10 +1558,12 @@ static void ohci_ARContext_PktHandler(OHCI1394Context *_ctx)
         while (start < end)
         {
             start = ohci_ARContext_ParsePacket(ctx, unit, start);
-                
+
             /* if errors, we drop the rest of data */
             if (NULL == start)
+            {
                 break;
+            }
         }
 
         ctx->arc_FirstQuadlet = (APTR)ctx->arc_FirstQuadlet + len;
@@ -1476,7 +1585,7 @@ static BOOL ohci_ARContext_Init(OHCI1394Unit *        unit,
     const static ULONG pagessize = ARBUFFER_PAGE_COUNT * ARBUFFER_PAGE_SIZE;
 
     _INFO_UNIT(unit, "AR context $%X: DMA buffers size=%lu bytes, Pages buffer size=%lu bytes\n",
-        regoffset, blocksize, pagessize);
+               regoffset, blocksize, pagessize);
 
     /* Allocate DMA buffers space, 16-bytes aligned */
     ctx->arc_AllocDMABuffers = AllocVecDMA(blocksize + 15, MEMF_PUBLIC);
@@ -1534,7 +1643,7 @@ static void ohci_ARContexts_Start(OHCI1394Unit *unit)
     LOCK_CTX(&unit->hu_ARRequestCtx);
     ohci_ARContext_Start(&unit->hu_ARRequestCtx);
     UNLOCK_CTX(&unit->hu_ARRequestCtx);
-    
+
     LOCK_CTX(&unit->hu_ARResponseCtx);
     ohci_ARContext_Start(&unit->hu_ARResponseCtx);
     UNLOCK_CTX(&unit->hu_ARResponseCtx);
@@ -1556,19 +1665,27 @@ static BOOL ohci_ARContexts_Init(OHCI1394Unit *unit)
 {
     if (ohci_ARContext_Init(unit, &unit->hu_ARRequestCtx,
                             OHCI1394_REG_AREQR_CONTEXT_CONTROL,
-                            "["DEVNAME"] AR Requests Handler")) {
+                            "["DEVNAME"] AR Requests Handler"))
+    {
         _INFO_UNIT(unit, "AR request context %p created!\n", &unit->hu_ARRequestCtx);
         if (ohci_ARContext_Init(unit, &unit->hu_ARResponseCtx,
                                 OHCI1394_REG_ARESR_CONTEXT_CONTROL,
-                                "["DEVNAME"] AR Responses Handler")) {
+                                "["DEVNAME"] AR Responses Handler"))
+        {
             _INFO_UNIT(unit, "AR response context %p created!\n", &unit->hu_ARResponseCtx);
             return TRUE;
-        } else
+        }
+        else
+        {
             _ERR_UNIT(unit, "AR response context creation failed\n");
+        }
 
         ohci_ARContext_Term(&unit->hu_ARRequestCtx);
-    } else
+    }
+    else
+    {
         _ERR_UNIT(unit, "AR request context creation failed\n");
+    }
 
     return FALSE;
 }
@@ -1621,15 +1738,18 @@ static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *_ctx)
                 ADDTAIL(&ctx->atc_DeadBufferList, buf);
             }
             else if (dead)
-            { /* Not processed, but may be the cause of dead context */                
+            {
+                /* Not processed, but may be the cause of dead context */
                 d_last->d_TransferStatus = OHCI1394_EVENT_MISSING_ACK;
 
                 REMOVE(buf);
                 ADDTAIL(&ctx->atc_DeadBufferList, buf);
-                
+
                 /* remove all blocks until the last fetched DMA block is reached */
                 if (buf == last)
+                {
                     break;
+                }
             }
             else
             {
@@ -1640,16 +1760,20 @@ static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *_ctx)
 
         /* Completly finished or not ? */
         if (NULL == last)
+        {
             ctx->atc_CommandPtr = 0;
+        }
         else if (dead)
-        { /* Setup correctly the CommandPtr to the next valid descriptor block */
+        {
+            /* Setup correctly the CommandPtr to the next valid descriptor block */
             OHCI1394Descriptor *d = &last->atb_Descriptors[0];
             int z = ((last->atb_LastDescriptor - d) / sizeof(OHCI1394Descriptor)) + 1;
-            
+
             ctx->atc_CommandPtr = ohci_ATContext_GetPhyAddress(ctx, d) | z;
         }
         else
-        { /* Update the context CommandPtr in case of a future stop-start */
+        {
+            /* Update the context CommandPtr in case of a future stop-start */
             OHCI1394Descriptor *d = &last->atb_Descriptors[0];
             int z = ((last->atb_LastDescriptor - d) / sizeof(OHCI1394Descriptor)) + 1;
 
@@ -1699,11 +1823,11 @@ static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *_ctx)
             case OHCI1394_EVENT_MISSING_ACK: /* Packet transmitted -> BusReset before any ack */
                 status = HELIOS_RCODE_MISSING_ACK;
                 break;
-                
+
             case OHCI1394_EVENT_FLUSHED:     /* Packet not transmitted (but in DMA-FIFO) -> BusReset */
                 status = HELIOS_RCODE_GENERATION;
                 break;
-                
+
             case OHCI1394_EVENT_TIMEOUT:     /* Response timeout expired, Packet not transmitted */
                 status = HELIOS_RCODE_CANCELLED;
                 break;
@@ -1717,7 +1841,7 @@ static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *_ctx)
             case HELIOS_ACK_TYPE_ERROR + 0x10:
                 status = event - 0x10;
                 break;
-                
+
             default:
                 status = HELIOS_RCODE_SEND_ERROR;
         }
@@ -1731,7 +1855,7 @@ static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *_ctx)
         {
             pdata = buf->atb_PacketData;
             _INFO_ATDMA_CTX(ctx, "pdata=%p\n", pdata);
-            
+
             if (NULL != pdata)
             {
                 pdata->pd_Buffer = NULL;
@@ -1749,7 +1873,9 @@ static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *_ctx)
         LOCK_CTX(ctx);
         {
             if (buf != ctx->atc_LastBuffer)
+            {
                 ohci_ATContext_ReleaseBuffer(ctx, buf);
+            }
         }
         UNLOCK_CTX(ctx);
     }
@@ -1924,13 +2050,16 @@ static void ohci_IRContext_PacketPerBufferCallback(OHCI1394Context *_ctx)
 
         /* Call user callback if required */
         if ((buf->irb_BufferData.PayloadLength > 0) || !ctx->irc_Flags.DropEmpty)
+        {
             ctx->irc_Callback(&buf->irb_BufferData, event, ctx->irc_UserData);
+        }
 
         last = buf; /* Record the last filled buffer */
 
         /* Next buffer in DMA program */
         buf = buf->irb_Next;
-    } while (buf != ctx->irc_FirstDMABuffer);
+    }
+    while (buf != ctx->irc_FirstDMABuffer);
 
     /* if buf != FirstBuffer, buf status is 0 and this buffer is the new first buffer.
      * if buf == FirstBuffer, all buffers have been filled, the DMA context is stop and maybe some data has been lost
@@ -1985,11 +2114,14 @@ static BOOL ohci_ITContext_Stop(OHCI1394ITCtx *ctx)
 
         reg = ohci_RegRead(unit, OHCI1394_REG_IXMIT_CONTEXT_CONTROL(ctx->itc_Base.ic_Index));
         if (0 == (reg & CTX_ACTIVE))
+        {
             return TRUE;
+        }
 
         _INFO_CTX(&ctx->itc_Base.ic_Context, "IT context #%u still active\n", ctx->itc_Base.ic_Index);
         Helios_DelayMS(25); // wait 25 ms
-    } while (loop--);
+    }
+    while (loop--);
 
     /* Timeout */
     _INFO_CTX(&ctx->itc_Base.ic_Context,
@@ -2026,9 +2158,13 @@ static LONG ohci_AllocIsoCtx(OHCI1394Unit *unit, ULONG type, LONG index)
     LONG max;
 
     if (HELIOS_ISO_RX_CTX == type)
+    {
         max = unit->hu_MaxIsoReceiveCtx;
+    }
     else
+    {
         max = unit->hu_MaxIsoTransmitCtx;
+    }
 
     if (index >= max)
     {
@@ -2042,15 +2178,19 @@ static LONG ohci_AllocIsoCtx(OHCI1394Unit *unit, ULONG type, LONG index)
 
         /* Get current reservation mask */
         if (HELIOS_ISO_RX_CTX == type)
+        {
             mask = unit->hu_IRCtxMask;
+        }
         else
+        {
             mask = unit->hu_ITCtxMask;
+        }
 
         /* Next available? */
         if (index < 0)
         {
             ULONG i;
-            
+
             index = -1;
             for (i=0; i<32; i++)
             {
@@ -2066,21 +2206,31 @@ static LONG ohci_AllocIsoCtx(OHCI1394Unit *unit, ULONG type, LONG index)
         {
             /* free? */
             if (0 == (mask & (1ul << index)))
+            {
                 mask |= 1ul << index;
+            }
             else
+            {
                 index = -1;
+            }
         }
 
         if (index >= 0)
         {
             /* Save the new reservation mask */
             if (HELIOS_ISO_RX_CTX == type)
+            {
                 unit->hu_IRCtxMask = mask;
+            }
             else
+            {
                 unit->hu_ITCtxMask = mask;
+            }
         }
         else
+        {
             _ERR_UNIT(unit, "No free iso contexts (requested=%d)\n", index);
+        }
     }
     UNLOCK_REGION(unit);
 
@@ -2094,9 +2244,13 @@ static void ohci_FreeIsoCtx(OHCI1394Unit *unit, ULONG type, ULONG index)
         _INFO_UNIT(unit, "Freeing iso ctx %p (#%ld)\n", index);
 
         if (HELIOS_ISO_RX_CTX == type)
+        {
             unit->hu_IRCtxMask |= 1ul << index;
+        }
         else
+        {
             unit->hu_ITCtxMask |= 1ul << index;
+        }
     }
     UNLOCK_REGION(unit);
 }
@@ -2116,10 +2270,14 @@ static void ohci_IsoCtx_StopAll(OHCI1394Unit *unit)
         OHCI1394ITCtx *it_ctx;
 
         ForeachNode(&unit->hu_IRCtxList, ir_ctx)
+        {
             ohci_IRContext_Stop(ir_ctx);
+        }
 
         ForeachNode(&unit->hu_ITCtxList, it_ctx)
+        {
             ohci_ITContext_Stop(it_ctx);
+        }
     }
     UNLOCK_REGION_SHARED(unit);
 }
@@ -2132,7 +2290,9 @@ static void ohci_CheckAndScheduleIsoList(struct MinList *list, ULONG events)
     ForeachNode(list, ctx)
     {
         if (events & (1 << ctx->ic_Index))
+        {
             Helios_SignalSubTask(ctx->ic_Context.ctx_SubTask, ctx->ic_Context.ctx_Signal);
+        }
     }
 }
 
@@ -2164,15 +2324,16 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
     /* XXX: should be needed to check that the bus number is not 0x3ff (bus reset phase) ? */
 
     nodeid = OHCI1394_NODEID_NODENUMBER(q);
-    if (63 == nodeid) {
+    if (63 == nodeid)
+    {
         _ERR_UNIT(unit, "Bad node id number\n");
         return;
     }
 
     _INFO_UNIT(unit, "Local NodeId: %lu\n", nodeid);
-                
+
     /*--- SelfID's stream handling phase ---*/
-                
+
     /* Check for errors and obtain the number of packets written */
     q = ohci_RegRead(unit, OHCI1394_REG_SELFID_COUNT);
     if (q & OHCI1394_SELFIDCOUNTF_SELFIDERROR)
@@ -2180,7 +2341,7 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
         _ERR_UNIT(unit, "Bad self id count\n");
         return;
     }
-    
+
     packets_nbr = (q >> 3) & 0xff; /* 2 quadlets per packets, 4 bytes per quadlets */
     if (0 == packets_nbr)
     {
@@ -2202,15 +2363,15 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
      * during the Seld-ID scan all IEEE 1394a-1995 § 8.4.2.3 requirements shall be checked.
      * If one of them is not meet, a new bus reset is raised.
      */
-                
+
     _INFO_UNIT(unit, "Reading %u SelfID packets (%lu quadlet(s))...\n", packets_nbr, (q >> 2) & 0x1ff);
-            
+
     /* Step 1 - Get the generation of the stream */
 
     BE_SWAPLONG_P(&unit->hu_SelfIdBufferCpu[0]);
     gen = (unit->hu_SelfIdBufferCpu[0] >> 16) & 0xff;
     _INFO_UNIT(unit, "SelfID stream generation: %u\n", gen);
-                
+
     /* Step 2 -  Checking data integrity of the self-IDs stream and make a copy of it */
 
     for (i=1, j=0; j < packets_nbr; i+=2, j++)
@@ -2224,7 +2385,7 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
         }
         unit->hu_SelfIdArray[j] = BE_SWAPLONG(q);
     }
-                
+
     /* Step 3 - Validate the copy (no generation change) */
 
     q = OHCI1394_SELFIDCOUNT_SELFIDGENERATION(ohci_RegRead(unit, OHCI1394_REG_SELFID_COUNT));
@@ -2235,9 +2396,9 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
     }
 
     unit->hu_SelfIdPktCnt = packets_nbr;
-                
+
     /* Our SelfIDs buffer is now consistent, stop async contexts and clear the BusRest int. bit */
-                
+
     LOCK_REGION(unit);
     {
         /* Save current topo and invalid it */
@@ -2246,7 +2407,7 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
         prev_gen = unit->hu_OHCI_LastGeneration;
         unit->hu_OHCI_LastGeneration = gen;
         unit->hu_LocalNodeId = nodeid | HELIOS_LOCAL_BUS; /* Local BUS_ID (0x3ff) enforced */
-                    
+
         Helios_ReportMsg(HRMB_INFO, "OHCI", "<Bus-Reset> [Unit#%u], gen=%lu, local ID=%lu",
                          unit->hu_UnitNo, gen, nodeid);
 
@@ -2264,7 +2425,9 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
              * it has been replaced by the hu_NextROMData one.
              */
             if (unit->hu_NextROMData != unit->hu_ROMData)
+            {
                 Helios_FreeROM(unit->hu_MemPool, unit->hu_ROMData);
+            }
 
             unit->hu_ROMData = unit->hu_NextROMData;
             unit->hu_NextROMData = NULL;
@@ -2275,13 +2438,13 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
             /* Read back Busoptions register to valid the value (in case of forced bits) */
             unit->hu_ROMData[2] = unit->hu_BusOptions.value = ohci_RegRead(unit, OHCI1394_REG_BUS_OPTIONS);
         }
-                    
+
         ohci_RegWrite(unit, OHCI1394_REG_PHYREQ_REQ_FILTER_HI_SET, ~0);
         ohci_RegWrite(unit, OHCI1394_REG_PHYREQ_REQ_FILTER_LO_SET, ~0);
 
         /* Flush transactions (ioreq returned with flushed error code) */
         ohci_TL_FlushAll(unit);
-        
+
         log_SelfIDs(unit->hu_LocalNodeId, unit->hu_OHCI_LastGeneration, packets_nbr, unit->hu_SelfIdArray);
 
         Helios_SendEvent(&unit->hu_Listeners, HEVTF_HARDWARE_BUSRESET, 0);
@@ -2303,7 +2466,9 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
     }
 
     if (ohci_UpdateTopologyMapping(unit, gen, nodeid))
+    {
         unit->hu_BadTopo = 0;
+    }
     else if (++unit->hu_BadTopo < MAX_BAD_TOPO)
     {
         /* If it's impossible to generate a topology now, try a bus-reset */
@@ -2316,7 +2481,7 @@ static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
             _ERR_UNIT(unit, "Bus-Reset failed!\n");
             unit->hu_BadTopo = MAX_BAD_TOPO;
             ohci_Disable(unit);
-            
+
             /* XXX: a global unit reset can be better than just disable? */
         }
     }
@@ -2334,7 +2499,7 @@ busreset: /* Error => Short reset */
     {
         /* Put the unit in UnrecoverableError state */
         ohci_OnUnrecoverableError(unit, "Cannot raise a bus reset!");
-    }           
+    }
 }
 
 static void ohci_BusResetTask(HeliosSubTask *self, struct TagItem *tags)
@@ -2376,7 +2541,8 @@ static void ohci_BusResetTask(HeliosSubTask *self, struct TagItem *tags)
         {
             while (NULL != (msg = (APTR) GetMsg(taskport)))
             {
-                switch (msg->hm_Type) {
+                switch (msg->hm_Type)
+                {
                     case HELIOS_MSGTYPE_TASKKILL:
                         ReplyMsg((struct Message *) msg);
                         goto out;
@@ -2387,7 +2553,9 @@ static void ohci_BusResetTask(HeliosSubTask *self, struct TagItem *tags)
         }
 
         if (sigs & unit->hu_BusResetSignal)
+        {
             ohci_HandleSelfIDComplete(unit);
+        }
     }
 
 out:
@@ -2406,7 +2574,8 @@ static BOOL ohci_SoftReset(OHCI1394Unit *unit)
     {
         Helios_DelayMS(10); /* wait 10ms */
         reset = ohci_RegRead(unit, OHCI1394_REG_HC_CONTROL) & OHCI1394_HCCF_SOFTRESET;
-    } while (reset && --loop);
+    }
+    while (reset && --loop);
 
     if (reset)
     {
@@ -2512,7 +2681,9 @@ static void ohci_SplitTimeoutTask(HeliosSubTask *self, struct TagItem *tags)
                 while (NULL != (req = (OHCI1394SplitTimeReq *) GetMsg(unit->hu_TimerPort)))
                 {
                     if (NULL != req->transaction)
+                    {
                         ohci_TL_Finish(unit, req->transaction, HELIOS_RCODE_TIMEOUT);
+                    }
                     FreePooled(unit->hu_MemPool, req, sizeof(OHCI1394SplitTimeReq));
                 }
             }
@@ -2530,7 +2701,9 @@ static void ohci_remove_devices(OHCI1394Unit *unit)
     HeliosDevice *dev, *next;
 
     ForeachNodeSafe(&unit->hu_Devices, dev, next)
+    {
         Helios_RemoveDevice(dev);
+    }
 }
 
 
@@ -2593,7 +2766,9 @@ UWORD ohci_ComputeResponseTimeStamp(UWORD req_timestamp, UWORD offset)
         timestamp += (req_timestamp & ~0x1fff) + 0x2000;
     }
     else
+    {
         timestamp += (req_timestamp & ~0x1fff);
+    }
     return timestamp;
 }
 
@@ -2697,7 +2872,9 @@ LONG ohci_ATContext_Send(OHCI1394ATCtx *ctx, UBYTE generation, QUADLET *p,
         case TCODE_WRITE_BLOCK_REQUEST:
             hl = 16;
             if (NULL == payload)
+            {
                 payload = &p[4];
+            }
             length = AT_GET_HEADER_LEN(p[3]);
             z = 3;
             request = TRUE;
@@ -2706,7 +2883,9 @@ LONG ohci_ATContext_Send(OHCI1394ATCtx *ctx, UBYTE generation, QUADLET *p,
         case TCODE_WRITE_STREAM:
             hl = 8;
             if (NULL == payload)
+            {
                 payload = &p[2];
+            }
             length = AT_GET_HEADER_LEN(p[1]);
             z = 3;
             request = TRUE;
@@ -2732,7 +2911,9 @@ LONG ohci_ATContext_Send(OHCI1394ATCtx *ctx, UBYTE generation, QUADLET *p,
         case TCODE_LOCK_RESPONSE:
             hl = 16;
             if (NULL == payload)
+            {
                 payload = &p[4];
+            }
             length = AT_GET_HEADER_LEN(p[3]);
             z = 3;
             request = FALSE;
@@ -2762,27 +2943,40 @@ LONG ohci_ATContext_Send(OHCI1394ATCtx *ctx, UBYTE generation, QUADLET *p,
 
     /* TimeStamp (AT response packet only, or let it to 0) */
     if (!request)
+    {
         d[0].d_TimeStamp = BE_SWAPWORD(timestamp);
+    }
 
     if (NULL != payload)
-    { /* Packet with payload data */
+    {
+        /* Packet with payload data */
         if (TCODE_WRITE_STREAM == tcode)
+        {
             last_d = &d[1];
+        }
         else
+        {
             last_d = &d[2];
+        }
 
         /* Prepare the payload descriptor */
         last_d->d_ReqCount = BE_SWAPWORD(length);
         last_d->d_DataAddress = BE_SWAPLONG((ULONG)PCIXDMAGetPhysical(unit->hu_PCI_BoardObject, payload));
     }
     else /* Packet without payload data */
+    {
         last_d = &d[0];
+    }
 
     /* Overwrite tlabel for request packet */
     if (request && (TCODE_WRITE_STREAM != tcode) && (TCODE_WRITE_PHY != tcode))
+    {
         p0 = (p[0] & ~(AT_HEADER_TLABEL_MSK << AT_HEADER_TLABEL_SHIFT)) | (tlabel << AT_HEADER_TLABEL_SHIFT);
+    }
     else
+    {
         p0 = p[0];
+    }
 
     /* Prepare the Header data area */
     ((QUADLET *)&d[1])[0] = BE_SWAPLONG(p0);
@@ -2796,9 +2990,13 @@ LONG ohci_ATContext_Send(OHCI1394ATCtx *ctx, UBYTE generation, QUADLET *p,
             /* Data are swapped by the HW */
             if ((tcode == TCODE_WRITE_QUADLET_REQUEST) &&
                 (tcode == TCODE_READ_QUADLET_RESPONSE))
+            {
                 ((QUADLET *)&d[1])[3] = LE_SWAPLONG(p[3]);
+            }
             else
+            {
                 ((QUADLET *)&d[1])[3] = BE_SWAPLONG(p[3]);
+            }
         }
     }
 
@@ -2819,7 +3017,7 @@ LONG ohci_ATContext_Send(OHCI1394ATCtx *ctx, UBYTE generation, QUADLET *p,
         {
             if ((tcode != TCODE_WRITE_PHY)
                 && ((generation != unit->hu_OHCI_LastGeneration)
-                || (OHCI1394_INTF_BUSRESET & ohci_RegRead(unit, OHCI1394_REG_INT_EVENT_CLEAR))))
+                    || (OHCI1394_INTF_BUSRESET & ohci_RegRead(unit, OHCI1394_REG_INT_EVENT_CLEAR))))
             {
                 /* calling the ack callback max use an exclusive lock on unit */
                 UNLOCK_REGION_SHARED(unit);
@@ -2909,9 +3107,13 @@ void ohci_HandleLocalRequest(OHCI1394Unit *unit,
 
             /* Prepare the response packet */
             if (req->TCode != TCODE_WRITE_BLOCK_REQUEST)
+            {
                 resp->TCode = req->TCode + 2;
+            }
             else
+            {
                 resp->TCode = 2;
+            }
 
             resp->Header[0] = req->Header[0] & ~AT_HEADER_TCODE_MSK;
             resp->Header[0] |= resp->TCode << 4;
@@ -2943,10 +3145,14 @@ void ohci_HandleLocalRequest(OHCI1394Unit *unit,
                     }
                 }
                 else
+                {
                     resp->RCode = ohci_HandleLocalROM(unit, csr, req, resp);
+                }
             }
             else /* Other addresses are not accessible (TODO: request handler?) */
+            {
                 resp->RCode = HELIOS_RCODE_ADDRESS_ERROR;
+            }
 
             resp->SourceID = AT_GET_HEADER_DEST_ID(req->Header[1]);
             resp->Header[1] = (AT_GET_HEADER_DEST_ID(req->Header[0]) << 16) | (resp->RCode << 12);
@@ -2989,7 +3195,9 @@ LONG ohci_SetROM(OHCI1394Unit *unit, QUADLET *data)
     /* make internal copy of data */
     next_rom = Helios_CreateROM(unit->hu_MemPool, HA_Rom, (ULONG)data, TAG_DONE);
     if (NULL == next_rom)
+    {
         return HHIOERR_NOMEM;
+    }
 
     LOCK_REGION(unit);
     {
@@ -3007,17 +3215,21 @@ LONG ohci_SetROM(OHCI1394Unit *unit, QUADLET *data)
             err = HHIOERR_NO_ERROR;
         }
         else /* BUSY */
+        {
             err = HHIOERR_FAILED;
+        }
     }
     UNLOCK_REGION(unit);
-    
+
     if (!err)
     {
         /* Now finish the process by a bus reset */
         ohci_RaiseBusReset(unit, TRUE);
     }
     else
+    {
         Helios_FreeROM(unit->hu_MemPool, next_rom);
+    }
 
     return err;
 }
@@ -3105,17 +3317,23 @@ OHCI1394IRCtx *ohci_IRContext_Create(OHCI1394Unit *     unit,
                     FreeVecDMA(ctx->irc_DMABuffer);
                 }
                 else
+                {
                     _ERR_UNIT(unit, "IR #%u: DMABuffer alloc failed\n", index);
+                }
 
                 FreeVecDMA(ctx->irc_PageBuffer);
             }
             else
+            {
                 _ERR_UNIT(unit, "IR #%u: PageBuffer alloc failed\n", index);
+            }
 
             FreePooled(unit->hu_MemPool, ctx, sizeof(*ctx));
         }
         else
+        {
             _ERR_UNIT(unit, "IR #%u: ctx alloc failed\n", index);
+        }
 
         ohci_FreeIsoCtx(unit, HELIOS_ISO_RX_CTX, index);
     }
@@ -3162,32 +3380,33 @@ BOOL ohci_IRContext_Stop(OHCI1394IRCtx *ctx)
 
     LOCK_CTX(ctx);
     {
-       /* Disable interruption line */
-       ohci_RegWrite(unit, OHCI1394_REG_ISO_RECV_INT_MASK_CLEAR, index_mask);
+        /* Disable interruption line */
+        ohci_RegWrite(unit, OHCI1394_REG_ISO_RECV_INT_MASK_CLEAR, index_mask);
 
-       /* Request the DMA stop of context */
-       ohci_RegWrite(unit, OHCI1394_REG_IRECV_CONTEXT_CONTROL_CLEAR(ctx->irc_Base.ic_Index), CTX_RUN);
+        /* Request the DMA stop of context */
+        ohci_RegWrite(unit, OHCI1394_REG_IRECV_CONTEXT_CONTROL_CLEAR(ctx->irc_Base.ic_Index), CTX_RUN);
 
-       /* Wait about DMA safe state */
-       do
-       {
-           QUADLET reg;
+        /* Wait about DMA safe state */
+        do
+        {
+            QUADLET reg;
 
-           reg = ohci_RegRead(unit, OHCI1394_REG_IRECV_CONTEXT_CONTROL(ctx->irc_Base.ic_Index));
-           if (0 == (reg & CTX_ACTIVE))
-           {
-               res = TRUE;
-               goto out;
-           }
+            reg = ohci_RegRead(unit, OHCI1394_REG_IRECV_CONTEXT_CONTROL(ctx->irc_Base.ic_Index));
+            if (0 == (reg & CTX_ACTIVE))
+            {
+                res = TRUE;
+                goto out;
+            }
 
-           _INFO_CTX(&ctx->irc_Base.ic_Context, "IR context %u still active\n", ctx->irc_Base.ic_Index);
-           Helios_DelayMS(25); // wait 25 ms
-       } while (loop--);
+            _INFO_CTX(&ctx->irc_Base.ic_Context, "IR context %u still active\n", ctx->irc_Base.ic_Index);
+            Helios_DelayMS(25); // wait 25 ms
+        }
+        while (loop--);
 
-       /* Timeout */
-       _ERR_CTX(&ctx->irc_Base.ic_Context,
-                "TIMEOUT, IR context #%u still active 500ms after STOP request\n",
-                ctx->irc_Base.ic_Index);
+        /* Timeout */
+        _ERR_CTX(&ctx->irc_Base.ic_Context,
+                 "TIMEOUT, IR context #%u still active 500ms after STOP request\n",
+                 ctx->irc_Base.ic_Index);
     }
     UNLOCK_CTX(ctx);
 
@@ -3267,7 +3486,9 @@ LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index)
     while (NULL != ((struct Node *) unit)->ln_Succ)
     {
         if (unit->hu_UnitNo == index)
+        {
             break;
+        }
 
         unit = (OHCI1394Unit *) ((struct Node *) unit)->ln_Succ;
     }
@@ -3288,7 +3509,9 @@ LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index)
                     err = 0;
                 }
                 else
+                {
                     ohci_Term(unit);
+                }
             }
         }
         else
@@ -3298,7 +3521,9 @@ LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index)
         }
     }
     else
+    {
         _ERR("Unit %lu does not exist!\n", index);
+    }
 
     _INFO("-\n");
     return err;
@@ -3529,20 +3754,28 @@ LONG ohci_Init(OHCI1394Unit *unit)
                                                             goto end;
                                                         }
                                                         else
+                                                        {
                                                             _ERR_UNIT(unit, "ROM creation failed\n");
+                                                        }
                                                     }
                                                     else
+                                                    {
                                                         _ERR_UNIT(unit, "Failed to set L&C SelfID bits in PHY\n");
+                                                    }
                                                 }
                                                 else
+                                                {
                                                     _ERR_UNIT(unit, "Failed to set Link Power Status\n");
+                                                }
                                             }
 
                                             ohci_ARContexts_Term(unit);
                                         }
                                     }
                                     else
+                                    {
                                         _ERR_UNIT(unit, "TaskReady not received from BusReset task\n");
+                                    }
 
                                     Helios_KillSubTask(unit->hu_BusResetTask);
                                     ohci_remove_devices(unit);
@@ -3552,30 +3785,42 @@ LONG ohci_Init(OHCI1394Unit *unit)
                                 FreeVecDMA(unit->hu_SelfIdBufferAlloc);
                             }
                             else
+                            {
                                 _ERR_UNIT(unit, "AllocVecDMA() for %lu bytes failed\n", SELF_ID_BUF_SIZE * 2);
+                            }
                         }
                         else
+                        {
                             _ERR_UNIT(unit, "Unsupported OHCI version (0x%08x)\n", unit->hu_OHCI_Version);
+                        }
 
                         ohci_DumpRegisters(unit);
                         ohci_SoftReset(unit);
                     }
                 }
                 else
+                {
                     _ERR_UNIT(unit, "SplitTimeout task not ready\n");
+                }
 
                 Helios_KillSubTask(unit->hu_SplitTimeoutTask);
             }
             else
+            {
                 _ERR_UNIT(unit, "SplitTime task creation failed!\n");
+            }
 
             DeletePool(unit->hu_MemPool);
         }
         else
+        {
             _ERR_UNIT(unit, "CreatePool() failed!\n");
+        }
     }
     else
+    {
         _ERR_UNIT(unit, "ohci_PCI_OpenUnit() failed\n");
+    }
 
 end:
     _INFO_UNIT(unit, "- ret=%ld\n", ret);
@@ -3592,7 +3837,9 @@ void ohci_Term(OHCI1394Unit *unit)
     ohci_remove_devices(unit);
 
     ForeachNodeSafe(&unit->hu_IRCtxList, iso_ctx, next)
+    {
         ohci_IRContext_Destroy(iso_ctx);
+    }
 
     ForeachNodeSafe(&unit->hu_ITCtxList, iso_ctx, next)
     {
@@ -3610,7 +3857,9 @@ void ohci_Term(OHCI1394Unit *unit)
     ohci_FreeTopology(unit);
     Helios_FreeROM(unit->hu_MemPool, unit->hu_ROMData);
     if (NULL != unit->hu_NextROMData)
+    {
         Helios_FreeROM(unit->hu_MemPool, unit->hu_NextROMData);
+    }
 
     _INFO("Kill split-timeout task\n");
     Helios_KillSubTask(unit->hu_SplitTimeoutTask);
@@ -3635,7 +3884,10 @@ LONG ohci_Enable(OHCI1394Unit *unit)
 
     _INFO_UNIT(unit, "+\n");
 
-    if (unit->hu_Flags.Enabled) return TRUE;
+    if (unit->hu_Flags.Enabled)
+    {
+        return TRUE;
+    }
 
     /* reset bad topo counter */
     unit->hu_BadTopo = 0;
@@ -3657,9 +3909,13 @@ LONG ohci_Enable(OHCI1394Unit *unit)
     }
 
     if (!ret)
+    {
         ohci_Disable(unit);
+    }
     else
+    {
         unit->hu_Flags.Enabled = TRUE;
+    }
 
     _INFO_UNIT(unit, "-\n");
     return ret;
@@ -3669,7 +3925,10 @@ void ohci_Disable(OHCI1394Unit *unit)
 {
     _INFO_UNIT(unit, "+\n");
 
-    if (!unit->hu_Flags.Enabled) return;
+    if (!unit->hu_Flags.Enabled)
+    {
+        return;
+    }
 
     unit->hu_Flags.Enabled = FALSE;
 
@@ -3695,19 +3954,23 @@ void ohci_HandleDeadContexts(_HELIOS_Bus *bus)
     LOCK_REGION(ohci);
     {
         /* Scan all contexts to find which ones are dead */
-        if (ohci_Context_IsDead(&ohci->ARResponseCtx.Context)) {
+        if (ohci_Context_IsDead(&ohci->ARResponseCtx.Context))
+        {
             log_Error("AR Response context dead");
             // TODO
         }
-        if (ohci_Context_IsDead(&ohci->ARRequestCtx.Context)) {
+        if (ohci_Context_IsDead(&ohci->ARRequestCtx.Context))
+        {
             log_Error("AR Request context dead");
             // TODO
         }
-        if (ohci_Context_IsDead(&ohci->ATResponseCtx.Context)) {
+        if (ohci_Context_IsDead(&ohci->ATResponseCtx.Context))
+        {
             log_Error("AT Response context dead");
             // TODO
         }
-        if (ohci_Context_IsDead(&ohci->ATRequestCtx.Context)) {
+        if (ohci_Context_IsDead(&ohci->ATRequestCtx.Context))
+        {
             log_Error("AT Request context dead");
             // TODO
         }
@@ -3729,7 +3992,8 @@ void Helios_DumpOHCI(HeliosBus *_bus)
     {
         APTR ir_ctx;
 
-        for (i=0; i < ARRAY_SIZE(ohci_reg_names); i++) {
+        for (i=0; i < ARRAY_SIZE(ohci_reg_names); i++)
+        {
             QUADLET q;
             ULONG offset = ohci_reg_names[i].Offset;
 
@@ -3739,8 +4003,10 @@ void Helios_DumpOHCI(HeliosBus *_bus)
         }
 
         kprintf("\t\nDumping IR contexts\n");
-        ForeachNode(&ohci->IRCtxList, ir_ctx) {
-            if (NULL != ir_ctx) {
+        ForeachNode(&ohci->IRCtxList, ir_ctx)
+        {
+            if (NULL != ir_ctx)
+            {
                 kprintf("IR Ctx %u-%p:\n", i, ir_ctx);
                 kprintf("\tCtrl   : $%08x\n", ohci_RegRead(ohci, OHCI1394_REG_IRECV_CONTEXT_CONTROL(i)));
                 kprintf("\tCmdPtr : $%08x\n", ohci_RegRead(ohci, OHCI1394_REG_IRECV_COMMAND_PTR(i)));
@@ -3763,8 +4029,12 @@ void Helios_DumpOHCI(HeliosBus *_bus)
         kprintf("Bus TLabels mask : $%016llx\n", bus->TLabelBitmap);
         kprintf("Dumping bus pending transactions array:\n");
         ptr_t = bus->PendingTransactions;
-        for (tlabel=0; tlabel < 64; tlabel++, ptr_t++) {
-            if (NULL == *ptr_t) continue;
+        for (tlabel=0; tlabel < 64; tlabel++, ptr_t++)
+        {
+            if (NULL == *ptr_t)
+            {
+                continue;
+            }
             kprintf("[%02u] %p, ack %d, rcode %d\n", tlabel, *ptr_t, (*ptr_t)->RequestSA.Ack, (*ptr_t)->Response.RCode);
         }
         kprintf("\t\n");
@@ -3783,28 +4053,36 @@ void Helios_DumpOHCI(HeliosBus *_bus)
         kprintf("\t\nDumping ATRequestCtx in-use buffers...");
 
         buffer = (APTR) ATOMIC_FETCH((ULONG *) &ohci->ATRequestCtx.LastBufferDone);
-        if (NULL != buffer) {
+        if (NULL != buffer)
+        {
             ULONG j, i, *mem;
 
             kprintf("\nDescriptors of the last done buffer %p:\n", buffer);
 
-            for (j=0; j < 3; j++) {
+            for (j=0; j < 3; j++)
+            {
                 mem = (APTR) &buffer->Descriptors[j];
                 for (i=0; i < sizeof(_OHCI1394_Descriptor); i += 4, mem++)
+                {
                     kprintf("$%08x: %08x\n", PCIXDMAGetPhysical(ohci->PciBoardObject, mem), SWAPLONG(*mem));
+                }
             }
             kprintf("\t\n");
         }
 
-        ForeachNodeSafe(&ohci->ATRequestCtx.Context.UsedList, buffer, next) {
+        ForeachNodeSafe(&ohci->ATRequestCtx.Context.UsedList, buffer, next)
+        {
             ULONG j, i, *mem;
 
             kprintf("\t\nDescriptors of buffer %p:\n", buffer);
 
-            for (j=0; j < 3; j++) {
+            for (j=0; j < 3; j++)
+            {
                 mem = (APTR) &buffer->Descriptors[j];
                 for (i=0; i < sizeof(_OHCI1394_Descriptor); i += 4, mem++)
+                {
                     kprintf("$%08x: %08x\n", PCIXDMAGetPhysical(ohci->PciBoardObject, mem), SWAPLONG(*mem));
+                }
             }
         }
         kprintf("\t\n");
@@ -3818,15 +4096,15 @@ void Helios_DumpOHCI(HeliosBus *_bus)
 
         buf = ohci->ARResponseCtx.Context.AlignedBigBufferStart;
         kprintf("Checking AR buffers... (already read: %u)\n",
-            (APTR) ohci->ARResponseCtx.FirstQuadlet - (APTR) ohci->ARResponseCtx.FirstBuffer->Page);
+                (APTR) ohci->ARResponseCtx.FirstQuadlet - (APTR) ohci->ARResponseCtx.FirstBuffer->Page);
         for (i=0; i < ARBUFFER_PAGE_COUNT; i++, buf++)
             kprintf("[%03u]: $%08x -> $%08x, len=%u, Status: $%04x %s%s\n", i,
-                ohci_GetPhyAddress(&ohci->ARResponseCtx.Context, &buf->Descriptor),
-                BE_SWAPLONG(buf->Descriptor.d_BranchAddress),
-                ARBUFFER_PAGE_SIZE - BE_SWAPWORD(buf->Descriptor.d_ResCount),
-                BE_SWAPWORD(buf->Descriptor.d_TransferStatus),
-                buf == ohci->ARResponseCtx.FirstBuffer?"First ":"",
-                buf == ohci->ARResponseCtx.LastBuffer?"Last":"");
+                    ohci_GetPhyAddress(&ohci->ARResponseCtx.Context, &buf->Descriptor),
+                    BE_SWAPLONG(buf->Descriptor.d_BranchAddress),
+                    ARBUFFER_PAGE_SIZE - BE_SWAPWORD(buf->Descriptor.d_ResCount),
+                    BE_SWAPWORD(buf->Descriptor.d_TransferStatus),
+                    buf == ohci->ARResponseCtx.FirstBuffer?"First ":"",
+                    buf == ohci->ARResponseCtx.LastBuffer?"Last":"");
     }
     UNLOCK_REGION(&ohci->ARResponseCtx.Context);
 

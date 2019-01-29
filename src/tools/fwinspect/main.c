@@ -110,8 +110,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define OUI_VENDOR_VIA          (0x004063ull)
 #define PEGASOS_MAGIC_GUID      (0x0011060000004b2full)
 
-#define SBP2_UNIT_SPEC_ID_ENTRY	0x0000609e
-#define SBP2_SW_VERSION_ENTRY	0x00010483
+#define SBP2_UNIT_SPEC_ID_ENTRY 0x0000609e
+#define SBP2_SW_VERSION_ENTRY   0x00010483
 
 typedef struct DeviceListerData
 {
@@ -127,7 +127,8 @@ typedef struct DeviceListerData
     char                     GUID[17];
 } DeviceListerData;
 
-enum {
+enum
+{
     OBJ_GENERATION,
     OBJ_DEVICE_COUNT,
     OBJ_BUS_RESET,
@@ -159,7 +160,8 @@ enum {
     OBJ_DUMP_OHCI,
 };
 
-enum {
+enum
+{
     ID_BUS_RESET=1,
     ID_BUS_ENABLE,
     ID_BUS_DISABLE,
@@ -190,7 +192,8 @@ static struct Hook DeviceListCompareHook;
 
 static char dev_names[63][3];
 
-static STRPTR rcode_str[] = {
+static STRPTR rcode_str[] =
+{
     [HELIOS_RCODE_COMPLETE]         = "Complete",
     [HELIOS_RCODE_CONFLICT_ERROR]   = "Conflict",
     [HELIOS_RCODE_DATA_ERROR]       = "Data",
@@ -205,7 +208,8 @@ static STRPTR rcode_str[] = {
     [0x10-HELIOS_RCODE_TIMEOUT]     = "Timeout",
 };
 
-static STRPTR speed2str[] = {
+static STRPTR speed2str[] =
+{
     [S100] = "S100",
     [S200] = "S200",
     [S400] = "S400",
@@ -219,8 +223,11 @@ static void LogMsg(STRPTR fmt, ...)
 
     va_start(va, fmt);
     if (NULL == app)
+    {
         vprintf(fmt, va);
-    else {
+    }
+    else
+    {
         char buf[160];
 
         vsnprintf(buf, sizeof(buf), fmt, va);
@@ -254,9 +261,12 @@ static void fw_to_eeprom(ULONG iobase, int cs, int clock, int dataout)
 static void send_bits_4w(ULONG iobase, int bits, ULONG value)
 {
     if (bits < 32)
+    {
         value <<= 32 - bits;
+    }
 
-    while (bits--) {
+    while (bits--)
+    {
         fw_to_eeprom(iobase, 1, 0, value & 0x80000000); usleep(10);
         fw_to_eeprom(iobase, 1, 1, value & 0x80000000); usleep(10);
         fw_to_eeprom(iobase, 1, 0, value & 0x80000000); usleep(10);
@@ -303,11 +313,14 @@ static void PimpMyPegasos(APTR board)
      */
 
     if ((PCI_VENDORID_VIA == PCIXReadConfigWord(board, PCIXCONFIG_VENDOR))
-        && (PCI_DEVICEID_VT630X == PCIXReadConfigWord(board, PCIXCONFIG_DEVICE))) {
+        && (PCI_DEVICEID_VT630X == PCIXReadConfigWord(board, PCIXCONFIG_DEVICE)))
+    {
 
         /* Power-on this board */
         if((PCIXReadConfigWord(board, PCIXCONFIG_COMMAND) & 7) == 0)
+        {
             PCIXWriteConfigWord(board, PCIXCONFIG_COMMAND, 7);
+        }
 
         membase = PCIXGetBoardAttr(board, PCIXTAG_BASEADDRESS0) & ~7;
 
@@ -316,14 +329,16 @@ static void PimpMyPegasos(APTR board)
         guid <<= 32;
         guid  |= reg_Read(membase + 0x28);
 
-        if (PEGASOS_MAGIC_GUID == guid) {
+        if (PEGASOS_MAGIC_GUID == guid)
+        {
             iobase = PCIXGetBoardAttr(board, PCIXTAG_BASEADDRESS1) & ~7;
 
             /* Searching for the MAC chipset */
             board = PCIXFindBoardTags(NULL, PCIXFINDTAG_FULLCLASS, PCI_CLASS_NETWORK_ETHERNET,
                                       PCIXFINDTAG_VENDOR, PCI_VENDORID_VIA,
                                       TAG_DONE);
-            if (NULL != board) {
+            if (NULL != board)
+            {
                 macbase = PCIXGetBoardAttr(board, PCIXTAG_BASEADDRESS0) & ~7;
 
                 /* Get the MAC address from the MAC-Chip */
@@ -348,17 +363,21 @@ static void PimpMyPegasos(APTR board)
                                   "So, please, confirm this operation..."MUIX_L,
                                   (ULONG) (PEGASOS_MAGIC_GUID >> 32), (ULONG) PEGASOS_MAGIC_GUID,
                                   (ULONG) (mac >> 32), (ULONG) mac, (ULONG) (guid >> 32), (ULONG) guid);
-                if (1 == res) {
+                if (1 == res)
+                {
                     res = MUI_Request(NULL, NULL, 0, "Helios Warning!", "_Obviously|*"MUIX_B"Oups, _Cancel!",
                                       MUIX_C"Really sure to do this EEPROM change?");
-                    if (1 == res) {
+                    if (1 == res)
+                    {
                         ULONG cnt;
 
                         /* enable direct access to pins */
                         reg_Write(iobase, reg_Read(iobase) | 0x80);
 
                         for (cnt = 0; cnt < 4; cnt++)
+                        {
                             write_4w(iobase, cnt, (guid >> (16*(3-cnt))) & 0xffff);
+                        }
 
                         /* disable direct access to pins */
                         reg_Write(iobase + 0x20, 0x20);
@@ -380,7 +399,7 @@ static void parse_dev_rom(DeviceListerData *data)
 {
     ULONG len, gen;
     LONG res;
-    QUADLET *rom, key, value, id[4]={0};
+    QUADLET *rom, key, value, id[4]= {0};
     HeliosRomIterator ri;
 
     res = Helios_GetAttrs(HGA_DEVICE, data->Device,
@@ -389,8 +408,10 @@ static void parse_dev_rom(DeviceListerData *data)
                           HA_RomLength, (ULONG)&len,
                           TAG_DONE);
     if ((res != 3) || (gen != data->Gen) || (NULL == rom))
+    {
         return;
-    
+    }
+
     /* Parse the root directory */
     Helios_InitRomIterator(&ri, (APTR)rom + ROM_ROOT_DIRECTORY);
     while (Helios_RomIterate(&ri, &key, &value))
@@ -398,16 +419,18 @@ static void parse_dev_rom(DeviceListerData *data)
         switch (key)
         {
             case CSR_KEY_MODULE_VENDOR_ID: id[0] = value; break;
-            case CSR_KEY_MODEL_ID:		   id[1] = value; break;
-            case CSR_KEY_UNIT_SPEC_ID:	   id[2] = value; break;
+            case CSR_KEY_MODEL_ID:         id[1] = value; break;
+            case CSR_KEY_UNIT_SPEC_ID:     id[2] = value; break;
             case CSR_KEY_UNIT_SW_VERSION:  id[3] = value; break;
-		}
+        }
     }
 
     /* Recognize some device types */
     data->Type = "<unknown>";
     if ((SBP2_UNIT_SPEC_ID_ENTRY == id[2]) && (CSR_KEY_UNIT_SW_VERSION == id[3]))
+    {
         data->Type = "SBP2";
+    }
     else if (0xa02d == id[2])
     {
         switch (id[3])
@@ -466,7 +489,7 @@ static APTR DeviceListConstruct(struct Hook *hook, APTR pool, HeliosDevice *dev)
         && (NULL != evtlist))
     {
         DeviceListerData *data;
-        
+
         data = AllocPooled(pool, sizeof(*data));
         if (NULL != data)
         {
@@ -501,7 +524,7 @@ static APTR DeviceListConstruct(struct Hook *hook, APTR pool, HeliosDevice *dev)
             return data;
         }
     }
-    
+
     LogMsg("Failed to add device %p\n", dev);
     return NULL;
 }
@@ -522,9 +545,13 @@ static LONG DeviceListDisplay(struct Hook *hook, STRPTR output[], DeviceListerDa
         *output++ = data->NodeInfo.n_PhyID == gLastTopo.ht_IRMNodeID ? "o":"";
 
         if (data->NodeInfo.n_MaxSpeed <= S400)
+        {
             *output++ = speed2str[data->NodeInfo.n_MaxSpeed];
+        }
         else
+        {
             *output++ = "BETA";
+        }
 
         *output++ = "<unknown>"; /* TODO: rom_node_type_str[]; */
         *output++ = data->Type;
@@ -552,19 +579,43 @@ static LONG DeviceListCompare(struct Hook *hook, DeviceListerData *d1, DeviceLis
 
 static LONG fail(APTR app, char *str)
 {
-    if (app) MUI_DisposeObject(app);
-    if (mcc) MUI_DeleteCustomClass(mcc);
+    if (app)
+    {
+        MUI_DisposeObject(app);
+    }
+    if (mcc)
+    {
+        MUI_DeleteCustomClass(mcc);
+    }
     if (NULL != gHWEvtListenerList)
     {
         Helios_RemoveEventListener(gHWEvtListenerList, &busreset_msg);
         Helios_RemoveEventListener(gHWEvtListenerList, &topology_msg);
     }
-    if (NULL != gHardware) Helios_ReleaseHardware(gHardware);
-    if (event_port) DeleteMsgPort(event_port);
-    if (io_port) DeleteMsgPort(io_port);
-    if (HeliosBase) CloseLibrary(HeliosBase);
-    if (PCIIDSBase) CloseLibrary(PCIIDSBase);
-    if (PCIXBase) CloseLibrary(PCIXBase);
+    if (NULL != gHardware)
+    {
+        Helios_ReleaseHardware(gHardware);
+    }
+    if (event_port)
+    {
+        DeleteMsgPort(event_port);
+    }
+    if (io_port)
+    {
+        DeleteMsgPort(io_port);
+    }
+    if (HeliosBase)
+    {
+        CloseLibrary(HeliosBase);
+    }
+    if (PCIIDSBase)
+    {
+        CloseLibrary(PCIIDSBase);
+    }
+    if (PCIXBase)
+    {
+        CloseLibrary(PCIXBase);
+    }
     if (str)
     {
         puts(str);
@@ -626,41 +677,55 @@ LONG Init(void)
                                 topology_msg.hm_EventMask = HEVTF_HARDWARE_TOPOLOGY;
                                 topology_msg.hm_UserData = gHardware;
                                 Helios_AddEventListener(gHWEvtListenerList, &topology_msg);
-                            
+
                                 return TRUE;
                             }
                             else
+                            {
                                 LogMsg("Failed to obtain HW event listener list\n");
+                            }
 
                             Helios_ReleaseHardware(gHardware);
                             gHardware = NULL;
                         }
                         else
+                        {
                             LogMsg("Failed to obtain hardware\n");
+                        }
 
                         DeleteMsgPort(event_port);
                         event_port = NULL;
                     }
                     else
+                    {
                         LogMsg("Helios events port creation failed\n");
+                    }
 
                     DeleteMsgPort(io_port);
                     io_port = NULL;
                 }
                 else
+                {
                     LogMsg("Helios IOs port creation failed\n");
+                }
 
                 CloseLibrary(HeliosBase);
                 HeliosBase = NULL;
             }
             else
+            {
                 LogMsg("can't open helios.library\n");
+            }
         }
         else
+        {
             LogMsg("can't open pciids.library\n");
+        }
     }
     else
+    {
         LogMsg("can't open pcix.library\n");
+    }
 
     return NULL;
 }
@@ -692,7 +757,8 @@ BOOL HandleHeliosEvents(void)
 
                     case HEVTF_HARDWARE_TOPOLOGY:
                     {
-                        struct TagItem tags[] = {
+                        struct TagItem tags[] =
+                        {
                             {HHA_Topology, (ULONG)&gLastTopo},
                             {TAG_DONE, 0}
                         };
@@ -721,7 +787,9 @@ BOOL HandleHeliosEvents(void)
 
                                 /* Add all devices */
                                 while (NULL != (dev = Helios_GetNextDevice(gHardware, dev)))
+                                {
                                     DoMethod(objs[OBJ_DEVICES_LIST], MUIM_List_InsertSingle, dev, MUIV_List_Insert_Sorted);
+                                }
                             }
                             Helios_UnlockBase();
                             set(objs[OBJ_DEVICES_LIST], MUIA_List_Quiet, FALSE);
@@ -760,7 +828,7 @@ BOOL HandleHeliosEvents(void)
                             sprintf(data->GUID, "%016llx", guid);
                             data->LastEvent = HEVTF_DEVICE_SCANNED;
                             parse_dev_rom(data);
-                            
+
                             DoMethod(objs[OBJ_DEVICES_LIST], MUIM_List_Redraw, MUIV_List_Redraw_Entry, data);
                         }
                     }
@@ -813,14 +881,20 @@ void HandleHeliosIO(void)
                             set(objs[OBJ_READ_QUADLET_OK], MUIA_Disabled, FALSE);
                         }
                         else
+                        {
                             set(objs[OBJ_WRITE_QUADLET_OK], MUIA_Disabled, FALSE);
+                        }
                         break;
 
                     case HELIOS_RCODE_CANCELLED:
                         if (TCODE_READ_QUADLET_REQUEST == p->TCode)
+                        {
                             set(objs[OBJ_READ_QUADLET_RESULT], MUIA_Text_Contents, "Cancelled");
+                        }
                         else
+                        {
                             BusEvents_LogMsg(0ull, "Write error", "Cancelled request!");
+                        }
                         break;
 
                     default:
@@ -830,9 +904,11 @@ void HandleHeliosIO(void)
                             set(objs[OBJ_READ_QUADLET_RESULT], MUIA_Text_Contents, buf);
                         }
                         else
+                        {
                             BusEvents_LogMsg(0ull, "Write error", "%s error", rcode_str[p->RCode]);
+                        }
                 }
-                
+
                 FreeVec(ioreq);
                 break;
 
@@ -853,7 +929,8 @@ int main(int argc, char **argv)
     ULONG vcid;
     UQUAD local_guid;
     CONST_STRPTR vid_str, did_str;
-    struct TagItem tags[] = {
+    struct TagItem tags[] =
+    {
         {OHCI1394A_PciVendorId, (ULONG)&vid},
         {OHCI1394A_PciDeviceId, (ULONG)&did},
         {HHA_VendorCompagnyId, (ULONG)&vcid},
@@ -869,21 +946,28 @@ int main(int argc, char **argv)
     INIT_HOOK(&DeviceListCompareHook, DeviceListCompare);
 
     for (i=0; i<63; i++)
+    {
         snprintf(&dev_names[i][0], 3, "%2lu", i);
+    }
 
     if (!Init())
+    {
         fail(NULL, "Init() failed.");
+    }
 
     ioreq_tmp.iohh_Req.io_Message.mn_Length = sizeof(ioreq_tmp);
     ioreq_tmp.iohh_Req.io_Command = HHIOCMD_QUERYDEVICE;
     ioreq_tmp.iohh_Data = tags;
 
     if (!Helios_DoIO(gHardware, &ioreq_tmp))
+    {
         fail(NULL, "HHIOCMD_QUERYDEVICE failed.");
+    }
 
     vid_str = PCIIDS_GetVendorName(vid);
     did_str = PCIIDS_GetDeviceName(vid, did);
 
+    // *INDENT-OFF*
     app = ApplicationObject,
         MUIA_Application_Title      , "FireWire inspector",
         MUIA_Application_Version    , "$VER: FWInspect 0.4 ("__DATE__")",
@@ -894,7 +978,7 @@ int main(int argc, char **argv)
         MUIA_Application_SingleTask , TRUE,
         MUIA_Application_Iconified  , FALSE,
 
-//+     win_main
+        // win_main
         SubWindow, win_main = WindowObject,
             MUIA_Window_Title, "FireWire inspector",
             MUIA_Window_ID   , MAKE_ID('M','A','I','N'),
@@ -974,7 +1058,7 @@ int main(int argc, char **argv)
                         Child, objs[OBJ_BUS_EVT_LOG] = ListviewObject,
                             MUIA_Listview_Input, FALSE,
                             MUIA_Listview_List, ListObject,
-                                ReadListFrame,      
+                                ReadListFrame,
                                 MUIA_Font, MUIV_Font_Fixed,
                                 MUIA_List_ConstructHook, MUIV_List_ConstructHook_String,
                                 MUIA_List_DestructHook, MUIV_List_DestructHook_String,
@@ -988,7 +1072,7 @@ int main(int argc, char **argv)
                 End,
             End,
         End,
-//+     OBJ_ROM_WIN
+        // OBJ_ROM_WIN
         SubWindow, objs[OBJ_ROM_WIN] = WindowObject,
             MUIA_Window_Title, "ROM Viewer",
             MUIA_Window_ID   , MAKE_ID('R','O','M',' '),
@@ -999,7 +1083,7 @@ int main(int argc, char **argv)
                 End,
             End,
         End,
-//+     win_read_quadlet
+        // win_read_quadlet
         SubWindow, win_read_quadlet = WindowObject,
             MUIA_Window_Title, "Read Quadlet",
             MUIA_Window_ID   , MAKE_ID('R','E','A','D'),
@@ -1028,7 +1112,7 @@ int main(int argc, char **argv)
                 End,
             End,
         End,
-//+     win_write_quadlet
+        // win_write_quadlet
         SubWindow, win_write_quadlet = WindowObject,
             MUIA_Window_Title, "Write Quadlet",
             MUIA_Window_ID   , MAKE_ID('W','R','I','T'),
@@ -1057,11 +1141,13 @@ int main(int argc, char **argv)
                 End,
             End,
         End,
-
     End;
+    // *INDENT-ON*
 
     if (!app)
+    {
         fail(app, "Failed to create Application.");
+    }
 
     /* Main window */
     DoMethod(win_main, MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
@@ -1095,11 +1181,15 @@ int main(int argc, char **argv)
              app, 2, MUIM_Application_ReturnID, ID_DUMP_OHCI);
 
     if (NULL != vid_str)
+    {
         set(objs[OBJ_VID], MUIA_ShortHelp, vid_str);
+    }
     if (NULL != did_str)
+    {
         set(objs[OBJ_DID], MUIA_ShortHelp, did_str);
+    }
 
-//+     Read quadlet window
+    /* Read quadlet window */
     DoMethod(win_read_quadlet, MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
              win_read_quadlet, 3, MUIM_Set, MUIA_Window_Open, FALSE);
 
@@ -1108,7 +1198,7 @@ int main(int argc, char **argv)
 
     DoMethod(objs[OBJ_READ_QUADLET_OK], MUIM_Notify, MUIA_Pressed, FALSE,
              app, 2, MUIM_Application_ReturnID, ID_READ_QUADLET);
-//+     Write quadlet window
+    /* Write quadlet window */
     DoMethod(win_write_quadlet, MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
              win_write_quadlet, 3, MUIM_Set, MUIA_Window_Open, FALSE);
 
@@ -1117,7 +1207,7 @@ int main(int argc, char **argv)
 
     DoMethod(objs[OBJ_WRITE_QUADLET_OK], MUIM_Notify, MUIA_Pressed, FALSE,
              app, 2, MUIM_Application_ReturnID, ID_WRITE_QUADLET);
-//+     ROM Window
+    /* ROM Window */
     DoMethod(objs[OBJ_ROM_WIN], MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
              objs[OBJ_ROM_WIN], 3, MUIM_Set, MUIA_Window_Open, FALSE);
 
@@ -1130,27 +1220,29 @@ int main(int argc, char **argv)
 
         /* Add all devices */
         while (NULL != (dev = Helios_GetNextDevice(gHardware, dev)))
+        {
             DoMethod(objs[OBJ_DEVICES_LIST], MUIM_List_InsertSingle, dev, MUIV_List_Insert_Sorted);
+        }
     }
     Helios_UnlockBase();
     set(objs[OBJ_DEVICES_LIST], MUIA_List_Quiet, FALSE);
 
     /* CycleChain setup */
     DoMethod(app, MUIM_MultiSet, MUIA_CycleChain, TRUE,
-        objs[OBJ_DUMP_OHCI],
-        objs[OBJ_DUMP_ROM],
-        objs[OBJ_READ_QUADLET],
-        objs[OBJ_WRITE_QUADLET],
-        objs[OBJ_BUS_RESET],
-        objs[OBJ_BUS_ENABLE],
-        objs[OBJ_BUS_DISABLE],
-        objs[OBJ_BUS_EVT_SAVE],
-        objs[OBJ_BUS_EVT_CLEAR],
-        objs[OBJ_READ_QUADLET_OK],
-        objs[OBJ_WRITE_QUADLET_OK],
-        objs[OBJ_READ_QUADLET_CANCEL],
-        objs[OBJ_WRITE_QUADLET_CANCEL],
-        NULL);
+             objs[OBJ_DUMP_OHCI],
+             objs[OBJ_DUMP_ROM],
+             objs[OBJ_READ_QUADLET],
+             objs[OBJ_WRITE_QUADLET],
+             objs[OBJ_BUS_RESET],
+             objs[OBJ_BUS_ENABLE],
+             objs[OBJ_BUS_DISABLE],
+             objs[OBJ_BUS_EVT_SAVE],
+             objs[OBJ_BUS_EVT_CLEAR],
+             objs[OBJ_READ_QUADLET_OK],
+             objs[OBJ_WRITE_QUADLET_OK],
+             objs[OBJ_READ_QUADLET_CANCEL],
+             objs[OBJ_WRITE_QUADLET_CANCEL],
+             NULL);
 
     /* Disable unimplemented features */
     set(objs[OBJ_BUS_EVT_SAVE], MUIA_Disabled, TRUE);
@@ -1161,7 +1253,6 @@ int main(int argc, char **argv)
     {
         LONG id = DoMethod(app, MUIM_Application_Input, &sigs);
 
-//+     id
         switch (id)
         {
             case MUIV_Application_ReturnID_Quit:
@@ -1185,111 +1276,131 @@ int main(int argc, char **argv)
                 break;
 
             case ID_DUMP_ROM:
+            {
+                DeviceListerData *data = NULL;
+                Object *obj;
+                LONG x;
+
+                if (get(objs[OBJ_DEVICES_LIST], MUIA_List_Active, &x) && (x >= 0))
                 {
-                    DeviceListerData *data = NULL;
-                    Object *obj;
-                    LONG x;
-
-                    if (get(objs[OBJ_DEVICES_LIST], MUIA_List_Active, &x) && (x >= 0))
+                    DoMethod(objs[OBJ_DEVICES_LIST], MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &data);
+                    if (NULL != data)
                     {
-                        DoMethod(objs[OBJ_DEVICES_LIST], MUIM_List_GetEntry, MUIV_List_GetEntry_Active, &data);
-                        if (NULL != data)
+                        /* If scanned, get the read ROM */
+                        if (HEVTF_DEVICE_SCANNED == data->LastEvent)
                         {
-                            /* If scanned, get the read ROM */
-                            if (HEVTF_DEVICE_SCANNED == data->LastEvent)
+                            Object *new_rom_prop;
+                            ULONG len;
+                            QUADLET *tmp;
+                            LONG res;
+
+                            Helios_ReadLockDevice(data->Device);
                             {
-                                Object *new_rom_prop;
-                                ULONG len;
-                                QUADLET *tmp;
-                                LONG res;
-
-                                Helios_ReadLockDevice(data->Device);
+                                tmp = NULL;
+                                res = Helios_GetAttrs(HGA_DEVICE, data->Device,
+                                                      HA_Rom, (ULONG)&tmp,
+                                                      HA_RomLength, (ULONG)&len,
+                                                      TAG_DONE);
+                                if ((res > 0) && (NULL != tmp) && (len > 0))
                                 {
-                                    tmp = NULL;
-                                    res = Helios_GetAttrs(HGA_DEVICE, data->Device,
-                                                          HA_Rom, (ULONG)&tmp,
-                                                          HA_RomLength, (ULONG)&len,
-                                                          TAG_DONE);
-                                    if ((res > 0) && (NULL != tmp) && (len > 0))
+                                    QUADLET *tmp2;
+
+                                    /* Duplicate data */
+                                    tmp2 = AllocVec(len, MEMF_PUBLIC | MEMF_CLEAR);
+                                    if (NULL != tmp2)
                                     {
-                                        QUADLET *tmp2;
-
-                                        /* Duplicate data */
-                                        tmp2 = AllocVec(len, MEMF_PUBLIC | MEMF_CLEAR);
-                                        if (NULL != tmp2)
-                                        {
-                                            CopyMem(tmp, tmp2, len);
-                                            tmp = tmp2;
-                                        }
-                                        else
-                                            tmp = NULL;
-                                    }
-                                    else
-                                        LogMsg("Failed to get ROM data\n");
-                                }
-                                Helios_UnlockDevice(data->Device);
-
-                                if (NULL != tmp)
-                                {
-                                    /* Create a new HexEdit object first before destroying any old one */
-                                    obj = HexEditObject,
-                                        VirtualFrame,
-                                        MUIA_HexEdit_LowBound,          tmp,
-                                        MUIA_HexEdit_HighBound,         (APTR)tmp + len - 1,
-                                        MUIA_HexEdit_BaseAddressOffset, CSR_CONFIG_ROM_OFFSET - (ULONG)tmp,
-                                        MUIA_HexEdit_EditMode,          FALSE,
-                                        MUIA_HexEdit_PropObject,        new_rom_prop = ScrollbarObject,
-                                        MUIA_Prop_UseWinBorder,         MUIV_Prop_UseWinBorder_Right,
-                                        End,
-                                        End;
-
-                                    if ((NULL != obj) && (NULL != new_rom_prop))
-                                    {
-                                        DoMethod(objs[OBJ_ROM_GROUP], MUIM_Group_InitChange);
-
-                                        /* Remove old HexEdit object */
-                                        if (NULL != objs[OBJ_ROM_HEX])
-                                        {
-                                            DoMethod(objs[OBJ_ROM_GROUP], OM_REMMEMBER, objs[OBJ_ROM_HEX]);
-                                            DoMethod(objs[OBJ_ROM_GROUP], OM_REMMEMBER, rom_prop);
-                                            MUI_DisposeObject(objs[OBJ_ROM_HEX]);
-                                        }
-
-                                        /* Delete old ROM data */
-                                        if (NULL != rom)
-                                            FreeVec(rom);
-
-                                        /* Setup the new ROM data and HexEdit object */
-                                        rom = tmp;
-                                        rom_prop = new_rom_prop;
-                                        DoMethod(objs[OBJ_ROM_GROUP], MUIM_Group_AddHead, rom_prop);
-                                        DoMethod(objs[OBJ_ROM_GROUP], MUIM_Group_AddTail, obj);
-                                        objs[OBJ_ROM_HEX] = obj;
-
-                                        DoMethod(objs[OBJ_ROM_GROUP], MUIM_Group_ExitChange);
-                                        set(objs[OBJ_ROM_WIN], MUIA_Window_Open, TRUE);
-                                        break;
+                                        CopyMem(tmp, tmp2, len);
+                                        tmp = tmp2;
                                     }
                                     else
                                     {
-                                        if (new_rom_prop) MUI_DisposeObject(new_rom_prop);
-                                        if (obj) MUI_DisposeObject(obj);
-                                        FreeVec(tmp);
+                                        tmp = NULL;
                                     }
                                 }
                                 else
-                                    LogMsg("Unable to obtain ROM data of node $%X\n", data->NodeID);
+                                {
+                                    LogMsg("Failed to get ROM data\n");
+                                }
+                            }
+                            Helios_UnlockDevice(data->Device);
+
+                            if (NULL != tmp)
+                            {
+                                    /* Create a new HexEdit object first before destroying any old one */
+                                // *INDENT-OFF*
+                                obj = HexEditObject,
+                                        VirtualFrame,
+                                            MUIA_HexEdit_LowBound,          tmp,
+                                            MUIA_HexEdit_HighBound,         (APTR)tmp + len - 1,
+                                            MUIA_HexEdit_BaseAddressOffset, CSR_CONFIG_ROM_OFFSET - (ULONG)tmp,
+                                            MUIA_HexEdit_EditMode,          FALSE,
+                                            MUIA_HexEdit_PropObject,        new_rom_prop = ScrollbarObject,
+                                            MUIA_Prop_UseWinBorder,         MUIV_Prop_UseWinBorder_Right,
+                                        End,
+                            End;
+                        // *INDENT-ON*
+
+                                if ((NULL != obj) && (NULL != new_rom_prop))
+                                {
+                                    DoMethod(objs[OBJ_ROM_GROUP], MUIM_Group_InitChange);
+
+                                    /* Remove old HexEdit object */
+                                    if (NULL != objs[OBJ_ROM_HEX])
+                                    {
+                                        DoMethod(objs[OBJ_ROM_GROUP], OM_REMMEMBER, objs[OBJ_ROM_HEX]);
+                                        DoMethod(objs[OBJ_ROM_GROUP], OM_REMMEMBER, rom_prop);
+                                        MUI_DisposeObject(objs[OBJ_ROM_HEX]);
+                                    }
+
+                                    /* Delete old ROM data */
+                                    if (NULL != rom)
+                                    {
+                                        FreeVec(rom);
+                                    }
+
+                                    /* Setup the new ROM data and HexEdit object */
+                                    rom = tmp;
+                                    rom_prop = new_rom_prop;
+                                    DoMethod(objs[OBJ_ROM_GROUP], MUIM_Group_AddHead, rom_prop);
+                                    DoMethod(objs[OBJ_ROM_GROUP], MUIM_Group_AddTail, obj);
+                                    objs[OBJ_ROM_HEX] = obj;
+
+                                    DoMethod(objs[OBJ_ROM_GROUP], MUIM_Group_ExitChange);
+                                    set(objs[OBJ_ROM_WIN], MUIA_Window_Open, TRUE);
+                                    break;
+                                }
+                                else
+                                {
+                                    if (new_rom_prop)
+                                    {
+                                        MUI_DisposeObject(new_rom_prop);
+                                    }
+                                    if (obj)
+                                    {
+                                        MUI_DisposeObject(obj);
+                                    }
+                                    FreeVec(tmp);
+                                }
+                            }
+                            else
+                            {
+                                LogMsg("Unable to obtain ROM data of node $%X\n", data->NodeID);
                             }
                         }
-                        else
-                            LogMsg("Bad selected device\n");
                     }
                     else
-                        LogMsg("No selected device\n");
-
-                    DisplayBeep(NULL);
+                    {
+                        LogMsg("Bad selected device\n");
+                    }
                 }
-                break;
+                else
+                {
+                    LogMsg("No selected device\n");
+                }
+
+                DisplayBeep(NULL);
+            }
+            break;
 
             case ID_READ_QUADLET:
             case ID_WRITE_QUADLET:
@@ -1318,8 +1429,11 @@ int main(int argc, char **argv)
                                     {
                                         LogMsg("Unable to obtain the address\n");
                                         goto flash;
-                                    } else
+                                    }
+                                    else
+                                    {
                                         offset = strtoll(addr_str, NULL, 16);
+                                    }
                                     break;
 
                                 case ID_WRITE_QUADLET:
@@ -1371,17 +1485,25 @@ int main(int argc, char **argv)
                             SendIO(&ioreq->iohhe_Req.iohh_Req);
                         }
                         else
+                        {
                             LogMsg("Bad selected device\n");
+                        }
                     }
                     else
+                    {
                         LogMsg("No selected device\n");
+                    }
                 }
                 else
+                {
                     LogMsg("Failed to alloc ioreq for sending request\n");
+                }
 
-            flash:
+flash:
                 if (NULL != ioreq)
+                {
                     FreeVec(ioreq);
+                }
                 DisplayBeep(NULL);
             }
             break;
@@ -1391,23 +1513,32 @@ int main(int argc, char **argv)
         if (run)
         {
             if (sigs)
+            {
                 sigs = Wait(sigs | io_port_signal | event_port_signal);
+            }
             else
+            {
                 sigs = SetSignal(0, (io_port_signal | event_port_signal));
+            }
 
             if (sigs & event_port_signal)
+            {
                 run = HandleHeliosEvents();
+            }
 
             if (sigs & io_port_signal)
+            {
                 HandleHeliosIO();
+            }
         }
     }
 
     set(win_main, MUIA_Window_Open, FALSE);
 
     if (NULL != rom)
+    {
         FreeVec(rom);
+    }
 
     return fail(app, NULL);
 }
-

@@ -27,12 +27,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include "Helios_private.h"
 //#include "Helios_Cat.h"
 
-#define	DEBUG(x)	;
+#define DEBUG(x)    ;
 
 static ULONG HeliosPrefs_New(struct IClass *cl,Object *obj,struct opSet *msg)
 {
     Object *actionobj;
-    if (NULL != HeliosBase) {
+    if (NULL != HeliosBase)
+    {
         return(NULL);
     }
 
@@ -40,7 +41,8 @@ static ULONG HeliosPrefs_New(struct IClass *cl,Object *obj,struct opSet *msg)
                                 //Child, NULL,
                                 TAG_MORE, (ULONG) msg->ops_AttrList);
 
-    if (NULL != obj) {
+    if (NULL != obj)
+    {
         struct HeliosPrefs_Data *data = INST_DATA(cl,obj);
         return((ULONG)obj);
     }
@@ -55,6 +57,6 @@ static ULONG HeliosPrefs_Dispose(struct IClass *cl,Object *obj,Msg msg)
 
 
 BEGINMTABLE2(HeliosPrefs)
-    case OM_NEW     : return HeliosPrefs_New     (cl,obj,(APTR)msg);
-    case OM_DISPOSE : return HeliosPrefs_Dispose (cl,obj,(APTR)msg);
+case OM_NEW     : return HeliosPrefs_New     (cl,obj,(APTR)msg);
+case OM_DISPOSE : return HeliosPrefs_Dispose (cl,obj,(APTR)msg);
 ENDMTABLE

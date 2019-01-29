@@ -49,8 +49,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 struct HeliosBase
 {
-	struct Library	        hb_Lib;
-	BPTR                    hb_SegList;
+    struct Library          hb_Lib;
+    BPTR                    hb_SegList;
 
     LOCK_VARIABLE;
     struct timerequest      hb_TimeReq;

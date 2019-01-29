@@ -428,12 +428,14 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 struct OHCI1394Unit;
 
-typedef struct OHCI1394SplitTimeReq {
+typedef struct OHCI1394SplitTimeReq
+{
     struct timerequest req;
     HeliosTransaction *transaction;
 } OHCI1394SplitTimeReq;
 
-typedef struct OHCI1394Descriptor {
+typedef struct OHCI1394Descriptor
+{
     u_int16_t   d_ReqCount;
     u_int16_t   d_Control;
     u_int32_t   d_DataAddress;
@@ -444,10 +446,12 @@ typedef struct OHCI1394Descriptor {
 
 #define d_TimeStamp d_ResCount
 
-typedef union {
+typedef union
+{
     QUADLET value;
 
-    struct {
+    struct
+    {
         /* bits from 31 to 0 */
         QUADLET BIBimageValid   : 1;
         QUADLET NoByteSwapData  : 1;
@@ -521,7 +525,8 @@ typedef struct OHCI1394Context
     ULONG                   ctx_Signal;
 } OHCI1394Context;
 
-typedef struct OHCI1394ATCtx {
+typedef struct OHCI1394ATCtx
+{
     OHCI1394Context         atc_Context;
     ULONG                   atc_CommandPtr;
 
@@ -535,7 +540,8 @@ typedef struct OHCI1394ATCtx {
     OHCI1394ATBuffer *      atc_LastBuffer;
 } OHCI1394ATCtx;
 
-typedef struct OHCI1394ARCtx {
+typedef struct OHCI1394ARCtx
+{
     OHCI1394Context     arc_Context;
 
     APTR                arc_AllocDMABuffers;
@@ -550,16 +556,19 @@ typedef struct OHCI1394ARCtx {
     QUADLET *           arc_FirstQuadlet;   // first quadlet to read inside the first page of the current DMA block
 } OHCI1394ARCtx;
 
-typedef struct OHCI1394IsoCtxBase {
+typedef struct OHCI1394IsoCtxBase
+{
     OHCI1394Context     ic_Context;
     ULONG               ic_Index;
 } OHCI1394IsoCtxBase;
 
-typedef struct {
+typedef struct
+{
     ULONG DropEmpty:1;
 } OHCI1394IRCtxFlags;
 
-typedef struct OHCI1394IRCtx {
+typedef struct OHCI1394IRCtx
+{
     OHCI1394IsoCtxBase  irc_Base;
     UBYTE               irc_HeaderPadding;
     UBYTE               irc_Channel;
@@ -582,11 +591,13 @@ typedef struct OHCI1394IRCtx {
     APTR                irc_AlignedPageBuffer;
 } OHCI1394IRCtx;
 
-typedef struct OHCI1394ITCtx {
+typedef struct OHCI1394ITCtx
+{
     OHCI1394IsoCtxBase  itc_Base;
 } OHCI1394ITCtx;
 
-typedef struct {
+typedef struct
+{
     ULONG Initialized:1;
     ULONG Enabled:1;
     ULONG UnrecoverableError:1;
@@ -628,7 +639,8 @@ typedef struct OHCI1394Unit
     HeliosSubTask *       hu_SplitTimeoutTask;
     struct MsgPort *      hu_TimerPort;
     struct timerequest *  hu_SplitTimeoutIOReq;
-    struct {
+    struct
+    {
         LOCK_VARIABLE;
         struct MinList    rhd_List;
     }                     hu_ReqHandlerData;

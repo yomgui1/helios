@@ -40,17 +40,17 @@ static inline LONG _ATOMIC_NCMPXCHG(volatile LONG *ptr, LONG old, LONG new)
     register LONG ret;
 
     __asm__ __volatile__ (
-    "\n"
-    ".atomic_ncmpxchg_loop_%=:\n"
-    "   lwarx   %0,0,%2\n"
-    "   cmpw    0,%0,%3\n"
-    "   beq-    .atomic_ncmpxchg_out_%=\n"
-    "   stwcx.  %4,0,%2\n"
-    "   bne-    .atomic_ncmpxchg_loop_%=\n"
-    ".atomic_ncmpxchg_out_%=:\n"
-    : "=&r" (ret)
-    : "m" (*ptr), "r" (ptr), "r" (old), "r" (new)
-    : "memory", "cr0");
+        "\n"
+        ".atomic_ncmpxchg_loop_%=:\n"
+        "   lwarx   %0,0,%2\n"
+        "   cmpw    0,%0,%3\n"
+        "   beq-    .atomic_ncmpxchg_out_%=\n"
+        "   stwcx.  %4,0,%2\n"
+        "   bne-    .atomic_ncmpxchg_loop_%=\n"
+        ".atomic_ncmpxchg_out_%=:\n"
+        : "=&r" (ret)
+        : "m" (*ptr), "r" (ptr), "r" (old), "r" (new)
+        : "memory", "cr0");
 
     return ret;
 };
@@ -118,14 +118,15 @@ extern ULONG utils_GetPhyAddress(APTR addr);
 */
 static inline UWORD utils_GetQuadletCRC16(QUADLET data, QUADLET check)
 {
-   int shift, sum, next; /* Integers are >= 32 bits */
+    int shift, sum, next; /* Integers are >= 32 bits */
 
-   for (next = check, shift = 28; shift >= 0; shift -= 4) {
-      sum = ((next >> 12) ^ (data >> shift)) & 0xF;
-      next = (next << 4) ^ (sum << 12) ^ (sum << 5) ^ (sum);
-   }
+    for (next = check, shift = 28; shift >= 0; shift -= 4)
+    {
+        sum = ((next >> 12) ^ (data >> shift)) & 0xF;
+        next = (next << 4) ^ (sum << 12) ^ (sum << 5) ^ (sum);
+    }
 
-   return next & 0xFFFF; /* 16-bit CRC value */
+    return next & 0xFFFF; /* 16-bit CRC value */
 }
 
 static inline UWORD utils_GetBlockCRC16(QUADLET *ptr, ULONG length)
@@ -133,7 +134,9 @@ static inline UWORD utils_GetBlockCRC16(QUADLET *ptr, ULONG length)
     UWORD crc = 0;
 
     for (; length; length--)
+    {
         crc = utils_GetQuadletCRC16(*ptr++, crc);
+    }
 
     return crc;
 }
@@ -144,9 +147,12 @@ static inline ULONG utils_CountBits32(ULONG value, ULONG state)
 
     state = state ? 1 : 0;
     cnt = 0;
-    for (s=32; s; s--, value >>= 1) {
+    for (s=32; s; s--, value >>= 1)
+    {
         if (state == (value & 1))
+        {
             cnt ++;
+        }
     }
 
     return cnt;

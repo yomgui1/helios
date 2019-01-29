@@ -429,7 +429,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define AVC1394_PANEL_OPERATION_ANGLE            0x50
 #define AVC1394_PANEL_OPERATION_SUBPICTURE       0x51
 
-enum avc1394_measurement_unit {
+enum avc1394_measurement_unit
+{
     AVC1394_VCR_MEASUREMENT_VIDEO_FRAME = 0,
     AVC1394_VCR_MEASUREMENT_VIDEO_SCENE,
     AVC1394_VCR_MEASUREMENT_VISS,
@@ -439,7 +440,8 @@ enum avc1394_measurement_unit {
     AVC1394_VCR_MEASUREMENT_PHOTO
 };
 
-typedef struct AVC1394_CmdResponse {
+typedef struct AVC1394_CmdResponse
+{
     UBYTE Reserved:4;
     UBYTE RCode:4;
     UBYTE SubunitID:3;
@@ -448,7 +450,8 @@ typedef struct AVC1394_CmdResponse {
     UBYTE Operand[9];
 } AVC1394_CmdResponse;
 
-enum {
+enum
+{
     AVC1394_ERR_NOERR,
     AVC1394_ERR_SYSTEM,
     AVC1394_ERR_HELIOS,
@@ -456,7 +459,8 @@ enum {
     AVC1394_ERR_BYE,
 };
 
-typedef struct AVC1394_ServerMsg {
+typedef struct AVC1394_ServerMsg
+{
     struct Message          SysMsg;
     HeliosDeviceHandler *   DeviceHandler;
     ULONG                   Error;
@@ -473,29 +477,29 @@ extern "C" {
 #if 0
 quadlet_t
 avc1394_transaction(raw1394handle_t handle, nodeid_t node,
-    quadlet_t quadlet, int retry);
+                    quadlet_t quadlet, int retry);
 
 quadlet_t *
 avc1394_transaction_block2(raw1394handle_t handle, nodeid_t node,
-    quadlet_t *request, int len, unsigned int *response_len, int retry);
+                           quadlet_t *request, int len, unsigned int *response_len, int retry);
 
 quadlet_t *
 avc1394_transaction_block(raw1394handle_t handle, nodeid_t node,
-    quadlet_t *request, int len, int retry);
+                          quadlet_t *request, int len, int retry);
 
 void
 avc1394_transaction_block_close(raw1394handle_t handle);
 
 int
 avc1394_open_descriptor(raw1394handle_t handle, nodeid_t node,
-    quadlet_t ctype, quadlet_t subunit,
-    unsigned char *descriptor_identifier, int len_descriptor_identifier,
-    unsigned char readwrite);
+                        quadlet_t ctype, quadlet_t subunit,
+                        unsigned char *descriptor_identifier, int len_descriptor_identifier,
+                        unsigned char readwrite);
 
 int
 avc1394_close_descriptor(raw1394handle_t handle, nodeid_t node,
-    quadlet_t ctype, quadlet_t subunit,
-    unsigned char *descriptor_identifier, int len_descriptor_identifier);
+                         quadlet_t ctype, quadlet_t subunit,
+                         unsigned char *descriptor_identifier, int len_descriptor_identifier);
 
 int
 avc1394_subunit_info(raw1394handle_t handle, nodeid_t node, quadlet_t *table);

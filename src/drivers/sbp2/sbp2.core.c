@@ -53,10 +53,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define YESNO(x) ((x)?"yes":"no")
 
 /* Status write response codes */
-#define SBP2_STATUS_REQUEST_COMPLETE	0x0
-#define SBP2_STATUS_TRANSPORT_FAILURE	0x1
-#define SBP2_STATUS_ILLEGAL_REQUEST	    0x2
-#define SBP2_STATUS_VENDOR_DEPENDENT	0x3
+#define SBP2_STATUS_REQUEST_COMPLETE    0x0
+#define SBP2_STATUS_TRANSPORT_FAILURE   0x1
+#define SBP2_STATUS_ILLEGAL_REQUEST     0x2
+#define SBP2_STATUS_VENDOR_DEPENDENT    0x3
 
 /* ISO/IEC 14776-312 : 2001 */
 #define SPC2_VERSION 4
@@ -69,8 +69,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define CSR_SPLIT_TIMEOUT 0x018
 #define CSR_BUSY_TIMEOUT 0x210
 
-#define SBP2_UNIT_SPEC_ID_ENTRY	0x0000609e
-#define SBP2_SW_VERSION_ENTRY	0x00010483
+#define SBP2_UNIT_SPEC_ID_ENTRY 0x0000609e
+#define SBP2_SW_VERSION_ENTRY   0x00010483
 
 /* SBP2 ROM keys */
 #define KEY_SBP2_COMMAND_SET_SPEC_ID    0x38
@@ -134,7 +134,9 @@ static LONG sbp2_do_read_quadlet(SBP2ClassLib *base,
 
     err = Helios_DoIO(HGA_DEVICE, dev, &ioreq.iohhe_Req);
     if ((HHIOERR_NO_ERROR == err) && (ioreq.iohhe_Req.iohh_Actual == sizeof(QUADLET)))
+    {
         return 0;
+    }
 
     _ERR_1394("Error=%d, RCode=%d\n", err, p->RCode);
 
@@ -170,7 +172,9 @@ static LONG sbp2_do_read_block(SBP2ClassLib *base,
 
     err = Helios_DoIO(HGA_DEVICE, dev, &ioreq.iohhe_Req);
     if ((HHIOERR_NO_ERROR == err) && (ioreq.iohhe_Req.iohh_Actual == length))
+    {
         return 0;
+    }
 
     _ERR_1394("Error=%d, RCode=%d\n", err, p->RCode);
 
@@ -204,7 +208,9 @@ static LONG sbp2_do_write_block(SBP2ClassLib *base,
 
     err = Helios_DoIO(HGA_DEVICE, dev, &ioreq.iohhe_Req);
     if ((HHIOERR_NO_ERROR == err) && (ioreq.iohhe_Req.iohh_Actual == length))
+    {
         return 0;
+    }
 
     _ERR_1394("Error=%d, RCode=%d\n", err, p->RCode);
 
@@ -230,11 +236,13 @@ static void dump_agent_state(SBP2Unit *unit)
             case 3: s="DEAD"; break;
             default: s="<unknown state>"; break;
         }
-        
+
         _INFO_1394("DEV[$%p] AGENT_STATE=$%08x (%s)\n", unit, status, s);
     }
     else
+    {
         _ERR_1394("DEV[$%p] Can't fetch AGENT_STATE register offset %llx, err=%ld\n", unit, offset, err);
+    }
 #endif
 }
 
@@ -251,7 +259,9 @@ static void sbp2_read_ascii_field(STRPTR in, STRPTR out, ULONG len)
         UBYTE c = in[i];
 
         if (c > 0x20)
+        {
             out[i] = c;
+        }
         else
         {
             out[i] = 0;
@@ -270,10 +280,10 @@ static struct timerequest *sbp2_add_timereq(SBP2Unit *unit, ULONG timeout)
     if (NULL != tr)
     {
         CopyMem(unit->u_IOTimeReq, tr, sizeof(*tr));
-        
+
         tr->tr_time.tv_secs = timeout / 1000;
         tr->tr_time.tv_micro = (timeout % 1000) * 1000;
-        
+
         SendIO(&tr->tr_node);
     }
 
@@ -312,17 +322,23 @@ static LONG sbp2_wait(SBP2Unit *unit, ULONG signal, ULONG timeout)
     if (sigs & signal)
     {
         if ((NULL != port) && !CheckIO(&tr.tr_node))
+        {
             AbortIO(&tr.tr_node);
+        }
         err = 0;
     }
     else
+    {
         _ERR_1394("Timeout\n");
+    }
 
     if (NULL != port)
     {
         /* Wait for timeout request completion */
         if (0 == (sigs & timer_signal))
+        {
             Wait(timer_signal);
+        }
         GetMsg(port);
         DeleteMsgPort(port);
     }
@@ -386,7 +402,9 @@ static LONG sbp2_do_write_quadlet(SBP2ClassLib *base,
 
     err = Helios_DoIO(HGA_DEVICE, dev, &ioreq.iohhe_Req);
     if (HHIOERR_NO_ERROR == err)
+    {
         return 0;
+    }
 
     _ERR("Error=%d, RCode=%d\n", err, p->RCode);
 
@@ -408,7 +426,9 @@ static SBP2ORBRequest *sbp2_alloc_orb_req(SBP2ClassLib *base, ULONG length)
                   orbreq->or_Base.iohhe_Req.iohh_Req.io_Message.mn_Length);
     }
     else
+    {
         _ERR_ORB("Failed to alloc ORB request\n");
+    }
 
     return orbreq;
 }
@@ -497,7 +517,9 @@ static void sbp2_agent_reset(SBP2Unit *unit)
 
     sigbit = AllocSignal(-1);
     if (sigbit < 0)
+    {
         goto out;
+    }
 
     status_signal = 1ul << sigbit;
 
@@ -521,7 +543,9 @@ static void sbp2_agent_reset(SBP2Unit *unit)
     _INFO("DummyORB: err=%ld, rcode=%ld\n", ioerr, rcode);
 
     if (!ioerr)
+    {
         sbp2_wait(unit, status_signal, ORB_TIMEOUT);
+    }
 
     sbp2_cancel_orbs(unit);
     FreeSignal(sigbit);
@@ -539,8 +563,8 @@ static HeliosResponse *sbp2_fs_reqhandler(HeliosAPacket *request, APTR udata)
     BOOL not_unified = request->Ack == HELIOS_ACK_PENDING;
 
     _INFO_1394("FIFO_STATUS: TC=$%x, offset=$%012llx, Payload=%p, Length=%u\n",
-          request->TCode, request->Offset,
-          request->Payload, request->PayloadLength);
+               request->TCode, request->Offset,
+               request->Payload, request->PayloadLength);
 
     /* This request handler doesn't send any response packets.
      * We just set orb RCode to complete and call the orb done callback,
@@ -560,7 +584,9 @@ static HeliosResponse *sbp2_fs_reqhandler(HeliosAPacket *request, APTR udata)
         response->hr_AllocSize = sizeof(*response);
     }
     else
+    {
         response = NULL;
+    }
 
     if ((TCODE_WRITE_BLOCK_REQUEST != request->TCode)
         || (NULL == request->Payload)
@@ -568,12 +594,16 @@ static HeliosResponse *sbp2_fs_reqhandler(HeliosAPacket *request, APTR udata)
         || (request->PayloadLength > sizeof(*status)))
     {
         if (not_unified)
+        {
             response->hr_Packet.RCode = HELIOS_RCODE_TYPE_ERROR;
+        }
         return response;
     }
 
     if (not_unified)
+    {
         response->hr_Packet.RCode = HELIOS_RCODE_COMPLETE;
+    }
 
     status = (APTR)request->Payload;
     /* bypass non-orb related status */
@@ -613,10 +643,14 @@ static HeliosResponse *sbp2_fs_reqhandler(HeliosAPacket *request, APTR udata)
             Signal(orbreq->or_ORBStTask, orbreq->or_ORBStSignal);
         }
         else
+        {
             _WARN("No pending ORB at Phy offset $%08x\n", orb_low);
+        }
     }
     else
+    {
         _WARN("Drop non-orb related status\n");
+    }
 
     return response;
 }
@@ -625,7 +659,9 @@ static HeliosResponse *sbp2_fs_reqhandler(HeliosAPacket *request, APTR udata)
 static void sbp2_complete_managment_orb(SBP2ClassLib *base, SBP2ORBRequest *orbreq, ORBStatus *status)
 {
     if (NULL != status)
+    {
         CopyMem(status, &orbreq->or_ORBStatus, sizeof(orbreq->or_ORBStatus));
+    }
 }
 
 static LONG sbp2_do_management_orb(SBP2Unit *unit, APTR orb)
@@ -638,11 +674,11 @@ static LONG sbp2_do_management_orb(SBP2Unit *unit, APTR orb)
     bzero(&orbreq, sizeof(orbreq));
     orbreq.or_Base.iohhe_Req.iohh_Req.io_Message.mn_Length = sizeof(orbreq);
     orbreq.or_Base.iohhe_Req.iohh_Req.io_Message.mn_ReplyPort = unit->u_OrbPort;
-    
+
     /* Send the ORB request */
     sbp2_send_orb_req(unit, &orbreq, orb, unit->u_MgtAgentBase,
                       sbp2_complete_managment_orb, status_signal);
-    
+
     Wait(1ul << unit->u_OrbPort->mp_SigBit);
     GetMsg(unit->u_OrbPort);
 
@@ -668,8 +704,8 @@ static LONG sbp2_do_management_orb(SBP2Unit *unit, APTR orb)
     if (STATUS_GET_RESPONSE(orbreq.or_ORBStatus) || STATUS_GET_SBP_STATUS(orbreq.or_ORBStatus))
     {
         _ERR_ORB("ORB %p: status error: <%u:%u>\n", orb,
-             STATUS_GET_RESPONSE(orbreq.or_ORBStatus),
-             STATUS_GET_SBP_STATUS(orbreq.or_ORBStatus));
+                 STATUS_GET_RESPONSE(orbreq.or_ORBStatus),
+                 STATUS_GET_SBP_STATUS(orbreq.or_ORBStatus));
         err = HERR_IO;
     }
 
@@ -682,21 +718,21 @@ out:
 static ULONG sbp2_sense_data_from_status(const UBYTE *status, UBYTE *sense_data)
 {
     sense_data[0] = 0x70;        /* current error response code */
-	sense_data[1] = 0x0;         /* reserved */
-	sense_data[2] = ((status[1]&0xf0)<<1) + (status[1]&0x0f);
-	sense_data[3] = status[4];   /* Information (status bytes 4-7) */
-	sense_data[4] = status[5];
-	sense_data[5] = status[6];
-	sense_data[6] = status[7];
-	sense_data[7] = 10;          /* Additional sense length (n-7, n=17) */
-	sense_data[8] = status[8];   /* CDB-dependent (status bytes 8-11) */
-	sense_data[9] = status[9];
-	sense_data[10] = status[10];
-	sense_data[11] = status[11];
-	sense_data[12] = status[2];  /* sense code */
-	sense_data[13] = status[3];  /* sense code qualifer */
-	sense_data[14] = status[12]; /* fru (status bytes 12-13) */
-	sense_data[15] = status[13];
+    sense_data[1] = 0x0;         /* reserved */
+    sense_data[2] = ((status[1]&0xf0)<<1) + (status[1]&0x0f);
+    sense_data[3] = status[4];   /* Information (status bytes 4-7) */
+    sense_data[4] = status[5];
+    sense_data[5] = status[6];
+    sense_data[6] = status[7];
+    sense_data[7] = 10;          /* Additional sense length (n-7, n=17) */
+    sense_data[8] = status[8];   /* CDB-dependent (status bytes 8-11) */
+    sense_data[9] = status[9];
+    sense_data[10] = status[10];
+    sense_data[11] = status[11];
+    sense_data[12] = status[2];  /* sense code */
+    sense_data[13] = status[3];  /* sense code qualifer */
+    sense_data[14] = status[12]; /* fru (status bytes 12-13) */
+    sense_data[15] = status[13];
 
     /* SAM-2 status code */
     return status[0] & 0x3f;
@@ -710,11 +746,13 @@ static BOOL sbp2_scsi_setup(SBP2Unit *unit, SBP2SCSICmdReq *req)
 
     orb->next.q = ORBPOINTER_NULL;
     orb->control = LE_SWAPLONG(ORBCONTROLPAYLOAD(unit->u_MaxPayload)
-		| ORBCONTROLSPEED(unit->u_MaxSpeed)
-		| ORBCONTROLF_NOTIFY);
+                               | ORBCONTROLSPEED(unit->u_MaxSpeed)
+                               | ORBCONTROLF_NOTIFY);
 
     if (scsicmd->scsi_Flags & SCSIF_READ)
+    {
         orb->control |= LE_SWAPLONG_C(ORBCONTROLF_READ);
+    }
 
     if (scsicmd->scsi_CmdLength >= 16)
     {
@@ -734,7 +772,7 @@ static BOOL sbp2_scsi_setup(SBP2Unit *unit, SBP2SCSICmdReq *req)
         if (0 != ((ULONG)scsicmd->scsi_Data % 4))
         {
             _ERR_SCSI("SCSI: data address not aligned on 4-bytes: %p\n",
-                 scsicmd->scsi_Data);
+                      scsicmd->scsi_Data);
             return FALSE;
         }
 #endif
@@ -804,18 +842,22 @@ static void sbp2_complete_scsi_orb(SBP2ClassLib *base, SBP2ORBRequest *orbreq, O
         log_DumpMem(status, (STATUS_GET_LEN(*status)+1)*sizeof(QUADLET), FALSE, "Status dump:\n");
 
         if (STATUS_GET_DEAD(*status))
+        {
             sbp2_agent_reset(req->sr_Unit);
+        }
 
         switch (STATUS_GET_RESPONSE(*status))
         {
             case SBP2_STATUS_REQUEST_COMPLETE:
                 scsi_status = SCSI_GOOD;
 
-                #if 1
+#if 1
                 /* Trash data cache of region written by the FW DMA */
                 if (NULL != cmd->scsi_Data)
+                {
                     CacheTrashCacheArea(cmd->scsi_Data, cmd->scsi_Length);
-                #endif
+                }
+#endif
                 cmd->scsi_Actual = cmd->scsi_Length;
 
                 if (STATUS_GET_LEN(*status) > 1)
@@ -836,16 +878,16 @@ static void sbp2_complete_scsi_orb(SBP2ClassLib *base, SBP2ORBRequest *orbreq, O
                     }
                 }
                 break;
-                
+
             case SBP2_STATUS_TRANSPORT_FAILURE:
                 _INFO_SCSI("SCSI: TRANSPORT_FAILURE\n");
                 scsi_status = HFERR_Phase;
                 break;
-                
+
             case SBP2_STATUS_ILLEGAL_REQUEST:
             case SBP2_STATUS_VENDOR_DEPENDENT:
                 _INFO_SCSI("SCSI: ILLEGAL_REQUEST/VENDOR_DEPENDENT (%u)\n",
-                      STATUS_GET_RESPONSE(*status));
+                           STATUS_GET_RESPONSE(*status));
                 scsi_status = HFERR_Phase;
                 break;
         }
@@ -897,7 +939,7 @@ static BOOL sbp2_login(SBP2Unit *unit)
     orb.response.q = utils_GetPhyAddress(&unit->u_ORBLoginResponse);
     orb.responselen = sizeof(ORBLoginResponse);
     orb.control = ORBCONTROLF_NOTIFY | ORBCONTROLTYPE_LOGIN
-        | ORBLOGINCONTROLF_EXCLUSIVE | ORBLOGINRECONNECT(2);
+                  | ORBLOGINCONTROLF_EXCLUSIVE | ORBLOGINRECONNECT(2);
     orb.lun = unit->u_LUN;
 
     /* Where the target will write the ORB status block */
@@ -912,20 +954,22 @@ static BOOL sbp2_login(SBP2Unit *unit)
 
         /* 250ms before next login ORB */
         if (i > 0)
+        {
             Helios_DelayMS(250);
+        }
 
         /* Sending the Login ORB to the target management agent */
         err = sbp2_do_management_orb(unit, &orb);
         if (!err)
         {
-            
+
 
             _INFO("LOGIN: succeed!\n");
             _INFO("LOGIN: Length        : %u\n", unit->u_ORBLoginResponse.length);
             _INFO("LOGIN: LoginID       : $%X\n", unit->u_ORBLoginResponse.login_id);
             _INFO("LOGIN: CommandAgent  : $%016llX\n", unit->u_ORBLoginResponse.command_agent);
             _INFO("LOGIN: ReconnectHold : $%X\n", unit->u_ORBLoginResponse.reconnect_hold);
-            
+
             /* Reset the target command agent */
             sbp2_agent_reset(unit);
 
@@ -937,15 +981,17 @@ static BOOL sbp2_login(SBP2Unit *unit)
             {
                 QUADLET value;
                 sbp2_do_read_quadlet(base, unit->u_HeliosDevice, CSR_BASE_LO + CSR_BUSY_TIMEOUT,
-                                 unit->u_MaxSpeed, &value);
+                                     unit->u_MaxSpeed, &value);
                 _INFO("New BUSY_TIMEOUT=$%08x\n", value);
             }
 #endif
-            
+
             return TRUE;
         }
         else if (HERR_TIMEOUT != err)
+        {
             break;
+        }
     }
 
     return FALSE;
@@ -1050,7 +1096,7 @@ try_inquiry:
     bzero(inquirydata, 256);
     bzero(sensedata, sizeof(sensedata));
     bzero(cmd6, 6);
-    
+
     cmd6[0] = SCSI_INQUIRY;
     cmd6[4] = inquiry_len;
 
@@ -1065,11 +1111,13 @@ try_inquiry:
             ((0x28 == scsicmd.scsi_SenseData[12]) ||
              (0x29 == scsicmd.scsi_SenseData[12])) &&
             (0 == scsicmd.scsi_SenseData[13]))
+        {
             continue;
+        }
 
         break;
     }
-    
+
     if (!err)
     {
         /* Check if we can get more data */
@@ -1092,7 +1140,9 @@ try_inquiry:
         goto try_inquiry;
     }
     else
+    {
         goto out;
+    }
 
     log_DumpMem(inquirydata, inquirydata[4]+4, FALSE, "INQUIRY Data:\n");
     _INFO("INQUIRY: done, %lu bytes\n", inquirydata[4]+4);
@@ -1113,12 +1163,14 @@ try_inquiry:
         goto out;
     }
     else
+    {
         _INFO("INQUIRY: device type = $%02x\n", device_type);
+    }
 
     if ((unit->u_DeviceType != 0xff) && (unit->u_DeviceType != device_type))
     {
         _WARN("ROM device type differents of one in INQUIRY data (%u != %u)\n",
-             unit->u_DeviceType, device_type);
+              unit->u_DeviceType, device_type);
         unit->u_DeviceType = device_type;
     }
 
@@ -1133,7 +1185,9 @@ try_inquiry:
 
     /* Version shall be SPC */
     if (inquirydata[2] != SPC2_VERSION)
+    {
         _WARN("SPC2 version is $%02x (should be $%02x)\n", inquirydata[2], SPC2_VERSION);
+    }
 
     unit->u_Flags.Removable = 0 != (inquirydata[1] & 0x80);
     _INFO("INQUIRY: removable support: %s\n", YESNO(unit->u_Flags.Removable));
@@ -1209,7 +1263,9 @@ static void sbp2_get_capacity(SBP2Unit *unit)
     unit->u_Geometry.dg_SectorSize = unit->u_BlockSize = LE_SWAPLONG(capacity[1]);
     unit->u_BlockShift = 0;
     while((1ul<<unit->u_BlockShift) < unit->u_BlockSize)
+    {
         unit->u_BlockShift++;
+    }
 
     _INFO("GEOMETRY: SectorSize: %lu, TotalSectors: %lu\n",
           unit->u_Geometry.dg_SectorSize, unit->u_Geometry.dg_TotalSectors);
@@ -1236,7 +1292,9 @@ static void sbp2_scan_logical_unit_directory(SBP2Unit *unit, const QUADLET *dir)
     while (Helios_RomIterate(&ri, &key, &value))
     {
         if (KEY_SBP2_LOGICAL_UNIT_NUMBER == key)
+        {
             sbp2_config_logical_unit(unit, value);
+        }
     }
 }
 
@@ -1262,11 +1320,15 @@ static void sbp2_read_unit_name(SBP2Unit *unit, const QUADLET *dir)
             Helios_ReportMsg(HRMB_INFO, "SBP2", "unit #%u: Welcome to unit '%s'", unit->u_UnitNo, name);
         }
         else
+        {
             _ERR("Name alloc failed for %u bytes\n", len);
+        }
     }
     else
+    {
         _ERR("Helios_ReadTextualDescriptor() failed\n");
-}             
+    }
+}
 
 static void sbp2_getrominfo(SBP2Unit *unit, const QUADLET *dir)
 {
@@ -1308,7 +1370,7 @@ static void sbp2_getrominfo(SBP2Unit *unit, const QUADLET *dir)
                 unit->u_ORBSize = 0xff & value;
 
                 _INFO("=> Unit characteristics : $%06x => Mgt_ORB_timeout=%lu, ORB_size=%u\n",
-                       value, unit->u_MgtTimeout, unit->u_ORBSize);
+                      value, unit->u_MgtTimeout, unit->u_ORBSize);
                 break;
 
             case KEY_SBP2_COMMAND_SET_REVISION:
@@ -1371,7 +1433,9 @@ static void sbp2_automount(SBP2Unit *unit)
                              NP_PPC_Arg1,     (ULONG)unit,
                              TAG_DONE);
     if (NULL == proc)
+    {
         _ERR("Auto-mount task creation failed\n");
+    }
 }
 
 static void sbp2_mount_cd(SBP2Unit *unit)
@@ -1436,7 +1500,9 @@ static void sbp2_on_medium_changed(SBP2Unit *unit)
         ioreq.io_Command = CMD_START;
         ioerr = sbp2_iocmd_start_stop(unit, &ioreq);
         if (ioerr)
+        {
             return;
+        }
 
         unit->u_BlockSize = 0;
         sbp2_get_capacity(unit);
@@ -1446,7 +1512,9 @@ static void sbp2_on_medium_changed(SBP2Unit *unit)
             && ((PDT_CDROM == unit->u_DeviceType) || (PDT_WORM == unit->u_DeviceType)))
         {
             if (unit->u_Flags.AutoMountCD)
+            {
                 sbp2_mount_cd(unit);
+            }
         }
     }
     else
@@ -1512,7 +1580,7 @@ static BOOL sbp2_update(SBP2Unit *unit)
         unit->u_MaxPayload = MIN(nodeinfo.n_MaxSpeed + 7, 12u);
 
         _INFO("MaxSpeed: %u, MaxPayload: %lu\n", unit->u_MaxSpeed, 1ul << (unit->u_MaxPayload+2));
-        
+
         if (unit->u_Flags.Logged)
         {
             unit->u_Flags.Logged = sbp2_reconnect(unit);
@@ -1552,10 +1620,14 @@ static BOOL sbp2_update(SBP2Unit *unit)
                         /* Auto-mount */
                         if ((PDT_SIMPLE_DIRECT_ACCESS == unit->u_DeviceType) ||
                             (PDT_DIRECT_ACCESS == unit->u_DeviceType))
+                        {
                             sbp2_automount(unit);
+                        }
                     }
                     else
+                    {
                         _ERR("START cmd failed on non-removable unit\n");
+                    }
                 }
 
                 return TRUE;
@@ -1670,7 +1742,9 @@ static void sbp2_handle_removable(SBP2Unit *unit)
             }
         }
         else
+        {
             _ERR("SCSI: Test unit ready cmd failed, ioerr=%d\n", ioerr);
+        }
     }
     else if (!unit->u_Flags.Ready)
     {
@@ -1684,7 +1758,9 @@ static void sbp2_handle_removable(SBP2Unit *unit)
     }
 
     if (ready_changed)
+    {
         sbp2_on_medium_changed(unit);
+    }
 }
 
 static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
@@ -1720,10 +1796,12 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
         char buf[60];
 
         unit->u_AutoReconnect = 0;
-        
+
         if ((GetVar("helios_autoreconnect", buf, sizeof(buf), 0) > 0) &&
             (StrToLong(buf, &value) > 0))
+        {
             unit->u_AutoReconnect = value;
+        }
 
         _INFO("Auto-Reconnect=%lu\n", unit->u_AutoReconnect);
     }
@@ -1755,7 +1833,9 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
         }
 
         if (unit->u_UnitNo > base->hc_MaxUnitNo)
+        {
             base->hc_MaxUnitNo = unit->u_UnitNo;
+        }
 
         ADDTAIL(&base->hc_Units, unit);
         unit->u_Flags.Public = TRUE;
@@ -1777,11 +1857,15 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
         (NULL == unit->u_OrbPort) ||
         (-1 == unit->u_ORBStatusSigBit) ||
         (-1 == io_sigbit))
+    {
         goto release_unit;
+    }
 
     unit->u_IOTimeReq = Helios_OpenTimer(unit->u_TimerPort, UNIT_VBLANK);
     if (NULL == unit->u_IOTimeReq)
+    {
         goto release_unit;
+    }
 
     _INFO("Task %s ressources OK, get info now\n", FindTask(NULL)->tc_Node.ln_Name);
 
@@ -1792,10 +1876,12 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
                     HA_Hardware, (ULONG)&unit->u_HeliosHW, /* NR */
                     HA_EventListenerList, (ULONG)&dev_ell,
                     TAG_DONE);
-    
+
     /* Something wrong with the device ? */
     if ((gen != unit->u_Generation) || (NULL == unit->u_HeliosHW) || (NULL == dev_ell))
+    {
         goto release_unit;
+    }
 
     hw_ell = NULL;
     Helios_GetAttrs(HGA_HARDWARE, unit->u_HeliosHW,
@@ -1819,7 +1905,9 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
                         HA_UnitRomDirectory, (ULONG)&dir,
                         TAG_DONE);
         if (NULL != dir)
+        {
             sbp2_getrominfo(unit, dir);
+        }
         else
         {
             Helios_UnlockDevice(dev);
@@ -1858,9 +1946,9 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
     sbp2_dev_listener.hm_Msg.mn_Length = sizeof(sbp2_dev_listener);
     sbp2_dev_listener.hm_Type = HELIOS_MSGTYPE_EVENT;
     sbp2_dev_listener.hm_EventMask = HEVTF_DEVICE_NEW_UNIT
-        | HEVTF_DEVICE_DEAD
-        | HEVTF_DEVICE_REMOVED
-        | HEVTF_DEVICE_UPDATED;
+                                     | HEVTF_DEVICE_DEAD
+                                     | HEVTF_DEVICE_REMOVED
+                                     | HEVTF_DEVICE_UPDATED;
     Helios_AddEventListener(dev_ell, &sbp2_dev_listener);
 
     /* Prepare IO port to accept requests from the device interface */
@@ -1878,23 +1966,31 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
 
     /* Login and target initialization */
     if (!sbp2_update(unit))
+    {
         goto release_unit;
+    }
 
     /* Main loop */
     while (run)
     {
         /* Add new timeout request for the removable periodic task */
         if (unit->u_Flags.Removable && (NULL == removable_tr))
+        {
             removable_tr = sbp2_add_timereq(unit, REMOVABLE_CHECK_TIMEOUT);
+        }
 
         if ((unit->u_AutoReconnect > 0) && unit->u_Flags.Logged && (NULL == reconnect_tr))
+        {
             reconnect_tr = sbp2_add_timereq(unit, unit->u_AutoReconnect);
+        }
 
         sigs = Wait(SIGBREAKF_CTRL_C | (1ul << evt_port->mp_SigBit) | timer_signal | ioreq_signal);
 
         /* exit? */
         if (sigs & SIGBREAKF_CTRL_C)
+        {
             run = FALSE;
+        }
 
         /* Handle Helios events first */
         if (sigs & (1ul << evt_port->mp_SigBit))
@@ -1947,9 +2043,11 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
             }
 
             if (run & update)
+            {
                 sbp2_update(unit);
+            }
         }
-        
+
         /* Device IO requests */
         if (run && ((sigs & ioreq_signal) || (unit->u_Flags.ProcessIO)))
         {
@@ -1970,7 +2068,9 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
                 }
             }
             else
+            {
                 unit->u_Flags.ProcessIO = 1;
+            }
         }
 
         /* Periodic jobs */
@@ -1983,13 +2083,17 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
                 if (tr == removable_tr)
                 {
                     if (run)
+                    {
                         sbp2_handle_removable(unit);
+                    }
                     removable_tr = NULL;
                 }
                 else if (tr == reconnect_tr)
                 {
                     if (run && !sbp2_reconnect(unit))
+                    {
                         run = FALSE;
+                    }
                     reconnect_tr = NULL;
                 }
 
@@ -2030,7 +2134,9 @@ release_unit:
 
     /* Logout (fails in case of bad generation) */
     if (unit->u_Flags.Logged)
+    {
         sbp2_logout(unit);
+    }
 
     /* Cancel pending ORBs */
     sbp2_cancel_orbs(unit);
@@ -2047,10 +2153,14 @@ release_unit:
 
     /* Unregister all Helios events */
     if (0 != sbp2_dev_listener.hm_EventMask)
+    {
         Helios_RemoveEventListener(dev_ell, &sbp2_dev_listener);
+    }
 
     if (0 != sbp2_hw_listener.hm_EventMask)
+    {
         Helios_RemoveEventListener(hw_ell, &sbp2_hw_listener);
+    }
 
     /* Flush helios event ports */
     while (NULL != (evt = (HeliosEventMsg *)GetMsg(evt_port)))
@@ -2075,10 +2185,14 @@ release_unit:
 
     /* Abort periodic timers */
     if ((NULL != removable_tr) && !CheckIO(&removable_tr->tr_node))
+    {
         AbortIO(&removable_tr->tr_node);
+    }
 
     if ((NULL != reconnect_tr) && !CheckIO(&reconnect_tr->tr_node))
+    {
         AbortIO(&reconnect_tr->tr_node);
+    }
 
     /* Proper timer device flush */
     while ((NULL != removable_tr) || (NULL != reconnect_tr))
@@ -2088,10 +2202,14 @@ release_unit:
         while (NULL != (tr = (APTR)GetMsg(unit->u_TimerPort)))
         {
             if (tr == removable_tr)
+            {
                 removable_tr = NULL;
+            }
 
             if (tr == reconnect_tr)
+            {
                 reconnect_tr = NULL;
+            }
 
             sbp2_free_timereq(unit, tr);
         }
@@ -2102,19 +2220,33 @@ release_unit:
      * remain valid until no unit open cnt reach 0.
      */
     if (NULL != unit->u_IOTimeReq)
+    {
         Helios_CloseTimer(unit->u_IOTimeReq);
+    }
     if (NULL != unit->u_TimerPort)
+    {
         DeleteMsgPort(unit->u_TimerPort);
+    }
     if (NULL != unit->u_OrbPort)
+    {
         DeleteMsgPort(unit->u_OrbPort);
+    }
     if (NULL != evt_port)
+    {
         DeleteMsgPort(evt_port);
+    }
     if (io_sigbit >= 0)
+    {
         FreeSignal(io_sigbit);
+    }
     if (unit->u_ORBStatusSigBit>= 0)
+    {
         FreeSignal(unit->u_ORBStatusSigBit);
+    }
     if (NULL != unit->u_OneBlock)
+    {
         FreePooled(base->hc_MemPool, unit->u_OneBlock, unit->u_OneBlockSize);
+    }
 
     task_name = unit->u_TaskName;
 
@@ -2159,7 +2291,9 @@ void sbp2_cancel_orbs(SBP2Unit *unit)
             REMOVE(node);
 
             if (!CheckIO(&req->or_Base.iohhe_Req.iohh_Req))
+            {
                 AbortIO(&req->or_Base.iohhe_Req.iohh_Req);
+            }
 
             req->or_ORBDone(base, req, NULL);
             _INFO_ORB("ORB req %p: cancelled\n", req);
@@ -2178,10 +2312,12 @@ LONG sbp2_do_scsi_cmd(SBP2Unit *unit, struct SCSICmd *scsicmd, ULONG timeout)
 
     scsicmd->scsi_Actual = 0;
     scsicmd->scsi_SenseActual = 0;
-    
+
     req = (SBP2SCSICmdReq *) sbp2_alloc_orb_req(unit->u_SBP2ClassBase, sizeof(SBP2SCSICmdReq));
     if (NULL == req)
+    {
         goto transport_error;
+    }
 
     /* Initialize the SCSI command request */
     req->sr_Base.or_Base.iohhe_Req.iohh_Req.io_Message.mn_ReplyPort = unit->u_OrbPort;
@@ -2190,7 +2326,9 @@ LONG sbp2_do_scsi_cmd(SBP2Unit *unit, struct SCSICmd *scsicmd, ULONG timeout)
 
     /* Finish the request initialization */
     if (!sbp2_scsi_setup(unit, req))
+    {
         goto transport_error;
+    }
 
     retry = 3; /* try if target reply BUSY */
 orb_retry:
@@ -2230,10 +2368,14 @@ orb_retry:
                 goto orb_retry;
             }
             else
+            {
                 ioerr = HFERR_Phase;
+            }
         }
         else
+        {
             ioerr = HFERR_Phase;
+        }
 
         scsicmd->scsi_CmdActual = 0;
         /* scsicmd->scsi_Status set during the cancel_orb */
@@ -2254,7 +2396,7 @@ orb_retry:
     else if (SBP2_STATUS_REQUEST_COMPLETE != STATUS_GET_RESPONSE(req->sr_Base.or_ORBStatus))
     {
         _ERR_SCSI("SCSI[$%02x]: ORB status failure, response code is %x\n",
-             scsicmd->scsi_Command[0], STATUS_GET_RESPONSE(req->sr_Base.or_ORBStatus));
+                  scsicmd->scsi_Command[0], STATUS_GET_RESPONSE(req->sr_Base.or_ORBStatus));
 
         sbp2_cancel_orbs(unit);
         sbp2_agent_reset(unit);
@@ -2272,14 +2414,18 @@ orb_retry:
             /* target has also send Sense data? */
             if (scsicmd->scsi_SenseActual > 0)
                 _ERR_SCSI("SCSI[$%02x]: bad status, %lu sense bytes, [key=$%x, asc/ascq=$%02x/$%02x]\n",
-                     scsicmd->scsi_Command[0], scsicmd->scsi_SenseActual,
-                     scsicmd->scsi_SenseData[2] & SK_MASK,
-                     scsicmd->scsi_SenseData[12], scsicmd->scsi_SenseData[13]);
+                          scsicmd->scsi_Command[0], scsicmd->scsi_SenseActual,
+                          scsicmd->scsi_SenseData[2] & SK_MASK,
+                          scsicmd->scsi_SenseData[12], scsicmd->scsi_SenseData[13]);
             else
+            {
                 _ERR_SCSI("SCSI[$%02x]: bad status, no sense data\n", scsicmd->scsi_Command[0]);
+            }
         }
         else
+        {
             ioerr = 0;
+        }
     }
 
     goto out;
@@ -2290,7 +2436,10 @@ transport_error:
     ioerr = HFERR_Phase;
 
 out:
-    if (NULL != req) sbp2_free_orb_req(unit->u_SBP2ClassBase, &req->sr_Base);
+    if (NULL != req)
+    {
+        sbp2_free_orb_req(unit->u_SBP2ClassBase, &req->sr_Base);
+    }
 
     /* in case of error, check if its not due to a bus-reset */
     if (ioerr)
@@ -2298,8 +2447,8 @@ out:
         ULONG gen;
 
         if ((1 == Helios_GetAttrs(HGA_DEVICE, unit->u_HeliosDevice,
-                                 HA_Generation, (ULONG)&gen,
-                                 TAG_DONE)) &&
+                                  HA_Generation, (ULONG)&gen,
+                                  TAG_DONE)) &&
             (gen != unit->u_Generation))
         {
             LOCK_REGION(unit);
@@ -2360,24 +2509,30 @@ void sbp2_decref(SBP2Unit *unit)
     {
         SBP2Unit *node;
         ULONG maxno;
-        
+
         _INFO("Freeing sbp2 unit %p-<%s>\n", unit, unit->u_UnitName);
-        
+
         /* Find new unit # max */
         maxno = base->hc_MaxUnitNo;
         ForeachNode(&base->hc_Units, node)
         {
             if (node->u_UnitNo > maxno)
+            {
                 maxno = node->u_UnitNo;
+            }
         }
         base->hc_MaxUnitNo = maxno;
-        
+
         if (NULL != unit->u_NotifyUnit)
+        {
             MountDeleteNotifyUnit(unit->u_NotifyUnit);
-        
+        }
+
         if (NULL != unit->u_UnitName)
+        {
             FreeVecPooled(base->hc_MemPool, unit->u_UnitName);
-        
+        }
+
         /* Free unit itself */
         FreePooled(base->hc_MemPool, unit, sizeof(*unit));
 
@@ -2467,7 +2622,9 @@ LONG sbp2_ForceUnitBinding(SBP2ClassLib *base, HeliosUnit *unit)
                                   sbp2_unit->u_UnitNo, guid, gen);
                 name = sbp2_unit->u_TaskName = utils_DupStr(base->hc_MemPool, buf);
                 if (NULL == sbp2_unit->u_TaskName)
+                {
                     name = "<sbp2 unit driver>";
+                }
 
                 /* TODO: BAD CODE, REMOVE ME SOON */
                 Forbid();
@@ -2485,9 +2642,13 @@ LONG sbp2_ForceUnitBinding(SBP2ClassLib *base, HeliosUnit *unit)
                                                                            NP_PPC_Arg2,     (ULONG)sbp2_unit,
                                                                            TAG_DONE);
                 if (NULL != sbp2_unit->u_DriverTask)
+                {
                     return TRUE;
+                }
                 else
+                {
                     _ERR("Can't create SBP2 unit task %s\n", buf);
+                }
 
                 /* TODO: BAD CODE, REMOVE ME SOON */
                 Forbid();
@@ -2497,22 +2658,30 @@ LONG sbp2_ForceUnitBinding(SBP2ClassLib *base, HeliosUnit *unit)
                 Helios_UnbindUnit(unit);
             }
             else
+            {
                 _ERR("Can't bind unit %p!\n", unit);
+            }
 
             Helios_ReleaseUnit(unit);
 
             if (NULL != sbp2_unit->u_TaskName)
+            {
                 FreeVecPooled(base->hc_MemPool, sbp2_unit->u_TaskName);
+            }
             FreePooled(base->hc_MemPool, sbp2_unit, sizeof(*sbp2_unit));
         }
         else
+        {
             _ERR("SBP2 unit alloc failed\n");
+        }
 
 
         Helios_ReleaseDevice(dev); /* NR from Helios_GetAttrs */
     }
     else
+    {
         _ERR("[1394 unit@%p] failed to obtain 1394 device\n", unit);
+    }
 
     return FALSE;
 }
@@ -2530,7 +2699,9 @@ LONG sbp2_AttemptUnitBinding(SBP2ClassLib *base, HeliosUnit *unit)
                     TAG_DONE);
 
     if ((SBP2_UNIT_SPEC_ID_ENTRY == spec) && (SBP2_SW_VERSION_ENTRY == ver))
+    {
         return sbp2_ForceUnitBinding(base, unit);
+    }
 
     return FALSE;
 }
@@ -2545,7 +2716,9 @@ LONG sbp2_ReleaseUnitBinding(SBP2ClassLib *base, HeliosUnit *helios_unit, SBP2Un
 
         /* Ask the unit task to exit */
         if (NULL != sbp2_unit->u_DriverTask)
+        {
             Signal(sbp2_unit->u_DriverTask, SIGBREAKF_CTRL_C);
+        }
     }
     UNLOCK_REGION(sbp2_unit);
 
@@ -2561,7 +2734,9 @@ LONG sbp2_ReleaseAllBindings(SBP2ClassLib *base)
         SBP2Unit *unit;
 
         ForeachNode(&base->hc_Units, unit)
+        {
             sbp2_ReleaseUnitBinding(base, unit->u_HeliosUnit, unit);
+        }
     }
     UNLOCK_REGION_SHARED(base);
 

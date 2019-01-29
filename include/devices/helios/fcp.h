@@ -36,7 +36,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 struct IOExtFCP
 {
-	struct IOStdReq     SysReq;
+    struct IOStdReq     SysReq;
     UBYTE               Unit;
     HeliosBus *         Bus;
 };

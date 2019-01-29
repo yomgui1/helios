@@ -51,7 +51,9 @@ static LONG avc1394_SendCommandBlock(HeliosDeviceHandler *  handler,
         ULONG i;
 
         for (i=0; i < length; i++)
+        {
             LE_SWAPLONG_P(&block[i]);
+        }
     }
 #endif
 
@@ -93,21 +95,24 @@ void avc1394_Server(void)
     BOOL run;
 
     if (!NewGetTaskAttrs(NULL, &sv_port, sizeof(struct MsgPort *),
-                        TASKINFOTYPE_TASKMSGPORT, TAG_DONE)
-        || (NULL == sv_port)) {
+                         TASKINFOTYPE_TASKMSGPORT, TAG_DONE)
+        || (NULL == sv_port))
+    {
         log_Error("No server messages port");
         return;
     }
 
     /* Create 2 ports to communicate with Helios */
     helios_port = CreateMsgPort();
-    if (NULL == helios_port) {
+    if (NULL == helios_port)
+    {
         log_Error("No server helios messages port");
         return;
     }
 
     fcp_port = CreateMsgPort();
-    if (NULL == fcp_port) {
+    if (NULL == fcp_port)
+    {
         log_Error("No server FCP messages port");
         DeleteMsgPort(helios_port);
         return;
@@ -115,7 +120,8 @@ void avc1394_Server(void)
 
     /* Create a request helios object in advance */
     req = Helios_AllocATObject(sizeof(*req));
-    if (NULL == req) {
+    if (NULL == req)
+    {
         log_APIError("Unable to create a request object to communicate with Helios");
         DeleteMsgPort(helios_port);
         DeleteMsgPort(fcp_port);
@@ -123,7 +129,8 @@ void avc1394_Server(void)
     }
 
     ars = Helios_AllocATObject(sizeof(*ars));
-    if (NULL == ars) {
+    if (NULL == ars)
+    {
         log_APIError("Unable to create a response object to communicate with Helios");
         Helios_FreeATObject(req);
         DeleteMsgPort(helios_port);
@@ -150,16 +157,19 @@ void avc1394_Server(void)
 
     /* Main loop : handle command messages from client. one by one. */
     run = TRUE;
-    do {
+    do
+    {
         WaitPort(sv_port);
 
-        while (NULL != (sv_msg = (APTR) GetMsg(sv_port))) {
+        while (NULL != (sv_msg = (APTR) GetMsg(sv_port)))
+        {
             HeliosBus *bus;
             HeliosRequestMsg *fcp_msg;
             ULONG retry;
             QUADLET result = 0;
 
-            if (AVC1394_ERR_BYE == sv_msg->Error) {
+            if (AVC1394_ERR_BYE == sv_msg->Error)
+            {
                 DB("FCP server has receives dead msg\n");
                 ReplyMsg((APTR) sv_msg);
                 run = FALSE;
@@ -172,7 +182,8 @@ void avc1394_Server(void)
             bus = sv_msg->DeviceHandler->Bus;
 
             /* Enable the FCP response handler */
-            if (HELIOS_ERR_NOERR != Helios_RegisterRequestHandler(bus, &fcp_response_handler)) {
+            if (HELIOS_ERR_NOERR != Helios_RegisterRequestHandler(bus, &fcp_response_handler))
+            {
                 log_Error("Unable to register a FCP response handler. Kill the FCP server...");
                 sv_msg->Error = AVC1394_ERR_BYE;
                 ReplyMsg((APTR) sv_msg);
@@ -181,7 +192,8 @@ void avc1394_Server(void)
             }
 
             /* Try to send command as specified by msg->Retry */
-            for (retry=0; retry <= sv_msg->Retry; retry++) {
+            for (retry=0; retry <= sv_msg->Retry; retry++)
+            {
                 LONG err;
                 QUADLET command;
 
@@ -196,14 +208,16 @@ void avc1394_Server(void)
                 /* Handle ack retry codes */
                 if ((HELIOS_ACK_BUSY_X == req->arq_Ack)
                     || (HELIOS_ACK_BUSY_A == req->arq_Ack)
-                    || (HELIOS_ACK_BUSY_B == req->arq_Ack)) {
+                    || (HELIOS_ACK_BUSY_B == req->arq_Ack))
+                {
                     /* just wait a bit before retrying */
                     Delay(1);
                     continue; /* re-send command (if retry counter not exceeded) */
                 }
 
                 /* In case of other errors, reports an generic AV/C error code */
-                if (HELIOS_ERR_NOERR != err) {
+                if (HELIOS_ERR_NOERR != err)
+                {
                     DB("Helios error reported on SendCommandXXX: %u\n", err);
                     sv_msg->Error = AVC1394_ERR_HELIOS;
                     goto reply_sv_msg;
@@ -211,13 +225,15 @@ void avc1394_Server(void)
 
                 /* Now, it's time to wait about a response on the FCP response address */
                 result = -1;
-                do {
+                do
+                {
                     WaitPort(fcp_port);
 
                     /* Normally we're waiting only for one response,
                      * but as any hacker node can also use this port, check them all!
                      */
-                    while (NULL != (fcp_msg = (APTR) GetMsg(fcp_port))) {
+                    while (NULL != (fcp_msg = (APTR) GetMsg(fcp_port)))
+                    {
                         ULONG rcode;
                         AVC1394_CmdResponse *response;
 
@@ -226,22 +242,29 @@ void avc1394_Server(void)
                         /* We only support write quadlet/block responses.
                          * If not the case, we report a TYPE error rcode.
                          */
-                        if (TCODE_WRITE_QUADLET_REQUEST == fcp_msg->Packet->TCode) {
+                        if (TCODE_WRITE_QUADLET_REQUEST == fcp_msg->Packet->TCode)
+                        {
                             response = (APTR) &fcp_msg->Packet->Header[3];
                             LE_SWAPLONG_P(response);
                             rcode = HELIOS_RCODE_COMPLETE;
-                        } else if (TCODE_WRITE_BLOCK_REQUEST == fcp_msg->Packet->TCode) {
+                        }
+                        else if (TCODE_WRITE_BLOCK_REQUEST == fcp_msg->Packet->TCode)
+                        {
                             response = (APTR) &fcp_msg->Packet->Payload[0];
 #if defined(__LITTLE_ENDIAN__) | defined(_LITTLE_ENDIAN)
                             {
                                 ULONG i;
 
                                 for (i=0; i < length; i++)
+                                {
                                     LE_SWAPLONG_P(&response[i]);
+                                }
                             }
 #endif
                             rcode = HELIOS_RCODE_COMPLETE;
-                        } else {
+                        }
+                        else
+                        {
                             log_Error("FCP response frame received with an unwaited TCode (%u).\n"
                                       "Please email the author with this report!", fcp_msg->Packet->TCode);
                             sv_msg->Error = AVC1394_ERR_SYSTEM;
@@ -257,60 +280,76 @@ void avc1394_Server(void)
                         Helios_ReplyRequestHandlerMsg(fcp_msg, ars, rcode);
 
                         if (AVC1394_ERR_NOERR == sv_msg->Error)
+                        {
                             goto reply_sv_msg;
+                        }
 
                         DB("Result: %08x\n", *(QUADLET *)response);
 
                         /* No correlated response ?
                          * TODO: some cases have also a differrent opcode -> not handled here
                          */
-                        if (((*(QUADLET *)response) & 0x00ffff00) != (command & 0x00ffff00)) {
+                        if (((*(QUADLET *)response) & 0x00ffff00) != (command & 0x00ffff00))
+                        {
                             DB("Not correlated response detected: command=%06x, response=%06x\n", command, result);
                             ReplyMsg((APTR) fcp_msg);
                             continue;
                         }
 
                         /* Interim responses are valid only for Notify commands */
-                        if (AVC1394_RESPONSE_INTERIM == response->RCode) {
+                        if (AVC1394_RESPONSE_INTERIM == response->RCode)
+                        {
                             DB("Interim response\n");
-                            if (AVC1394_CTYPE_NOTIFY != AVC1394_MASK_CTYPE(command)) {
+                            if (AVC1394_CTYPE_NOTIFY != AVC1394_MASK_CTYPE(command))
+                            {
                                 ReplyMsg((APTR) fcp_msg);
                                 continue;
                             }
-                        } else if (0 == response->RCode) {
+                        }
+                        else if (0 == response->RCode)
+                        {
                             DB("0 rcode result, Retry\n");
                             ReplyMsg((APTR) fcp_msg);
                             break;
                         }
 
                         /* Need to retains fcp data ? */
-                        if (TCODE_WRITE_QUADLET_REQUEST == fcp_msg->Packet->TCode) {
+                        if (TCODE_WRITE_QUADLET_REQUEST == fcp_msg->Packet->TCode)
+                        {
                             sv_msg->Data[0] = result;
                             ReplyMsg((APTR) fcp_msg);
-                        } else
+                        }
+                        else
+                        {
                             sv_msg->FCPMsg = fcp_msg;
+                        }
                         break;
                     }
-                } while (-1 == result);
+                }
+                while (-1 == result);
 
                 /* Good ! */
                 if (result != 0)
+                {
                     break;
+                }
 
                 DB("Try %u failed, retry...\n", retry);
             }
 
             /* Retry over ? */
-            if (retry > sv_msg->Retry) {
+            if (retry > sv_msg->Retry)
+            {
                 sv_msg->Error = AVC1394_ERR_RETRY_EXCEEDED;
                 log_Error("Retry exceeded\n");
             }
 
-        reply_sv_msg:
+reply_sv_msg:
 
             /* Remove the request handler (and let Helios handles possible ones) */
             Helios_UnregisterRequestHandler(bus, &fcp_response_handler);
-            while (NULL != (fcp_msg = (APTR) GetMsg(fcp_port))) {
+            while (NULL != (fcp_msg = (APTR) GetMsg(fcp_port)))
+            {
                 /* Reply to any remaining FCP RESPONSE messages by an error RCode */
                 Helios_ReplyRequestHandlerMsg(fcp_msg, ars, HELIOS_RCODE_ADDRESS_ERROR);
                 ReplyMsg((APTR) fcp_msg);
@@ -319,7 +358,8 @@ void avc1394_Server(void)
             DB("reply msg %p (result: $%08x)\n", sv_msg, result);
             ReplyMsg((APTR) sv_msg);
         }
-    } while (run);
+    }
+    while (run);
 
     /* Forbit clients to send new messages on sv_port */
     ObtainSemaphore(&AVC1394Base->Sema);
@@ -330,7 +370,8 @@ void avc1394_Server(void)
     Helios_FreeATObject(ars);
 
     /* Flush/delete ports */
-    while (NULL != (sv_msg = (APTR) GetMsg(sv_port))) {
+    while (NULL != (sv_msg = (APTR) GetMsg(sv_port)))
+    {
         sv_msg->Error = AVC1394_ERR_BYE;
         ReplyMsg((APTR) sv_msg);
     }
@@ -358,10 +399,14 @@ AVC1394_ServerMsg *avc1394_SendServerMsg(AVC1394_ServerMsg *sv_msg, struct MsgPo
     ObtainSemaphore(&AVC1394Base->Sema);
     sv_port = AVC1394Base->ServerPort;
     DB("Send msg %p\n", sv_msg);
-    if (NULL != sv_port) PutMsg(sv_port, (APTR) sv_msg);
+    if (NULL != sv_port)
+    {
+        PutMsg(sv_port, (APTR) sv_msg);
+    }
     ReleaseSemaphore(&AVC1394Base->Sema);
 
-    if (NULL == sv_port) {
+    if (NULL == sv_port)
+    {
         log_Error("Server port unavailable");
         sv_msg = NULL;
     }
@@ -388,33 +433,40 @@ int avc1394_open_descriptor(raw1394handle_t handle, nodeid_t node,
     quadlet_t  request[2];
     quadlet_t *response;
     unsigned char subfunction = readwrite?
-        AVC1394_OPERAND_DESCRIPTOR_SUBFUNCTION_WRITE_OPEN
-        :AVC1394_OPERAND_DESCRIPTOR_SUBFUNCTION_READ_OPEN;
+                                AVC1394_OPERAND_DESCRIPTOR_SUBFUNCTION_WRITE_OPEN
+                                :AVC1394_OPERAND_DESCRIPTOR_SUBFUNCTION_READ_OPEN;
 
 #ifdef DEBUG
     {
         int i;
         fprintf(stderr, "Open descriptor: ctype: 0x%08X, subunit:0x%08X,\n     descriptor_identifier:", ctype, subunit);
         for (i=0; i<len_descriptor_identifier; i++)
+        {
             fprintf(stderr, " 0x%02X", descriptor_identifier[i]);
+        }
         fprintf(stderr,"\n");
     }
 #endif
 
     if (len_descriptor_identifier != 1)
+    {
         fprintf(stderr, "Unimplemented.\n");
+    }
     /*request[0] = ctype | subunit | AVC1394_COMMAND_OPEN_DESCRIPTOR
       | ((*descriptor_identifier & 0xFF00) >> 16);
       request[1] = ((*descriptor_identifier & 0xFF) << 24) | subfunction;*/
 
     request[0] = ctype | subunit | AVC1394_COMMAND_OPEN_DESCRIPTOR
-        | *descriptor_identifier;
+                 | *descriptor_identifier;
     request[1] = subfunction << 24;
     if (ctype == AVC1394_CTYPE_STATUS)
+    {
         request[1] = 0xFF00FFFF;
+    }
 
     response = avc1394_transaction_block(handle, node, request, 2, AVC1394_RETRY);
-    if (response == NULL) {
+    if (response == NULL)
+    {
         avc1394_transaction_block_close(handle);
         return -1;
     }
@@ -443,22 +495,27 @@ int avc1394_close_descriptor(raw1394handle_t handle, nodeid_t node,
         int i;
         fprintf(stderr, "Close descriptor: ctype: 0x%08X, subunit:0x%08X,\n      descriptor_identifier:", ctype, subunit);
         for (i=0; i<len_descriptor_identifier; i++)
+        {
             fprintf(stderr, " 0x%02X", descriptor_identifier[i]);
+        }
         fprintf(stderr,"\n");
     }
 #endif
     if (len_descriptor_identifier != 1)
+    {
         fprintf(stderr, "Unimplemented.\n");
+    }
     /*request[0] = ctype | subunit | AVC1394_COMMAND_OPEN_DESCRIPTOR
       | ((*descriptor_identifier & 0xFF00) >> 16);
       request[1] = ((*descriptor_identifier & 0xFF) << 24) | subfunction;*/
 
     request[0] = ctype | subunit | AVC1394_COMMAND_OPEN_DESCRIPTOR
-        | *descriptor_identifier;
+                 | *descriptor_identifier;
     request[1] = subfunction << 24;
 
     response = avc1394_transaction_block(handle, node, request, 2, AVC1394_RETRY);
-    if (response == NULL) {
+    if (response == NULL)
+    {
         avc1394_transaction_block_close(handle);
         return -1;
     }
@@ -486,17 +543,21 @@ unsigned char *avc1394_read_descriptor(raw1394handle_t handle, nodeid_t node,
     quadlet_t *response;
 
     if (len_descriptor_identifier != 1)
+    {
         fprintf(stderr, "Unimplemented.\n");
+    }
 
     memset(request, 0, 128*4);
     request[0] = AVC1394_CTYPE_CONTROL | subunit | AVC1394_COMMAND_READ_DESCRIPTOR
-        | *descriptor_identifier;
+                 | *descriptor_identifier;
     request[1] = 0xFF000000;    /* read entire descriptor */
     request[2] = 0x00000000;    /* beginning from 0x0000 */
 
     response = avc1394_transaction_block(handle, node, request, 3, AVC1394_RETRY);
     if (response == NULL)
+    {
         return NULL;
+    }
 
     return (unsigned char *) response;
 }
@@ -507,7 +568,10 @@ unsigned char *avc1394_read_descriptor(raw1394handle_t handle, nodeid_t node,
 
 void AVC1394_FreeServerMsg(AVC1394_ServerMsg *msg)
 {
-    if (NULL != msg->FCPMsg) ReplyMsg((APTR) msg->FCPMsg);
+    if (NULL != msg->FCPMsg)
+    {
+        ReplyMsg((APTR) msg->FCPMsg);
+    }
     FreeMem(msg, sizeof(*msg));
 }
 
@@ -519,42 +583,63 @@ AVC1394_ServerMsg *AVC1394_GetUnitInfo(HeliosBus *bus, UWORD nodeid)
     QUADLET request[2];
 
     request[0] = AVC1394_CTYPE_STATUS | AVC1394_SUBUNIT_TYPE_UNIT
-        | AVC1394_SUBUNIT_ID_IGNORE | AVC1394_COMMAND_UNIT_INFO | 0xFF;
+                 | AVC1394_SUBUNIT_ID_IGNORE | AVC1394_COMMAND_UNIT_INFO | 0xFF;
     request[1] = 0xFFFFFFFF;
 
     port = CreateMsgPort();
-    if (NULL != port) {
+    if (NULL != port)
+    {
         handler = Helios_AllocDeviceHandler(bus);
-        if (NULL != handler) {
-            if (NULL != Helios_ConnectDeviceHandler(handler, HTTAG_NODE_ID, nodeid, TAG_DONE)) {
+        if (NULL != handler)
+        {
+            if (NULL != Helios_ConnectDeviceHandler(handler, HTTAG_NODE_ID, nodeid, TAG_DONE))
+            {
                 msg = AllocMem(sizeof(*msg), MEMF_PUBLIC);
-                if (NULL != msg) {
+                if (NULL != msg)
+                {
                     msg->DeviceHandler = handler;
                     msg->Retry = AVC1394_RETRY;
                     msg->Length = 2;
                     msg->Data = request;
-                    if (NULL != avc1394_SendServerMsg(msg, port)) {
+                    if (NULL != avc1394_SendServerMsg(msg, port))
+                    {
                         WaitPort(port);
                         GetMsg(port);
 
-                        if (AVC1394_ERR_NOERR == msg->Error) {
+                        if (AVC1394_ERR_NOERR == msg->Error)
+                        {
                             DB("UnitInfo of node $%04x: $%08x - $%08x\n",
-                                nodeid, msg->FCPMsg->Packet->Payload[0], msg->FCPMsg->Packet->Payload[1]);
+                               nodeid, msg->FCPMsg->Packet->Payload[0], msg->FCPMsg->Packet->Payload[1]);
                         }
-                    } else
+                    }
+                    else
+                    {
                         log_APIError("failed to send message");
-                } else
+                    }
+                }
+                else
+                {
                     log_APIError("failed to allocate message");
-            } else
+                }
+            }
+            else
+            {
                 log_APIError("Helios_ConnectDeviceHandler() failed");
+            }
 
             Helios_FreeDeviceHandler(handler);
-        } else
+        }
+        else
+        {
             log_APIError("Helios_AllocDeviceHandler() failed");
+        }
 
         DeleteMsgPort(port);
-    } else
+    }
+    else
+    {
         log_APIError("CreateMsgPort() failed");
+    }
 
     return msg;
 }
@@ -568,10 +653,13 @@ LONG AVC1394_GetSubUnitInfo(HeliosBus *bus, UWORD nodeid, QUADLET *table)
     QUADLET request[2];
 
     port = CreateMsgPort();
-    if (NULL != port) {
+    if (NULL != port)
+    {
         handler = Helios_AllocDeviceHandler(bus);
-        if (NULL != handler) {
-            if (NULL != Helios_ConnectDeviceHandler(handler, HTTAG_NODE_ID, nodeid, TAG_DONE)) {
+        if (NULL != handler)
+        {
+            if (NULL != Helios_ConnectDeviceHandler(handler, HTTAG_NODE_ID, nodeid, TAG_DONE))
+            {
                 ULONG page;
                 AVC1394_ServerMsg msg;
 
@@ -581,41 +669,62 @@ LONG AVC1394_GetSubUnitInfo(HeliosBus *bus, UWORD nodeid, QUADLET *table)
                 msg.Data   = request;
 
                 /* 32 subunits by A/C unit, 4 subunits per page => 8 pages. */
-                for (page=0; page < 8; page++) {
+                for (page=0; page < 8; page++)
+                {
                     request[0] = AVC1394_CTYPE_STATUS | AVC1394_SUBUNIT_TYPE_UNIT
-                        | AVC1394_SUBUNIT_ID_IGNORE | AVC1394_COMMAND_SUBUNIT_INFO
-                        | page << 4 | EXTENSION_CODE;
+                                 | AVC1394_SUBUNIT_ID_IGNORE | AVC1394_COMMAND_SUBUNIT_INFO
+                                 | page << 4 | EXTENSION_CODE;
                     request[1] = 0xFFFFFFFF;
 
                     DB("send req for page %u\n", page);
-                    if (NULL != avc1394_SendServerMsg(&msg, port)) {
+                    if (NULL != avc1394_SendServerMsg(&msg, port))
+                    {
                         WaitPort(port);
                         GetMsg(port);
 
                         err = msg.Error;
-                        if (NULL != msg.FCPMsg) {
+                        if (NULL != msg.FCPMsg)
+                        {
                             if (AVC1394_RESPONSE_IMPLEMENTED == AVC1394_MASK_RESPONSE(msg.FCPMsg->Packet->Payload[0]))
+                            {
                                 table[page] = msg.FCPMsg->Packet->Payload[1];
+                            }
                             else
+                            {
                                 table[page] = 0xffffffff;
+                            }
                             ReplyMsg((APTR) msg.FCPMsg);
-                        } else
+                        }
+                        else
+                        {
                             break;
-                    } else {
+                        }
+                    }
+                    else
+                    {
                         log_APIError("failed to send message");
                         break;
                     }
                 }
-            } else
+            }
+            else
+            {
                 log_APIError("Helios_ConnectDeviceHandler() failed");
+            }
 
             Helios_FreeDeviceHandler(handler);
-        } else
+        }
+        else
+        {
             log_APIError("Helios_AllocDeviceHandler() failed");
+        }
 
         DeleteMsgPort(port);
-    } else
+    }
+    else
+    {
         log_APIError("CreateMsgPort() failed");
+    }
 
     return err;
 
@@ -627,16 +736,25 @@ LONG AVC1394_CheckSubUnitType(HeliosBus *bus, UWORD nodeid, LONG type)
     LONG i, j, entry, id;
 
     if (AVC1394_ERR_NOERR != AVC1394_GetSubUnitInfo(bus, nodeid, table))
+    {
         return 0;
+    }
 
-    for (i=0; i<8; i++) {
-        for (j=3; j>=0; j--) {
+    for (i=0; i<8; i++)
+    {
+        for (j=3; j>=0; j--)
+        {
             entry = (table[i] >> (j * 8)) & 0xFF;
-            if (entry == 0xff) continue;
+            if (entry == 0xff)
+            {
+                continue;
+            }
             id = entry >> 3;
             //DB("%s: node #%u, id = $%02x\n", __FUNCTION__, nodeid, id);
             if (id == AVC1394_GET_SUBUNIT_TYPE(type))
+            {
                 return 1;
+            }
         }
     }
 

@@ -58,7 +58,8 @@ static ULONG Name##_Dispatcher(void) { struct IClass *cl=(struct IClass*)REG_A0;
 
 struct HeliosDeviceHandle;
 
-typedef struct MyDevice {
+typedef struct MyDevice
+{
     struct MinNode              SysNode;
     struct HeliosDeviceHandle * Handle;
     STRPTR                      Name;
@@ -66,7 +67,8 @@ typedef struct MyDevice {
     BOOL                        AVC;
 } MyDevice;
 
-enum {
+enum
+{
     TAGBASE_YOMGUI = (TAG_USER | (0x3f4c << 16)),
 
     /* CamCtrl MCC */
@@ -103,20 +105,23 @@ enum {
     MM_Decoder_Push,
 };
 
-struct MP_RingBuffer_IO {
+struct MP_RingBuffer_IO
+{
     ULONG   MethodID;
     UBYTE * Buffer;
     ULONG   Length;
 };
 
-struct MP_Decoder_Push {
+struct MP_Decoder_Push
+{
     ULONG   MethodID;
     UBYTE *  Buffer;
     ULONG   Length;
     ULONG * SOF;
 };
 
-enum {
+enum
+{
     ID_DEVICE_SELECTED=1,
     ID_RECORD_START,
     ID_RECORD_STOP,

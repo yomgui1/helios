@@ -32,27 +32,28 @@ extern void LIB_Expunge(void);
 extern void LIB_Reserved(void);
 
 
-ULONG LibFuncTable[] = {
+ULONG LibFuncTable[] =
+{
     FUNCARRAY_BEGIN,
-        FUNCARRAY_32BIT_NATIVE,
-        (ULONG) &LIB_Open,
-        (ULONG) &LIB_Close,
-        (ULONG) &LIB_Expunge,
-        (ULONG) &LIB_Reserved,
-        -1,
+    FUNCARRAY_32BIT_NATIVE,
+    (ULONG) &LIB_Open,
+    (ULONG) &LIB_Close,
+    (ULONG) &LIB_Expunge,
+    (ULONG) &LIB_Reserved,
+    -1,
 
     FUNCARRAY_32BIT_SYSTEMV,
-        (ULONG) &AVC1394_FreeServerMsg,
-        (ULONG) &AVC1394_GetUnitInfo,
-        (ULONG) &AVC1394_GetSubUnitInfo,
-        (ULONG) &AVC1394_CheckSubUnitType,
-        (ULONG) &AVC1394_VCR_Eject,
-        (ULONG) &AVC1394_VCR_Stop,
-        (ULONG) &AVC1394_VCR_IsPlaying,
-        (ULONG) &AVC1394_VCR_Play,
-        (ULONG) &AVC1394_VCR_IsRecording,
-        (ULONG) &AVC1394_VCR_Reverse,
-        (ULONG) &AVC1394_VCR_Pause,
-        -1,
+    (ULONG) &AVC1394_FreeServerMsg,
+    (ULONG) &AVC1394_GetUnitInfo,
+    (ULONG) &AVC1394_GetSubUnitInfo,
+    (ULONG) &AVC1394_CheckSubUnitType,
+    (ULONG) &AVC1394_VCR_Eject,
+    (ULONG) &AVC1394_VCR_Stop,
+    (ULONG) &AVC1394_VCR_IsPlaying,
+    (ULONG) &AVC1394_VCR_Play,
+    (ULONG) &AVC1394_VCR_IsRecording,
+    (ULONG) &AVC1394_VCR_Reverse,
+    (ULONG) &AVC1394_VCR_Pause,
+    -1,
     FUNCARRAY_END
 };

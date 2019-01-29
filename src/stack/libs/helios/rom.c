@@ -70,7 +70,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define KEYTYPEV_DIRECTORY  (KEYTYPE_DIRECTORY<<6)
 
 #if 0
-UBYTE key_types[] = {
+UBYTE key_types[] =
+{
     [KEY_TEXTUAL_DESCRIPTOR]    = KEYTYPEF_LEAF | KEYTYPEF_DIRECTORY,
     [KEY_BUS_DEPENDENT_INFO]    = KEYTYPEF_LEAF | KEYTYPEF_DIRECTORY,
     [KEY_MODULE_VENDOR_ID]      = KEYTYPEF_IMMEDIATE,
@@ -193,21 +194,27 @@ QUADLET *Helios_CreateROMTagList(APTR pool, CONST struct TagItem *tags)
     QUADLET *rom;
 
     if (NULL != pool)
+    {
         rom = AllocPooledAligned(pool, CSR_CONFIG_ROM_SIZE, CSR_CONFIG_ROM_SIZE, 0);
+    }
     else
+    {
         rom = AllocMemAligned(CSR_CONFIG_ROM_SIZE, MEMF_PUBLIC|MEMF_CLEAR, CSR_CONFIG_ROM_SIZE, 0);
+    }
 
     if (NULL != rom)
     {
         /* Note: we suppose that data/length must be multiples of 4 */
         QUADLET *data = (APTR)GetTagData(HA_Rom, 0, tags);
         ULONG len = MIN(GetTagData(HA_RomLength, CSR_CONFIG_ROM_SIZE, tags), CSR_CONFIG_ROM_SIZE);
-        
+
         if (NULL != data)
         {
             CopyMemQuick(data, rom, len);
             if (len < CSR_CONFIG_ROM_SIZE)
+            {
                 bzero((APTR)rom + len, len-CSR_CONFIG_ROM_SIZE);
+            }
         }
         else
             rom_SetDefault(rom, (((UQUAD)GetTagData(HA_GUID_Hi, 0, tags)) << 32)
@@ -222,9 +229,13 @@ QUADLET *Helios_CreateROMTagList(APTR pool, CONST struct TagItem *tags)
 void Helios_FreeROM(APTR pool, QUADLET *rom)
 {
     if (NULL != pool)
+    {
         FreePooled(pool, rom, CSR_CONFIG_ROM_SIZE);
+    }
     else
+    {
         FreeMem(rom, CSR_CONFIG_ROM_SIZE);
+    }
 }
 
 LONG Helios_ReadROM(HeliosDevice *dev, QUADLET *storage, ULONG *length)
@@ -286,16 +297,24 @@ LONG Helios_ReadROM(HeliosDevice *dev, QUADLET *storage, ULONG *length)
             err = DoIO(&ioreq.iohhe_Req.iohh_Req);
 
             if ((HHIOERR_NO_ERROR != err) || (HELIOS_RCODE_COMPLETE != p->RCode))
+            {
                 _ERR("$%04x: ROM[%u] read failed (IOErr=%ld, RCode=%ld)\n", dev->hd_NodeID, i, err, p->RCode);
+            }
             if (HHIOERR_FAILED == err)
             {
                 if (HELIOS_RCODE_GENERATION == p->RCode)
+                {
                     return HERR_BUSRESET;
+                }
                 else if (HELIOS_RCODE_BUSY != p->RCode)
+                {
                     return HERR_IO;
+                }
             }
             else if (HHIOERR_NO_ERROR != err)
+            {
                 return HERR_IO;
+            }
             else
             {
                 LOCK_REGION_SHARED(dev);
@@ -309,18 +328,24 @@ LONG Helios_ReadROM(HeliosDevice *dev, QUADLET *storage, ULONG *length)
                 }
 
                 if ((i > 0) || (0 != p->QuadletData))
+                {
                     break;
+                }
             }
 
             if (0 == --loop)
+            {
                 break;
+            }
 
             _WARN("$%04x: ROM not ready, try again...\n", dev->hd_NodeID);
             Helios_DelayMS(125);
         }
-        
+
         if (!loop)
+        {
             return HERR_TIMEOUT;
+        }
 
         _INFO_1394("$%04x: ROM[%u]=$%08x\n", dev->hd_NodeID, i, p->QuadletData);
         storage[i] = p->QuadletData;
@@ -333,7 +358,9 @@ LONG Helios_ReadROM(HeliosDevice *dev, QUADLET *storage, ULONG *length)
             /* Minimal ROM => 1 QUADLET */
             info_len = storage[0] >> 24;
             if (1 == info_len)
+            {
                 return HERR_NOERR;
+            }
         }
     }
 
@@ -400,7 +427,9 @@ LONG Helios_ReadROM(HeliosDevice *dev, QUADLET *storage, ULONG *length)
                 return HERR_IO;
             }
             else
+            {
                 break;
+            }
         }
         while (loop);
 
@@ -445,9 +474,9 @@ void Helios_InitRomIterator(HeliosRomIterator *ri, const QUADLET *rom)
 LONG Helios_RomIterate(HeliosRomIterator *ri, QUADLET *key, QUADLET *value)
 {
     *key = *ri->actual >> 24;
-	*value = *ri->actual & 0xffffff;
+    *value = *ri->actual & 0xffffff;
 
-	return ri->actual++ < ri->end;
+    return ri->actual++ < ri->end;
 }
 
 LONG Helios_ReadTextualDescriptor(const QUADLET *dir, STRPTR buffer, ULONG length)
@@ -464,15 +493,21 @@ LONG Helios_ReadTextualDescriptor(const QUADLET *dir, STRPTR buffer, ULONG lengt
             CopyMem((APTR)&dir[3], buffer, len);
 
             if (len < length)
+            {
                 _INFO("Textual contents: %s\n", buffer);
+            }
 
             return len;
         }
         else
+        {
             _ERR("Unsupported characters: $%08x\n", dir[0]);
+        }
     }
     else
+    {
         _ERR("Corrupted Unit textual leaf entry\n");
+    }
 
     return -1;
 }

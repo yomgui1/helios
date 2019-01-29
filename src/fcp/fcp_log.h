@@ -68,16 +68,23 @@ static inline void log_DumpMem(APTR mem, ULONG len, BOOL swap, const char *title
 {
     ULONG i;
 
-    if (NULL != title) {
+    if (NULL != title)
+    {
         DB(""); DB_Raw(title);
     }
 
     if (len >= 300)
+    {
         len = 300;
+    }
 
-    for (i=0; i < len; i+=4, mem+=4) {
+    for (i=0; i < len; i+=4, mem+=4)
+    {
         ULONG v = *(ULONG *)mem;
-        if (swap) {v = SWAPLONG(v);}
+        if (swap)
+        {
+            v = SWAPLONG(v);
+        }
         DB_Raw("0x%08x: %08x\n", mem, v);
     }
 }

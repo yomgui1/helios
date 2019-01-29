@@ -42,14 +42,16 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 void dev_OnNewNode(OHCI1394Unit *unit, HeliosNode *node)
 {
     HeliosDevice *dev;
-    
+
     dev = Helios_AddDevice((HeliosHardware *)unit, node, unit->hu_Topology->ht_Generation);
     node->n_Device = dev;
 
     _INFO_UNIT(unit, "node #%u created: device %p\n", node->n_PhyID, node->n_Device);
 
     if (NULL == dev)
+    {
         return;
+    }
 
     Helios_ScanDevice(dev);
 }
@@ -87,6 +89,8 @@ void dev_OnUpdatedNode(OHCI1394Unit *unit, HeliosNode *node)
     Helios_UpdateDevice(dev, node, unit->hu_Topology->ht_Generation);
 
     if (0 == dev->hd_GUID.q)
+    {
         Helios_ScanDevice(dev);
+    }
 }
 

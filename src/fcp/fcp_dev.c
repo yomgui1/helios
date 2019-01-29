@@ -44,11 +44,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #define MAX_HANDLED_BUS 8
 
-struct MyDevice {
+struct MyDevice
+{
     struct Library      Lib;
     UWORD               Pad;
     BPTR                SegList;
-    struct {
+    struct
+    {
         HeliosBus *          Bus;
         HeliosRequestHandler RequestHandler;
         HeliosRequestHandler ResponseHandler;
@@ -80,7 +82,8 @@ static ULONG cmd_Invalid(struct IOExtFCP *ioreq);
 static void dev_BeginIO(void);
 static void dev_AbortIO(void);
 
-static const ULONG FuncTable[] = {
+static const ULONG FuncTable[] =
+{
     FUNCARRAY_32BIT_NATIVE,
     (ULONG)dev_Open,
     (ULONG)dev_Close,
@@ -91,12 +94,14 @@ static const ULONG FuncTable[] = {
     ~0
 };
 
-const struct {
+const struct
+{
     ULONG        LibSize;
     const void * FuncTable;
     const void * DataTable;
     void       (*InitFunc)(void);
-} init = {
+} init =
+{
     sizeof(struct MyDevice),
     FuncTable,
     NULL,
@@ -143,7 +148,8 @@ static ULONG internal_Expunge(struct MyDevice *base)
 
     MySegment = base->SegList;
 
-    if (base->Lib.lib_OpenCnt) {
+    if (base->Lib.lib_OpenCnt)
+    {
         DEBUG_EXPUNGE("set LIBF_DELEXP\n");
         base->Lib.lib_Flags |= LIBF_DELEXP;
         return NULL;
@@ -152,7 +158,10 @@ static ULONG internal_Expunge(struct MyDevice *base)
     DEBUG_EXPUNGE("remove the device\n");
     Remove(&base->Lib.lib_Node);
 
-    if (NULL != HeliosBase) CloseLibrary(HeliosBase);
+    if (NULL != HeliosBase)
+    {
+        CloseLibrary(HeliosBase);
+    }
 
     DEBUG_EXPUNGE("free the library\n");
     FreeMem((APTR)((ULONG)(base) - (ULONG)(base->Lib.lib_NegSize)),
@@ -179,9 +188,13 @@ static struct MyDevice *dev_Init(struct MyDevice * base,
     /* Open needed resources */
     HeliosBase = OpenLibrary("helios.library", 0);
     if (NULL != HeliosBase)
+    {
         return base;
+    }
     else
+    {
         SysError_NeedLibrary("helios.library", 0);
+    }
 
     FreeMem((APTR)((ULONG)(base) - (ULONG)(base->Lib.lib_NegSize)),
             base->Lib.lib_NegSize + base->Lib.lib_PosSize);
@@ -212,25 +225,29 @@ static struct MyDevice *dev_Open(void)
     ++base->Lib.lib_OpenCnt;
     base->Lib.lib_Flags &= ~LIBF_DELEXP;
 
-    if (ioreq->SysReq.io_Message.mn_Length < sizeof(struct IOExtFCP)) {
+    if (ioreq->SysReq.io_Message.mn_Length < sizeof(struct IOExtFCP))
+    {
         err = IOERR_BADLENGTH;
         log_Error("Bad length");
         goto end;
     }
 
-    if (unit >= MAX_HANDLED_BUS) {
+    if (unit >= MAX_HANDLED_BUS)
+    {
         err = IOERR_OPENFAIL;
         log_Error("Bad unit number");
         goto end;
     }
 
     bus = base->Buses[unit].Bus;
-    if (NULL == bus) {
+    if (NULL == bus)
+    {
         /* Find wanted unit bridge */
         bridge = NULL;
         while ((NULL != (bridge = Helios_FindNextBridge(bridge))) && (unit-- > 0));
 
-        if (NULL == bridge) {
+        if (NULL == bridge)
+        {
             err = IOERR_OPENFAIL;
             log_Error("unit %u not found", unit);
             goto end;
@@ -238,7 +255,8 @@ static struct MyDevice *dev_Open(void)
 
         /* Obtain the associated bus */
         bus = Helios_HandleBridge(bridge);
-        if (NULL == bus) {
+        if (NULL == bus)
+        {
             err = IOERR_OPENFAIL;
             log_Error("unable to obtain bus for unit %lu", unit);
             goto end;
@@ -253,7 +271,8 @@ static struct MyDevice *dev_Open(void)
     fcp_request_handler->To       = FCP_REQUEST_ADDR;
     //fcp_request_handler->UserData = base->Buses[unit].RequestPort;
 
-    if (HELIOS_ERR_NOERR != Helios_RegisterRequestHandler(bus, fcp_request_handler)) {
+    if (HELIOS_ERR_NOERR != Helios_RegisterRequestHandler(bus, fcp_request_handler))
+    {
         err = IOERR_OPENFAIL;
         log_Error("unable to register FCP request handler for unit %u", unit);
         goto end;
@@ -267,7 +286,8 @@ static struct MyDevice *dev_Open(void)
 
     NEWLIST(fcp_response_handler->UserData);
 
-    if (HELIOS_ERR_NOERR != Helios_RegisterRequestHandler(bus, fcp_response_handler)) {
+    if (HELIOS_ERR_NOERR != Helios_RegisterRequestHandler(bus, fcp_response_handler))
+    {
         err = IOERR_OPENFAIL;
         log_Error("unable to register FCP response handler for unit %u", unit);
         goto end;
@@ -283,9 +303,16 @@ end:
     --base->Lib.lib_OpenCnt;
     DEBUG_OPEN("returned: %lx, %ld\n", ret, err);
     ioreq->SysReq.io_Error = err;
-    if ((0 != err) && (NULL != bus)) {
-        if (NULL != fcp_request_handler) Helios_UnregisterRequestHandler(bus, fcp_request_handler);
-        if (NULL != fcp_response_handler) Helios_UnregisterRequestHandler(bus, fcp_response_handler);
+    if ((0 != err) && (NULL != bus))
+    {
+        if (NULL != fcp_request_handler)
+        {
+            Helios_UnregisterRequestHandler(bus, fcp_request_handler);
+        }
+        if (NULL != fcp_response_handler)
+        {
+            Helios_UnregisterRequestHandler(bus, fcp_response_handler);
+        }
         Helios_ReleaseBus(bus);
     }
     return ret;
@@ -303,16 +330,20 @@ static ULONG dev_Close(void)
 
     ioreq->SysReq.io_Device = (APTR) -1;
 
-    if ((--base->Lib.lib_OpenCnt) > 0) {
+    if ((--base->Lib.lib_OpenCnt) > 0)
+    {
         DEBUG_CLOSE("done\n");
-    } else {
+    }
+    else
+    {
         DEBUG_CLOSE("Release bus: %p, unit %u\n", ioreq->Bus, ioreq->Unit);
         Helios_UnregisterRequestHandler(ioreq->Bus, &base->Buses[ioreq->Unit].RequestHandler);
         Helios_UnregisterRequestHandler(ioreq->Bus, &base->Buses[ioreq->Unit].ResponseHandler);
         Helios_ReleaseBus(ioreq->Bus);
         ioreq->Bus = NULL;
 
-        if (base->Lib.lib_Flags & LIBF_DELEXP) {
+        if (base->Lib.lib_Flags & LIBF_DELEXP)
+        {
             DEBUG_CLOSE("LIBF_DELEXP set\n");
             return internal_Expunge(base);
         }
@@ -345,7 +376,8 @@ static void dev_BeginIO(void)
     ioreq->SysReq.io_Message.mn_Node.ln_Type = NT_MESSAGE;
     ioreq->SysReq.io_Error = 0;
 
-    switch(ioreq->SysReq.io_Command) {
+    switch(ioreq->SysReq.io_Command)
+    {
         case CMD_INVALID:
         case CMD_RESET:
         case CMD_READ:
@@ -354,8 +386,8 @@ static void dev_BeginIO(void)
         case CMD_STOP:
         case CMD_START:
         case CMD_FLUSH:
-          ret = cmd_Invalid(ioreq);
-          break;
+            ret = cmd_Invalid(ioreq);
+            break;
 
         case CMD_WRITE:
             ret = fcp_cmd_Write(ioreq);
@@ -367,9 +399,13 @@ static void dev_BeginIO(void)
     }
 
     if (0 != ret)
+    {
         ioreq->SysReq.io_Flags &= ~IOF_QUICK;
+    }
     else if (!(ioreq->SysReq.io_Flags & IOF_QUICK))
+    {
         ReplyMsg(&ioreq->SysReq.io_Message);
+    }
 }
 
 static void dev_AbortIO(void)
@@ -378,15 +414,18 @@ static void dev_AbortIO(void)
     struct MyDevice *base = (APTR) REG_A6;
     BOOL abort = FALSE;
 
-    switch(ioreq->SysReq.io_Command) {
+    switch(ioreq->SysReq.io_Command)
+    {
         case CMD_WRITE:
             DEBUG_NULL("Aborting FCP write command\n");
             break;
     }
 
-    if (abort) {
+    if (abort)
+    {
         ioreq->SysReq.io_Error = IOERR_ABORTED;
-        if (!(ioreq->SysReq.io_Flags & IOF_QUICK)) {
+        if (!(ioreq->SysReq.io_Flags & IOF_QUICK))
+        {
             DEBUG_NULL("Replying\n");
             ReplyMsg(&ioreq->SysReq.io_Message);
         }

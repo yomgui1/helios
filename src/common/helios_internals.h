@@ -55,7 +55,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
     LONG            hso_RefCnt;  \
     LOCK_VARIABLE;
 
-typedef struct _HeliosSharedObj {_SHOBJ_HEAD} _HeliosSharedObj;
+typedef struct _HeliosSharedObj
+{
+    _SHOBJ_HEAD
+} _HeliosSharedObj;
 
 struct HeliosEventListenerList
 {
@@ -79,11 +82,13 @@ struct HeliosDevice
 {
     _SHOBJ_HEAD
 
-    HeliosHardware *        hd_Hardware;    
+    HeliosHardware *        hd_Hardware;
     HeliosEventListenerList hd_Listeners;
-    union {
+    union
+    {
         UQUAD               q;
-        struct {
+        struct
+        {
             ULONG           hi;
             ULONG           lo;
         } w;
@@ -119,7 +124,7 @@ struct HeliosHardware
 struct HeliosUnit
 {
     _SHOBJ_HEAD
-    
+
     /* Following fields are set to NULL when unit is removed */
 
     LONG             hu_UnitNo;       /* unit number given during device's ROM parsing */

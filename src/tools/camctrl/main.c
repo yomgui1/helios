@@ -61,12 +61,14 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define ALLOCFAILURE() log_Error("Not enough memory to process.")
 
 //+ TYPES and STRUCTURES
-typedef struct MyBusHandle {
+typedef struct MyBusHandle
+{
     struct MinNode  SysNode;
     HeliosBusHandle Handle;
 } MyBusHandle;
 
-enum {
+enum
+{
     VCR_RECORD=0,
     VCR_REWIND,
     VCR_FORWARD,
@@ -76,7 +78,8 @@ enum {
     VCR_SIZE,
 };
 
-enum {
+enum
+{
     LOG_LEVEL_ALL=0,
     LOG_LEVEL_DEBUG,
     LOG_LEVEL_INFO,
@@ -84,7 +87,8 @@ enum {
     LOG_LEVEL_ERROR,
 };
 
-enum {
+enum
+{
     MAXLEN_EXACT=0,
     MAXLEN_LASTPACKET,
 };
@@ -113,12 +117,18 @@ struct MUI_CustomClass *gRingBufferMCC = NULL;
 static void vLogMsg(ULONG level, STRPTR fmt, va_list va)
 {
     if (gLogLevel > level)
+    {
         return;
+    }
 
     if (NULL == app)
+    {
         vprintf(fmt, va);
+    }
     else
+    {
         vprintf(fmt, va);
+    }
     putchar('\n');
 }
 
@@ -168,29 +178,50 @@ static void my_atexit(void)
     MyDevice *dev;
     APTR next;
 
-    if (NULL != app) MUI_DisposeObject(app);
+    if (NULL != app)
+    {
+        MUI_DisposeObject(app);
+    }
 
-    ForeachNodeSafe(&gDeviceList, dev, next) {
+    ForeachNodeSafe(&gDeviceList, dev, next)
+    {
         Helios_Device_Release(dev->Handle);
         FreeVec(dev->Name);
         FreeMem(dev, sizeof(*dev));
     }
 
-    ForeachNodeSafe(&gBusHandleList, handle, next) {
+    ForeachNodeSafe(&gBusHandleList, handle, next)
+    {
         Helios_Bus_Release(handle->Handle.Bus);
         FreeMem(handle, sizeof(*handle));
     }
 
-    if (NULL != HeliosBase) CloseLibrary(HeliosBase);
-    if (NULL != gPreviewMCC) VideoPreviewMCC_Delete(gPreviewMCC);
-    if (NULL != gDecoderMCC) DecoderMCC_Delete(gDecoderMCC);
-    if (NULL != gCamCtrlMCC) CamCtrlMCC_Delete(gCamCtrlMCC);
-    if (NULL != gRingBufferMCC) RingBufferMCC_Delete(gRingBufferMCC);
+    if (NULL != HeliosBase)
+    {
+        CloseLibrary(HeliosBase);
+    }
+    if (NULL != gPreviewMCC)
+    {
+        VideoPreviewMCC_Delete(gPreviewMCC);
+    }
+    if (NULL != gDecoderMCC)
+    {
+        DecoderMCC_Delete(gDecoderMCC);
+    }
+    if (NULL != gCamCtrlMCC)
+    {
+        CamCtrlMCC_Delete(gCamCtrlMCC);
+    }
+    if (NULL != gRingBufferMCC)
+    {
+        RingBufferMCC_Delete(gRingBufferMCC);
+    }
 }
 
 static LONG fail(char *str)
 {
-    if (str) {
+    if (str)
+    {
         puts(str);
         exit(20);
     }
@@ -202,31 +233,36 @@ static LONG fail(char *str)
 BOOL Init(void)
 {
     gCamCtrlMCC = CamCtrlMCC_Create();
-    if (NULL == gCamCtrlMCC) {
+    if (NULL == gCamCtrlMCC)
+    {
         log_Error("CamCtrl MCC creation failed");
         return FALSE;
     }
 
     gPreviewMCC = VideoPreviewMCC_Create();
-    if (NULL == gPreviewMCC) {
+    if (NULL == gPreviewMCC)
+    {
         log_Error("Preview MCC creation failed");
         return FALSE;
     }
 
     gDecoderMCC = DecoderMCC_Create();
-    if (NULL == gDecoderMCC) {
+    if (NULL == gDecoderMCC)
+    {
         log_Error("Decoder MCC creation failed");
         return FALSE;
     }
 
     gRingBufferMCC = RingBufferMCC_Create();
-    if (NULL == gRingBufferMCC) {
+    if (NULL == gRingBufferMCC)
+    {
         log_Error("RingBuffer MCC creation failed");
         return FALSE;
     }
 
     HeliosBase = OpenLibrary("helios.library", 0);
-    if (NULL != HeliosBase) {
+    if (NULL != HeliosBase)
+    {
         HeliosBridge *bridge;
         MyBusHandle *handle;
         int i;
@@ -235,37 +271,53 @@ BOOL Init(void)
 
         i = gBusCount = 0;
         bridge = NULL;
-        while (NULL != (bridge = Helios_Bridge_Next(bridge))) {
+        while (NULL != (bridge = Helios_Bridge_Next(bridge)))
+        {
             handle = AllocMem(sizeof(*handle), MEMF_PUBLIC | MEMF_CLEAR);
-            if (NULL != handle) {
+            if (NULL != handle)
+            {
                 HeliosBus *bus;
 
                 bus = Helios_Bridge_Handle(bridge);
-                if (NULL != bus) {
+                if (NULL != bus)
+                {
                     handle->Handle.Bus = bus;
-                    if (Helios_BusHandle_Connect(&handle->Handle)) {
+                    if (Helios_BusHandle_Connect(&handle->Handle))
+                    {
                         ADDTAIL(&gBusHandleList, handle);
                         gBusCount++;
-                    } else {
+                    }
+                    else
+                    {
                         log_Error("Failed to connect on bus %u.", i);
                         Helios_Bus_Release(bus);
                     }
-                } else {
+                }
+                else
+                {
                     log_Error("Failed to handle bus #%u.", i);
                     FreeMem(handle, sizeof(*handle));
                 }
-            } else
+            }
+            else
+            {
                 ALLOCFAILURE();
+            }
 
             i++;
         }
 
         if (gBusCount > 0)
+        {
             return TRUE;
+        }
 
         log_Error("No Firewire bus found on this machine!");
-    } else
+    }
+    else
+    {
         log_Error("can't open helios.library.");
+    }
 
     return FALSE;
 }
@@ -276,29 +328,48 @@ static MyDevice *CheckNode(HeliosBusHandle *bh, UBYTE nodeid)
     HeliosRomDirectory *dir;
     MyDevice *dev;
 
-    if (nodeid == bh->Local) return NULL;
+    if (nodeid == bh->Local)
+    {
+        return NULL;
+    }
 
     dh = Helios_Device_Obtain(bh, HTTAG_NODE_ID, nodeid, TAG_DONE);
-    if (NULL != dh) {
-        if (Helios_Device_GetAttr(dh, HTTAG_ROM_DIR, (ULONG *) &dir)) {
-            if ((0xa02d == dir->unit_spec_id) && (0x01 == (dir->unit_sw_version >> 16))) {
+    if (NULL != dh)
+    {
+        if (Helios_Device_GetAttr(dh, HTTAG_ROM_DIR, (ULONG *) &dir))
+        {
+            if ((0xa02d == dir->unit_spec_id) && (0x01 == (dir->unit_sw_version >> 16)))
+            {
                 dev = AllocMem(sizeof(*dev), MEMF_PUBLIC | MEMF_CLEAR);
-                if (NULL != dev) {
-                    if (NULL != dir->label) {
+                if (NULL != dev)
+                {
+                    if (NULL != dir->label)
+                    {
                         dev->Name = AllocVec(strlen(dir->label), MEMF_PUBLIC);
                         if (NULL != dev->Name)
+                        {
                             strcpy(dev->Name, dir->label);
+                        }
                         else
+                        {
                             ALLOCFAILURE();
-                    } else {
+                        }
+                    }
+                    else
+                    {
                         dev->Name = AllocVec(16, MEMF_PUBLIC);
                         if (NULL != dev->Name)
+                        {
                             snprintf(dev->Name, 16, "<%.6X-%.6X>", dir->vendor_id, dir->model_id);
+                        }
                         else
+                        {
                             ALLOCFAILURE();
+                        }
                     }
 
-                    if (NULL != dev->Name) {
+                    if (NULL != dev->Name)
+                    {
                         dev->AVC = dir->unit_sw_version & 1;
                         dev->Handle = dh;
                         FreeVec(dir);
@@ -306,17 +377,26 @@ static MyDevice *CheckNode(HeliosBusHandle *bh, UBYTE nodeid)
                     }
 
                     FreeMem(dev, sizeof(*dev));
-                } else
+                }
+                else
+                {
                     ALLOCFAILURE();
+                }
             }
 
             FreeVec(dir);
-        } else
+        }
+        else
+        {
             log_Debug("Failed to get node ROM information for node %u.", nodeid);
+        }
 
         Helios_Device_Release(dh);
-    } else
+    }
+    else
+    {
         log_Debug("Failed to obtain handle for node %u.", nodeid);
+    }
 
     return NULL;
 }
@@ -335,10 +415,13 @@ static void DoGlobalInit(void)
     NEWLIST(&gDeviceList);
 
     /* Scan all bus to found valid nodes */
-    ForeachNode(&gBusHandleList, handle) {
-        for (i=0; i < handle->Handle.NodeCount; i++) {
+    ForeachNode(&gBusHandleList, handle)
+    {
+        for (i=0; i < handle->Handle.NodeCount; i++)
+        {
             dev = CheckNode(&handle->Handle, i);
-            if (NULL != dev) {
+            if (NULL != dev)
+            {
                 dev->Index = gDevCount++;
                 ADDTAIL(&gDeviceList, dev);
                 DoMethod(obj_CaptureDeviceList, MUIM_List_InsertSingle, dev->Name, dev->Index);
@@ -356,9 +439,12 @@ int main(int argc, char **argv)
     atexit(my_atexit);
 
     if (!Init())
+    {
         fail("Init() failed.");
+    }
 
-    //+ ApplicationObject
+    // *INDENT-OFF*
+    // ApplicationObject
     app = CamCtrlObject,
         MUIA_Application_Title      , title,
         MUIA_Application_Version    , "$VER: FWGrab 0.1 ("__DATE__")",
@@ -496,10 +582,12 @@ int main(int argc, char **argv)
             End,
         End,
     End;
-    
+    // *INDENT-ON*
 
     if (!app)
+    {
         fail("Failed to create Application.");
+    }
 
     //+ Notifications
     DoMethod(win_main, MUIM_Notify, MUIA_Window_CloseRequest, TRUE,
@@ -559,7 +647,7 @@ int main(int argc, char **argv)
     /* Video format */
     DoMethod(app, MUIM_Notify, MA_CamCtrl_VideoFmt, MUIV_EveryTime,
              obj_RecvVideoFmt, 3, MUIM_Set, MUIA_Text_Contents, MUIV_TriggerValue);
-    
+
 
     DoGlobalInit();
 
@@ -567,32 +655,40 @@ int main(int argc, char **argv)
     set(win_main, MUIA_Window_Open, TRUE);
 
     //+ Mainloop
-    while (run) {
+    while (run)
+    {
         LONG id = DoMethod(app, MUIM_Application_Input, &mui_sigmask);
 
-        switch (id) {
+        switch (id)
+        {
             case MUIV_Application_ReturnID_Quit:
                 run = FALSE;
                 break;
 
             case ID_DEVICE_SELECTED:
+            {
+                MyDevice *dev;
+                LONG active;
+
+                if (!get(obj_CaptureDeviceList, MUIA_List_Active, &active) || (MUIV_List_Active_Off == active))
                 {
-                    MyDevice *dev;
-                    LONG active;
-
-                    if (!get(obj_CaptureDeviceList, MUIA_List_Active, &active) || (MUIV_List_Active_Off == active))
-                        break;
-
-                    set(obj_CaptureGroup, MUIA_Disabled, FALSE);
-
-                    ForeachNode(&gDeviceList, dev) {
-                        if (dev->Index != active) continue;
-                        set(app, MA_CamCtrl_CaptureDevice, dev);
-                        set(obj_VCRButtonsGroup, MUIA_Disabled, !dev->AVC);
-                        break;
-                    }
+                    break;
                 }
-                break;
+
+                set(obj_CaptureGroup, MUIA_Disabled, FALSE);
+
+                ForeachNode(&gDeviceList, dev)
+                {
+                    if (dev->Index != active)
+                    {
+                        continue;
+                    }
+                    set(app, MA_CamCtrl_CaptureDevice, dev);
+                    set(obj_VCRButtonsGroup, MUIA_Disabled, !dev->AVC);
+                    break;
+                }
+            }
+            break;
 
             case ID_PACKET_LOSS:
                 set(obj_VCRButtons[VCR_RECORD], MUIA_Selected, FALSE);
@@ -600,18 +696,25 @@ int main(int argc, char **argv)
                 break;
         }
 
-        if (run) {
+        if (run)
+        {
             sigs = mui_sigmask | helios_sigmask;
             if (sigs)
+            {
                 sigs = Wait(sigs);
+            }
             else
+            {
                 sigs = 0;
+            }
 
             if (sigs & helios_sigmask)
+            {
                 run = ProcessHeliosMsg();
+            }
         }
     }
-    
+
 
     set(win_main, MUIA_Window_Open, FALSE);
 

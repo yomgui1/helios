@@ -64,13 +64,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define KEYTYPEV_LEAF       (KEYTYPE_LEAF<<6)
 #define KEYTYPEV_DIRECTORY  (KEYTYPE_DIRECTORY<<6)
 
-#define PHY_CONFIG_GAP_COUNT(gap_count)	(((gap_count) << 16) | (1 << 22))
-#define PHY_CONFIG_ROOT_ID(node_id)	((((node_id) & 0x3f) << 24) | (1 << 23))
+#define PHY_CONFIG_GAP_COUNT(gap_count) (((gap_count) << 16) | (1 << 22))
+#define PHY_CONFIG_ROOT_ID(node_id) ((((node_id) & 0x3f) << 24) | (1 << 23))
 #define PHY_IDENTIFIER(id) ((id) << 30)
 
-#define PHY_PACKET_CONFIG	0x0
-#define PHY_PACKET_LINK_ON	0x1
-#define PHY_PACKET_SELF_ID	0x2
+#define PHY_PACKET_CONFIG   0x0
+#define PHY_PACKET_LINK_ON  0x1
+#define PHY_PACKET_SELF_ID  0x2
 
 static const ULONG gHeliosPTBase[] =
 {
@@ -123,7 +123,7 @@ static const ULONG *gHeliosPTA[] =
 
 static const UBYTE gHeliosGapCountTable[] =
 {
-	63, 5, 7, 8, 10, 13, 16, 18, 21, 24, 26, 29, 32, 35, 37, 40
+    63, 5, 7, 8, 10, 13, 16, 18, 21, 24, 26, 29, 32, 35, 37, 40
 };
 
 /*----------------------------------------------------------------------------*/
@@ -155,9 +155,11 @@ static void helios_free_unit(HeliosUnit *unit)
 static void helios_free_dev(HeliosDevice *dev)
 {
     _INFO("freeing dev %p (#%u)\n", dev, dev->hd_NodeInfo.n_PhyID);
-    
+
     if (NULL != dev->hd_Rom)
+    {
         FreePooled(HeliosBase->hb_MemPool, dev->hd_Rom, dev->hd_RomLength);
+    }
     FreePooled(HeliosBase->hb_MemPool, dev, sizeof(*dev));
 }
 
@@ -179,7 +181,9 @@ static void helios_remove_unit(HeliosUnit *unit)
 
         /* ask the bind class to release the unit */
         if (NULL != hc)
+        {
             HeliosClass_DoMethod(HCM_ReleaseUnitBinding, (ULONG)unit, (ULONG)unit->hu_BindUData);
+        }
 
         /* NOTE: the previous call is asynchrone, the unit may not be released yet.
          * DOC: warn classes implementors that unit data are NULL after HCM_ReleaseUnitBinding.
@@ -203,12 +207,14 @@ static void helios_dev_set_dead(HeliosDevice *dev)
     if (dev->hd_Generation > 0)
     {
         HeliosUnit *unit, *next;
-        
+
         _INFO("Del. dev $%x (%p)\n", dev, dev->hd_NodeID);
 
         dev->hd_Generation = 0;
         ForeachNodeSafe(&dev->hd_Units, unit, next)
+        {
             helios_remove_unit(unit);
+        }
 
         if (NULL != dev->hd_Rom)
         {
@@ -232,10 +238,10 @@ static void helios_get_ids(const QUADLET *rom, QUADLET *id)
         switch (key)
         {
             case CSR_KEY_MODULE_VENDOR_ID: id[0] = value; break;
-            case CSR_KEY_MODEL_ID:		   id[1] = value; break;
-            case CSR_KEY_UNIT_SPEC_ID:	   id[2] = value; break;
+            case CSR_KEY_MODEL_ID:         id[1] = value; break;
+            case CSR_KEY_UNIT_SPEC_ID:     id[2] = value; break;
             case CSR_KEY_UNIT_SW_VERSION:  id[3] = value; break;
-		}
+        }
     }
 }
 
@@ -272,13 +278,15 @@ static void helios_create_unit(HeliosDevice *dev, const QUADLET *directory, LONG
     ADDTAIL(&dev->hd_Units, unit);
     _INFO("Dev $%04x, new unit: RomDir=%p, id=[%x, %x, %x, %x]\n",
           dev->hd_NodeID, unit->hu_RomDirectory, id[0], id[1], id[2], id[3]);
-    
+
     /* Try to bind a class on this unit */
     ForeachNode(&HeliosBase->hb_Classes, hc)
     {
         /* DOC: indicate that the HeliosBase/Device are w-locked during this method. */
         if (HeliosClass_DoMethod(HCM_AttemptUnitBinding, (ULONG)unit))
+        {
             break;
+        }
     }
 
     /* Let the rest of system know this unit */
@@ -375,14 +383,20 @@ retry:
             is_bm = TRUE;
 
             if (!topo.ht_Nodes[topo.ht_RootNodeID].n_Flags.LinkOn)
+            {
                 new_root_phyid = topo.ht_LocalNodeID;
+            }
             else
+            {
                 new_root_phyid = topo.ht_RootNodeID;
+            }
 
 set_config:
             maxhops = topo.ht_Nodes[topo.ht_RootNodeID].n_MaxHops;
             if (maxhops >= sizeof(gHeliosGapCountTable)/sizeof(gHeliosGapCountTable[0]))
+            {
                 maxhops = 0;
+            }
 
             gap_count = gHeliosGapCountTable[maxhops];
             if ((*bm_retry++ < 5) &&
@@ -420,7 +434,9 @@ set_config:
         }
     }
     else
+    {
         _WARN("Too late\n");
+    }
 }
 
 static void helios_hardware_task(HeliosSubTask *self, struct TagItem *tags)
@@ -503,15 +519,19 @@ static void helios_hardware_task(HeliosSubTask *self, struct TagItem *tags)
 
         sigs = Wait(all_sigs);
         if (sigs & SIGBREAKF_CTRL_C)
+        {
             run = FALSE;
+        }
 
         if (sigs & (1ul << taskport->mp_SigBit))
         {
             while (NULL != (msg = (APTR)GetMsg(taskport)))
             {
                 if (HELIOS_MSGTYPE_TASKKILL == msg->hm_Type)
+                {
                     run = FALSE;
-                
+                }
+
                 ReplyMsg((struct Message *)msg);
             }
         }
@@ -530,7 +550,9 @@ static void helios_hardware_task(HeliosSubTask *self, struct TagItem *tags)
                 if (NULL != next)
                 {
                     if (NULL != evt)
+                    {
                         FreeMem(evt, evt->hm_Msg.mn_Length);
+                    }
 
                     evt = next;
                 }
@@ -540,7 +562,9 @@ static void helios_hardware_task(HeliosSubTask *self, struct TagItem *tags)
             if (NULL != evt)
             {
                 if ((bm_gen+1) != evt->hm_Result)
+                {
                     is_bm = FALSE;
+                }
 
                 helios_process_bm(hw, &evt->hm_Time, evt->hm_Result, is_bm, bm_gen, &bm_retry);
 
@@ -555,13 +579,15 @@ static void helios_hardware_task(HeliosSubTask *self, struct TagItem *tags)
         struct Message *msg;
 
         while (NULL != (msg = GetMsg(evtport)))
+        {
             FreeMem(msg, msg->mn_Length);
+        }
     }
 
     LOCK_REGION(HeliosBase);
     REMOVE(&hw->hu_HWNode);
     UNLOCK_REGION(HeliosBase);
-    
+
     HW_DECREF(hw);
 
     /* TODO: RefCnt protection here */
@@ -569,9 +595,18 @@ static void helios_hardware_task(HeliosSubTask *self, struct TagItem *tags)
     CloseDevice((struct IORequest *)iobase);
 
 error:
-    if (NULL != iobase) DeleteExtIO((struct IORequest *)iobase);
-    if (NULL != evtport) DeleteMsgPort(evtport);
-    if (NULL != hwport) DeleteMsgPort(hwport);
+    if (NULL != iobase)
+    {
+        DeleteExtIO((struct IORequest *)iobase);
+    }
+    if (NULL != evtport)
+    {
+        DeleteMsgPort(evtport);
+    }
+    if (NULL != hwport)
+    {
+        DeleteMsgPort(hwport);
+    }
 }
 
 static void helios_read_dev_name(HeliosDevice *dev, const QUADLET *dir)
@@ -589,7 +624,9 @@ static void helios_read_dev_name(HeliosDevice *dev, const QUADLET *dir)
         }
     }
     else
+    {
         _ERR("Helios_ReadTextualDescriptor() failed\n");
+    }
 }
 
 static void helios_scanner_task(HeliosDevice *dev, STRPTR task_name, ULONG topogen)
@@ -612,12 +649,16 @@ static void helios_scanner_task(HeliosDevice *dev, STRPTR task_name, ULONG topog
     LOCK_REGION_SHARED(dev);
     {
         if (dev->hd_Generation != topogen)
+        {
             topogen = 0;
+        }
     }
     UNLOCK_REGION_SHARED(dev);
 
     if (!topogen)
+    {
         goto bye;
+    }
 
     _INFO("Scanning dev %p @ gen #%lu\n", dev, topogen);
 
@@ -634,10 +675,14 @@ static void helios_scanner_task(HeliosDevice *dev, STRPTR task_name, ULONG topog
             rom = tmp;
         }
         else
+        {
             len = CSR_CONFIG_ROM_SIZE;
+        }
     }
     else
+    {
         len = CSR_CONFIG_ROM_SIZE;
+    }
 
     LOCK_REGION(HeliosBase);
     {
@@ -674,7 +719,9 @@ static void helios_scanner_task(HeliosDevice *dev, STRPTR task_name, ULONG topog
                         }
                     }
                     else
+                    {
                         changed = TRUE;
+                    }
 
                     if (changed)
                     {
@@ -687,13 +734,17 @@ static void helios_scanner_task(HeliosDevice *dev, STRPTR task_name, ULONG topog
                         _WARN("[$%04x] ROM has changed, removing old units...\n", dev->hd_NodeID);
 
                         ForeachNodeSafe(&dev->hd_Units, unit, next)
+                        {
                             helios_remove_unit(unit);
+                        }
 
                         /* Free previous ROM
                          * DOC: ROM pointer shall be used in a dev locked region!
                          */
                         if (NULL != dev->hd_Rom)
+                        {
                             FreePooled(HeliosBase->hb_MemPool, dev->hd_Rom, dev->hd_RomLength);
+                        }
 
                         dev->hd_Rom = rom;
                         rom = NULL;
@@ -720,7 +771,9 @@ static void helios_scanner_task(HeliosDevice *dev, STRPTR task_name, ULONG topog
                         }
                     }
                     else
+                    {
                         _INFO("[$%04x] ROM not changed\n", dev->hd_NodeID);
+                    }
 
                     Helios_SendEvent(&dev->hd_Listeners, HEVTF_DEVICE_SCANNED, (ULONG)dev);
                 }
@@ -731,14 +784,19 @@ static void helios_scanner_task(HeliosDevice *dev, STRPTR task_name, ULONG topog
                 }
             }
             else
+            {
                 _WARN("Abording ROM scan dev %p (topogen mismatch: %u)\n", dev, topogen);
+            }
         }
         UNLOCK_REGION(dev);
     }
     UNLOCK_REGION(HeliosBase);
 
 bye:
-    if (NULL != rom) FreePooled(HeliosBase->hb_MemPool, rom, len);
+    if (NULL != rom)
+    {
+        FreePooled(HeliosBase->hb_MemPool, rom, len);
+    }
 
     NewSetTaskAttrsA(NULL, (APTR)&default_task_name, sizeof(STRPTR), TASKINFOTYPE_NAME, NULL);
     FreePooled(HeliosBase->hb_MemPool, task_name, 64);
@@ -750,12 +808,18 @@ bye:
 static HeliosUnit *helios_dev_next_unit(HeliosDevice *dev, HeliosUnit *unit)
 {
     if (NULL == unit)
+    {
         unit = (APTR)GetHead(&dev->hd_Units);
+    }
     else
+    {
         unit = (APTR)GetSucc(&unit->hso_SysNode);
+    }
 
     if (NULL != unit)
+    {
         UNIT_INCREF(unit);
+    }
 
     return unit;
 }
@@ -764,12 +828,18 @@ static HeliosUnit *helios_dev_next_unit(HeliosDevice *dev, HeliosUnit *unit)
 static HeliosDevice *helios_hw_next_device(HeliosHardware *hw, HeliosDevice *dev)
 {
     if (NULL == dev)
+    {
         dev = (APTR)GetHead(&hw->hu_Devices);
+    }
     else
+    {
         dev = (APTR)GetSucc(&dev->hso_SysNode);
+    }
 
     if (NULL != dev)
+    {
         DEV_INCREF(dev);
+    }
 
     return dev;
 }
@@ -786,7 +856,9 @@ static HeliosUnit *helios_hw_next_unit(HeliosHardware *hw, HeliosUnit *unit)
         DEV_INCREF(dev);
     }
     else
+    {
         dev = NULL;
+    }
 
     /* Loop on all devices of fixed hardware */
     do
@@ -798,12 +870,16 @@ static HeliosUnit *helios_hw_next_unit(HeliosHardware *hw, HeliosUnit *unit)
 
             next_dev = Helios_GetNextDeviceA(dev, tags); /* NR */
             if (NULL != dev)
+            {
                 Helios_ReleaseDevice(dev);
+            }
             dev = next_dev;
 
             /* No more device on fixed hardware? */
             if (NULL == dev)
+            {
                 return NULL;
+            }
         }
 
         unit = helios_dev_next_unit(dev, unit); /* NR */
@@ -827,7 +903,9 @@ LONG Helios_GetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
     struct TagItem *ti, *tmp_tags;
 
     if (type < HELIOSPTASIZE)
+    {
         packtab = (ULONG *) gHeliosPTA[type];
+    }
 
     switch (type)
     {
@@ -872,12 +950,13 @@ LONG Helios_GetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
 
                         case HHA_Topology:
                         {
-                            struct TagItem tags[] = {
+                            struct TagItem tags[] =
+                            {
                                 {HHA_Topology, (ULONG)ti->ti_Data},
                                 {TAG_DONE, 0}
                             };
                             IOHeliosHWReq ioreq;
-                            
+
                             ioreq.iohh_Req.io_Message.mn_Length = sizeof(ioreq);
                             ioreq.iohh_Req.io_Command = HHIOCMD_QUERYDEVICE;
                             ioreq.iohh_Data = tags;
@@ -911,7 +990,7 @@ LONG Helios_GetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
                         case HA_NodeInfo:
                             CopyMemQuick(&dev->hd_NodeInfo, (APTR)ti->ti_Data, sizeof(HeliosNode));
                             break;
-                            
+
                         case HA_EventListenerList:
                             *(HeliosEventListenerList **)ti->ti_Data = &dev->hd_Listeners;
                             break;
@@ -924,10 +1003,10 @@ LONG Helios_GetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
                             *(HeliosHardware **)ti->ti_Data = dev->hd_Hardware;
                             HW_INCREF(dev->hd_Hardware);
                             break;
-                            
+
                         default: continue;
                     }
-                    
+
                     count++;
                 }
             }
@@ -957,10 +1036,10 @@ LONG Helios_GetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
                             *(HeliosDevice **)ti->ti_Data = unit->hu_Device;
                             DEV_INCREF(unit->hu_Device);
                             break;
-                                
+
                         default: continue;
                     }
-                    
+
                     count++;
                 }
             }
@@ -986,7 +1065,9 @@ LONG Helios_SetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
     ULONG *packtab = NULL;
 
     if (type < HELIOSPTASIZE)
+    {
         packtab = (ULONG *) gHeliosPTA[type];
+    }
 
     switch (type)
     {
@@ -1050,16 +1131,24 @@ HeliosHardware *Helios_GetNextHardware(HeliosHardware *hw)
     APTR addr;
 
     if (NULL == hw)
+    {
         addr = GetHead(&HeliosBase->hb_Hardwares);
+    }
     else
+    {
         addr = GetSucc(&hw->hu_HWNode);
+    }
 
     if (NULL == addr)
+    {
         return NULL;
+    }
 
     hw = (HeliosHardware *)(addr - offsetof(HeliosHardware, hu_HWNode));
     if (NULL != hw)
+    {
         HW_INCREF(hw);
+    }
 
     _INFO("hw=%p\n", hw);
     return hw;
@@ -1093,7 +1182,8 @@ HeliosHardware *Helios_AddHardware(STRPTR name, LONG unit)
 {
     HeliosHardware *hw = NULL;
     char buf[64];
-    struct TagItem tags[] = {
+    struct TagItem tags[] =
+    {
         {HA_Pool, (ULONG)HeliosBase->hb_MemPool},
         {HA_UserData, (ULONG)&hw},
         {HA_Device, (ULONG)name},
@@ -1115,10 +1205,14 @@ HeliosHardware *Helios_AddHardware(STRPTR name, LONG unit)
             hw = NULL;
         }
         else
+        {
             _INFO("Hardware %p: task %p\n", hw, task);
+        }
     }
     else
+    {
         _ERR("Failed to create hw task '%s'\n", buf);
+    }
 
     return hw;
 }
@@ -1138,10 +1232,14 @@ LONG Helios_RemoveHardware(HeliosHardware *hw)
         Helios_DisableHardware(hw, TRUE);
 
         ForeachNodeSafe(&hw->hu_Devices, dev, next)
+        {
             Helios_RemoveDevice(dev);
+        }
 
         if (ATOMIC_FETCH(&hw->hso_RefCnt) > 1)
+        {
             return FALSE;
+        }
     }
 
     Helios_KillSubTask(hw->hu_HWTask);
@@ -1178,7 +1276,9 @@ HeliosDevice *Helios_GetNextDeviceA(HeliosDevice *dev, struct TagItem *tags)
     }
 
     if (NULL != search_in_hw)
+    {
         dev = helios_hw_next_device(search_in_hw, dev);
+    }
     else
     {
         HeliosHardware *hw;
@@ -1189,7 +1289,9 @@ HeliosDevice *Helios_GetNextDeviceA(HeliosDevice *dev, struct TagItem *tags)
             HW_INCREF(hw);
         }
         else
+        {
             hw = NULL;
+        }
 
         /* Loop on all hardwares */
         do
@@ -1197,10 +1299,12 @@ HeliosDevice *Helios_GetNextDeviceA(HeliosDevice *dev, struct TagItem *tags)
             if (NULL == hw)
             {
                 hw = Helios_GetNextHardware(hw); /* NR */
-                    
+
                 /* No more hardware? */
                 if (NULL == hw)
+                {
                     return NULL;
+                }
             }
 
             /* Operate like if hardware was fixed now */
@@ -1235,7 +1339,9 @@ void Helios_ReleaseDevice(HeliosDevice *dev)
     {
         /* Bad design? */
         if (old_refcnt <= 0)
+        {
             _WARN("Too many releases of device %p called (old refcnt: %d)\n", dev, old_refcnt);
+        }
 
         helios_free_dev(dev);
     }
@@ -1259,7 +1365,7 @@ void Helios_RemoveDevice(HeliosDevice *dev)
         Helios_SendEvent(&dev->hd_Listeners, HEVTF_DEVICE_REMOVED, (ULONG)dev);
     }
     UNLOCK_REGION(HeliosBase);
-    
+
     Helios_ReleaseDevice(dev);
     Helios_ReleaseHardware(hw);
 }
@@ -1298,7 +1404,9 @@ HeliosDevice *Helios_AddDevice(HeliosHardware *hw,
               dev->hd_Generation);
     }
     else
+    {
         _ERR("Device allocation failed\n");
+    }
 
     return dev;
 }
@@ -1314,17 +1422,19 @@ void Helios_UpdateDevice(HeliosDevice *dev, HeliosNode *node, ULONG topogen)
                   dev->hd_Generation,
                   node->n_Flags.ResetInitiator?"I":"",
                   dev->hd_GUID.q == 0?"Q":"");
-        
+
             dev->hd_Generation = topogen;
             dev->hd_RomScanner = NULL;
 
             /* need to update the rom ? */
             if (node->n_Flags.ResetInitiator)
+            {
                 dev->hd_GUID.q = 0;
+            }
 
             CopyMemQuick(node, &dev->hd_NodeInfo, sizeof(dev->hd_NodeInfo));
             dev->hd_NodeID = HELIOS_LOCAL_BUS | node->n_PhyID;
-            
+
             Helios_SendEvent(&dev->hd_Listeners, HEVTF_DEVICE_UPDATED, (ULONG)dev);
         }
         UNLOCK_REGION(dev);
@@ -1348,7 +1458,7 @@ void Helios_ScanDevice(HeliosDevice *dev)
     if (gen > 0)
     {
         STRPTR name = AllocPooled(HeliosBase->hb_MemPool, 64);
-            
+
         if (NULL != name)
         {
             utils_SafeSPrintF(name, 64, "heliosdevice-scanner <%u,$%x>", gen, nid);
@@ -1382,10 +1492,14 @@ void Helios_ScanDevice(HeliosDevice *dev)
             }
         }
         else
+        {
             _ERR("Scanner name alloc failed\n");
+        }
     }
     else
+    {
         _WARN("already dead device, not scanned\n");
+    }
 }
 
 void Helios_ReadLockDevice(HeliosDevice *dev)
@@ -1430,13 +1544,17 @@ LONG Helios_ObtainUnit(HeliosUnit *unit)
             LOCK_REGION_SHARED(dev);
             {
                 if (dev->hd_Generation > 0)
+                {
                     res = TRUE;
+                }
             }
             UNLOCK_REGION_SHARED(dev);
         }
 
         if (!res)
+        {
             Helios_ReleaseUnit(unit);
+        }
     }
 
     return res;
@@ -1454,7 +1572,9 @@ void Helios_ReleaseUnit(HeliosUnit *unit)
     {
         /* Bad design? */
         if (old_refcnt <= 0)
+        {
             _WARN("Too many releases of unit %p called (old refcnt: %d)\n", unit, old_refcnt);
+        }
 
         helios_free_unit(unit);
     }
@@ -1475,7 +1595,7 @@ HeliosUnit *Helios_GetNextUnitA(HeliosUnit *unit, struct TagItem *tags)
             case HA_Device: search_in_dev = (APTR)tag->ti_Data; break;
         }
     }
-    
+
     /* Sanity checks of given unit */
     if (NULL != unit)
     {
@@ -1501,10 +1621,14 @@ HeliosUnit *Helios_GetNextUnitA(HeliosUnit *unit, struct TagItem *tags)
     }
 
     if (NULL != search_in_hw)
-        unit = helios_hw_next_unit(search_in_hw, unit); /* NR */
+    {
+        unit = helios_hw_next_unit(search_in_hw, unit);    /* NR */
+    }
     else if (NULL != search_in_dev)
-        unit = helios_dev_next_unit(search_in_dev, unit); /* NR */
-    else 
+    {
+        unit = helios_dev_next_unit(search_in_dev, unit);    /* NR */
+    }
+    else
     {
         HeliosHardware *hw;
 
@@ -1514,7 +1638,9 @@ HeliosUnit *Helios_GetNextUnitA(HeliosUnit *unit, struct TagItem *tags)
             HW_INCREF(hw);
         }
         else
+        {
             hw = NULL;
+        }
 
         /* Loop on all hardwares */
         do
@@ -1528,12 +1654,16 @@ HeliosUnit *Helios_GetNextUnitA(HeliosUnit *unit, struct TagItem *tags)
                 {
                     next_hw = Helios_GetNextHardware(hw); /* NR */
                     if (NULL != hw)
+                    {
                         Helios_ReleaseHardware(hw);
+                    }
                     hw = next_hw;
 
                     /* No more hardware? */
                     if (NULL == hw)
+                    {
                         return NULL;
+                    }
                 }
                 while (IsListEmpty((struct List *)&hw->hu_Devices));
             }
@@ -1583,7 +1713,9 @@ LONG Helios_BindUnit(HeliosUnit *unit, HeliosClass *hc, APTR udata)
             UNLOCK_REGION(unit);
         }
         else
+        {
             _ERR("bind failed: dev %p is removed\n", unit->hu_Device);
+        }
     }
     UNLOCK_REGION_SHARED(dev);
 
@@ -1600,7 +1732,7 @@ LONG Helios_UnbindUnit(HeliosUnit *unit)
         if (NULL != unit->hu_BindClass)
         {
             _INFO("Unbind unit #%lu class@%p of dev $%llx\n",
-                   unit->hu_UnitNo, unit->hu_BindClass, dev->hd_GUID);
+                  unit->hu_UnitNo, unit->hu_BindClass, dev->hd_GUID);
 
             Helios_ReleaseClass(unit->hu_BindClass);
 
@@ -1609,7 +1741,9 @@ LONG Helios_UnbindUnit(HeliosUnit *unit)
             res = TRUE;
         }
         else
+        {
             res = FALSE;
+        }
     }
     UNLOCK_REGION(unit);
 
@@ -1645,8 +1779,8 @@ void Helios_DBG_DumpDevices(HeliosHardware *hw)
                 kprintf("\t\tNodeInfo:\n");
                 kprintf("\t\t\tPhyID:      %u\n", dev->hd_NodeInfo.n_PhyID);
                 kprintf("\t\t\tFlags:      $%02x %s%s\n", *(UBYTE*)&dev->hd_NodeInfo.n_Flags,
-                       dev->hd_NodeInfo.n_Flags.ResetInitiator?'I':c,
-                       dev->hd_NodeInfo.n_Flags.LinkOn?'L':c);
+                        dev->hd_NodeInfo.n_Flags.ResetInitiator?'I':c,
+                        dev->hd_NodeInfo.n_Flags.LinkOn?'L':c);
                 kprintf("\t\t\tPortCount:  %u\n", dev->hd_NodeInfo.n_PortCount);
                 kprintf("\t\t\tPhySpeed:   %u\n", dev->hd_NodeInfo.n_PhySpeed);
                 kprintf("\t\t\tMaxSpeed:   %u\n", dev->hd_NodeInfo.n_MaxSpeed);

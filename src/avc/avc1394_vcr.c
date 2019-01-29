@@ -45,31 +45,47 @@ static LONG vcr_SendCommand(HeliosBus *bus, ULONG nodeid, QUADLET command, QUADL
     LONG err = AVC1394_ERR_SYSTEM;
 
     port = CreateMsgPort();
-    if (NULL != port) {
+    if (NULL != port)
+    {
         handler = Helios_AllocDeviceHandler(bus);
-        if (NULL != handler) {
-            if (NULL != Helios_ConnectDeviceHandler(handler, HTTAG_NODE_ID, nodeid, TAG_DONE)) {
+        if (NULL != handler)
+        {
+            if (NULL != Helios_ConnectDeviceHandler(handler, HTTAG_NODE_ID, nodeid, TAG_DONE))
+            {
                 msg.DeviceHandler = handler;
                 msg.Retry = AVC1394_RETRY;
                 msg.Length = 1;
                 msg.Data = &command;
-                if (NULL != avc1394_SendServerMsg(&msg, port)) {
+                if (NULL != avc1394_SendServerMsg(&msg, port))
+                {
                     WaitPort(port);
                     GetMsg(port);
                     err = msg.Error;
                     *result = command;
-                } else
+                }
+                else
+                {
                     log_APIError("failed to send message");
-            } else
+                }
+            }
+            else
+            {
                 log_APIError("Helios_ConnectDeviceHandler() failed");
+            }
 
             Helios_FreeDeviceHandler(handler);
-        } else
+        }
+        else
+        {
             log_APIError("Helios_AllocDeviceHandler() failed");
+        }
 
         DeleteMsgPort(port);
-    } else
+    }
+    else
+    {
         log_APIError("CreateMsgPort() failed");
+    }
 
     return err;
 }
@@ -86,35 +102,52 @@ static LONG vcr_DoTransaction(HeliosBus *bus, ULONG nodeid, QUADLET command, QUA
     request[1] = 0xFFFFFFFF;
 
     port = CreateMsgPort();
-    if (NULL != port) {
+    if (NULL != port)
+    {
         handler = Helios_AllocDeviceHandler(bus);
-        if (NULL != handler) {
-            if (NULL != Helios_ConnectDeviceHandler(handler, HTTAG_NODE_ID, nodeid, TAG_DONE)) {
+        if (NULL != handler)
+        {
+            if (NULL != Helios_ConnectDeviceHandler(handler, HTTAG_NODE_ID, nodeid, TAG_DONE))
+            {
                 msg.DeviceHandler = handler;
                 msg.Retry = AVC1394_RETRY;
                 msg.Length = 2;
                 msg.Data = request;
-                if (NULL != avc1394_SendServerMsg(&msg, port)) {
+                if (NULL != avc1394_SendServerMsg(&msg, port))
+                {
                     WaitPort(port);
                     GetMsg(port);
 
                     err = msg.Error;
-                    if (NULL != msg.FCPMsg) {
+                    if (NULL != msg.FCPMsg)
+                    {
                         *result = msg.FCPMsg->Packet->Payload[1];
                         ReplyMsg((APTR) msg.FCPMsg);
                     }
-                } else
+                }
+                else
+                {
                     log_APIError("failed to send message");
-            } else
+                }
+            }
+            else
+            {
                 log_APIError("Helios_ConnectDeviceHandler() failed");
+            }
 
             Helios_FreeDeviceHandler(handler);
-        } else
+        }
+        else
+        {
             log_APIError("Helios_AllocDeviceHandler() failed");
+        }
 
         DeleteMsgPort(port);
-    } else
+    }
+    else
+    {
         log_APIError("CreateMsgPort() failed");
+    }
 
     return err;
 }
@@ -138,11 +171,15 @@ LONG AVC1394_VCR_IsPlaying(HeliosBus *bus, UWORD nodeid)
     QUADLET result;
 
     err = vcr_SendCommand(bus, nodeid,
-        STATVCR0| AVC1394_VCR_COMMAND_TRANSPORT_STATE | AVC1394_VCR_OPERAND_TRANSPORT_STATE, &result);
+                          STATVCR0| AVC1394_VCR_COMMAND_TRANSPORT_STATE | AVC1394_VCR_OPERAND_TRANSPORT_STATE, &result);
     if ((AVC1394_ERR_NOERR == err) && (AVC1394_VCR_RESPONSE_TRANSPORT_STATE_PLAY == AVC1394_MASK_OPCODE(result)))
+    {
         return AVC1394_GET_OPERAND0(result);
+    }
     else
+    {
         return 0;
+    }
 }
 
 LONG AVC1394_VCR_IsRecording(HeliosBus *bus, UWORD nodeid)
@@ -151,27 +188,39 @@ LONG AVC1394_VCR_IsRecording(HeliosBus *bus, UWORD nodeid)
     QUADLET result;
 
     err = vcr_SendCommand(bus, nodeid,
-        STATVCR0 | AVC1394_VCR_COMMAND_TRANSPORT_STATE | AVC1394_VCR_OPERAND_TRANSPORT_STATE, &result);
+                          STATVCR0 | AVC1394_VCR_COMMAND_TRANSPORT_STATE | AVC1394_VCR_OPERAND_TRANSPORT_STATE, &result);
     if ((AVC1394_ERR_NOERR == err) && (AVC1394_VCR_RESPONSE_TRANSPORT_STATE_RECORD == AVC1394_MASK_OPCODE(result)))
+    {
         return AVC1394_GET_OPERAND0(result);
+    }
     else
+    {
         return 0;
+    }
 }
 
 LONG AVC1394_VCR_Play(HeliosBus *bus, UWORD nodeid, QUADLET *status)
 {
     if (AVC1394_VCR_OPERAND_PLAY_FORWARD == AVC1394_VCR_IsPlaying(bus, nodeid))
+    {
         return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_SLOWEST_FORWARD, status);
+    }
     else
+    {
         return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FORWARD, status);
+    }
 }
 
 LONG AVC1394_VCR_Reverse(HeliosBus *bus, UWORD nodeid, QUADLET *status)
 {
     if (AVC1394_VCR_OPERAND_PLAY_REVERSE == AVC1394_VCR_IsPlaying(bus, nodeid))
+    {
         return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_SLOWEST_REVERSE, status);
+    }
     else
+    {
         return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_REVERSE, status);
+    }
 }
 
 LONG AVC1394_VCR_Pause(HeliosBus *bus, UWORD nodeid, QUADLET *status)
@@ -179,16 +228,27 @@ LONG AVC1394_VCR_Pause(HeliosBus *bus, UWORD nodeid, QUADLET *status)
     LONG mode;
 
     mode = AVC1394_VCR_IsRecording(bus, nodeid);
-    if (mode) {
+    if (mode)
+    {
         if (AVC1394_VCR_OPERAND_RECORD_PAUSE == mode)
+        {
             return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_RECORD | AVC1394_VCR_OPERAND_RECORD_RECORD, status);
+        }
         else
+        {
             return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_RECORD | AVC1394_VCR_OPERAND_RECORD_PAUSE, status);
-    } else {
+        }
+    }
+    else
+    {
         if (AVC1394_VCR_OPERAND_PLAY_FORWARD_PAUSE == AVC1394_VCR_IsPlaying(bus, nodeid))
+        {
             return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FORWARD, status);
+        }
         else
+        {
             return vcr_SendCommand(bus, nodeid, CTLVCR0 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FORWARD_PAUSE, status);
+        }
     }
 }
 
@@ -206,30 +266,46 @@ QUADLET AVC1394_VCR_Status(HeliosBus bus, ULONG generation, ULONG id)
 int avc1394_vcr_is_recording(HeliosDevice dev)
 {
     quadlet_t response = avc1394_transaction(handle, node, STATVCR0
-        | AVC1394_VCR_COMMAND_TRANSPORT_STATE | AVC1394_VCR_OPERAND_TRANSPORT_STATE,
-        AVC1394_RETRY);
+                                             | AVC1394_VCR_COMMAND_TRANSPORT_STATE | AVC1394_VCR_OPERAND_TRANSPORT_STATE,
+                                             AVC1394_RETRY);
     if (AVC1394_MASK_OPCODE(response)
         == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_RECORD)
+    {
         return AVC1394_GET_OPERAND0(response);
+    }
     else
+    {
         return 0;
+    }
 }
 
 
 void avc1394_vcr_trick_play(raw1394handle_t handle, nodeid_t node, int speed)
 {
-    if (!avc1394_vcr_is_recording(handle, node)) {
-        if (speed == 0) {
+    if (!avc1394_vcr_is_recording(handle, node))
+    {
+        if (speed == 0)
+        {
             avc1394_send_command(handle, node, CTLVCR0
-                | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FORWARD);
-        } else if (speed > 0) {
-            if (speed > 14) speed = 14;
+                                 | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FORWARD);
+        }
+        else if (speed > 0)
+        {
+            if (speed > 14)
+            {
+                speed = 14;
+            }
             avc1394_send_command(handle, node, CTLVCR0
-                | AVC1394_VCR_COMMAND_PLAY | (AVC1394_VCR_OPERAND_PLAY_NEXT_FRAME + speed));
-        } else {
-            if (speed < -14) speed = -14;
+                                 | AVC1394_VCR_COMMAND_PLAY | (AVC1394_VCR_OPERAND_PLAY_NEXT_FRAME + speed));
+        }
+        else
+        {
+            if (speed < -14)
+            {
+                speed = -14;
+            }
             avc1394_send_command(handle, node, CTLVCR0
-                | AVC1394_VCR_COMMAND_PLAY | (AVC1394_VCR_OPERAND_PLAY_PREVIOUS_FRAME - speed));
+                                 | AVC1394_VCR_COMMAND_PLAY | (AVC1394_VCR_OPERAND_PLAY_PREVIOUS_FRAME - speed));
         }
     }
 }
@@ -237,23 +313,29 @@ void avc1394_vcr_trick_play(raw1394handle_t handle, nodeid_t node, int speed)
 
 void avc1394_vcr_rewind(raw1394handle_t handle, nodeid_t node)
 {
-    if (avc1394_vcr_is_playing(handle, node)) {
+    if (avc1394_vcr_is_playing(handle, node))
+    {
         avc1394_send_command(handle, node, CTLVCR0
-            | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FASTEST_REVERSE);
-    } else {
+                             | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FASTEST_REVERSE);
+    }
+    else
+    {
         avc1394_send_command(handle, node, CTLVCR0
-            | AVC1394_VCR_COMMAND_WIND | AVC1394_VCR_OPERAND_WIND_REWIND);
+                             | AVC1394_VCR_COMMAND_WIND | AVC1394_VCR_OPERAND_WIND_REWIND);
     }
 }
 
 void avc1394_vcr_forward(raw1394handle_t handle, nodeid_t node)
 {
-    if (avc1394_vcr_is_playing(handle, node)) {
+    if (avc1394_vcr_is_playing(handle, node))
+    {
         avc1394_send_command(handle, node, CTLVCR0
-            | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FASTEST_FORWARD);
-    } else {
+                             | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_FASTEST_FORWARD);
+    }
+    else
+    {
         avc1394_send_command(handle, node, CTLVCR0
-            | AVC1394_VCR_COMMAND_WIND | AVC1394_VCR_OPERAND_WIND_FAST_FORWARD);
+                             | AVC1394_VCR_COMMAND_WIND | AVC1394_VCR_OPERAND_WIND_FAST_FORWARD);
 
     }
 }
@@ -261,18 +343,20 @@ void avc1394_vcr_forward(raw1394handle_t handle, nodeid_t node)
 
 void avc1394_vcr_next(raw1394handle_t handle, nodeid_t node)
 {
-    if (avc1394_vcr_is_playing(handle, node)) {
+    if (avc1394_vcr_is_playing(handle, node))
+    {
         avc1394_send_command(handle, node, CTLVCR0
-            | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_NEXT_FRAME);
+                             | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_NEXT_FRAME);
     }
 }
 
 void avc1394_vcr_next_index(raw1394handle_t handle, nodeid_t node)
 {
     quadlet_t request[2];
-    if (avc1394_vcr_is_playing(handle, node)) {
+    if (avc1394_vcr_is_playing(handle, node))
+    {
         request[0] = CTLVCR0 | AVC1394_VCR_COMMAND_FORWARD |
-            AVC1394_VCR_MEASUREMENT_INDEX;
+                     AVC1394_VCR_MEASUREMENT_INDEX;
         request[1] = 0x01FFFFFF;
         avc1394_send_command_block(handle, node, request, 2);
     }
@@ -280,18 +364,20 @@ void avc1394_vcr_next_index(raw1394handle_t handle, nodeid_t node)
 
 void avc1394_vcr_previous(raw1394handle_t handle, nodeid_t node)
 {
-    if (avc1394_vcr_is_playing(handle, node)) {
+    if (avc1394_vcr_is_playing(handle, node))
+    {
         avc1394_send_command(handle, node, CTLVCR0
-            | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_PREVIOUS_FRAME);
+                             | AVC1394_VCR_COMMAND_PLAY | AVC1394_VCR_OPERAND_PLAY_PREVIOUS_FRAME);
     }
 }
 
 void avc1394_vcr_previous_index(raw1394handle_t handle, nodeid_t node)
 {
     quadlet_t request[2];
-    if (avc1394_vcr_is_playing(handle, node)) {
+    if (avc1394_vcr_is_playing(handle, node))
+    {
         request[0] = CTLVCR0 | AVC1394_VCR_COMMAND_BACKWARD |
-            AVC1394_VCR_MEASUREMENT_INDEX;
+                     AVC1394_VCR_MEASUREMENT_INDEX;
         request[1] = 0x01FFFFFF;
         avc1394_send_command_block(handle, node, request, 2);
     }
@@ -301,7 +387,7 @@ void avc1394_vcr_previous_index(raw1394handle_t handle, nodeid_t node)
 void avc1394_vcr_record(raw1394handle_t handle, nodeid_t node)
 {
     avc1394_send_command(handle, node, CTLVCR0
-        | AVC1394_VCR_COMMAND_RECORD | AVC1394_VCR_OPERAND_RECORD_RECORD);
+                         | AVC1394_VCR_COMMAND_RECORD | AVC1394_VCR_OPERAND_RECORD_RECORD);
 }
 
 char *avc1394_vcr_decode_status(quadlet_t response)
@@ -311,40 +397,71 @@ char *avc1394_vcr_decode_status(quadlet_t response)
     quadlet_t resp2 = AVC1394_MASK_RESPONSE_OPERAND(response, 2);
     quadlet_t resp3 = AVC1394_MASK_RESPONSE_OPERAND(response, 3);
 
-    if (response == 0) {
+    if (response == 0)
+    {
         return "OK";
-    } else if (resp2 == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_LOAD_MEDIUM) {
+    }
+    else if (resp2 == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_LOAD_MEDIUM)
+    {
         return("Loading Medium");
-    } else if (resp2 == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_RECORD) {
+    }
+    else if (resp2 == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_RECORD)
+    {
         if (resp3 == AVC1394_VCR_OPERAND_RECORD_PAUSE)
+        {
             return("Recording Paused");
+        }
         else
+        {
             return("Recording");
-    } else if (resp2 == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_PLAY) {
+        }
+    }
+    else if (resp2 == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_PLAY)
+    {
         if (resp3 >= AVC1394_VCR_OPERAND_PLAY_FAST_FORWARD_1
-                && resp3 <= AVC1394_VCR_OPERAND_PLAY_FASTEST_FORWARD) {
+            && resp3 <= AVC1394_VCR_OPERAND_PLAY_FASTEST_FORWARD)
+        {
             return("Playing Fast Forward");
-        } else if (resp3 >= AVC1394_VCR_OPERAND_PLAY_FAST_REVERSE_1
-                    && resp3 <= AVC1394_VCR_OPERAND_PLAY_FASTEST_REVERSE) {
+        }
+        else if (resp3 >= AVC1394_VCR_OPERAND_PLAY_FAST_REVERSE_1
+                 && resp3 <= AVC1394_VCR_OPERAND_PLAY_FASTEST_REVERSE)
+        {
             return("Playing Reverse");
-        } else if (resp3 == AVC1394_VCR_OPERAND_PLAY_FORWARD_PAUSE) {
+        }
+        else if (resp3 == AVC1394_VCR_OPERAND_PLAY_FORWARD_PAUSE)
+        {
             return("Playing Paused");
-        } else {
+        }
+        else
+        {
             return("Playing");
         }
-    } else if (resp2 == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_WIND) {
-        if (resp3 == AVC1394_VCR_OPERAND_WIND_HIGH_SPEED_REWIND) {
+    }
+    else if (resp2 == AVC1394_VCR_RESPONSE_TRANSPORT_STATE_WIND)
+    {
+        if (resp3 == AVC1394_VCR_OPERAND_WIND_HIGH_SPEED_REWIND)
+        {
             return("Winding backward at incredible speed");
-        } else if (resp3 == AVC1394_VCR_OPERAND_WIND_STOP) {
+        }
+        else if (resp3 == AVC1394_VCR_OPERAND_WIND_STOP)
+        {
             return("Winding stopped");
-        } else if (resp3 == AVC1394_VCR_OPERAND_WIND_REWIND) {
+        }
+        else if (resp3 == AVC1394_VCR_OPERAND_WIND_REWIND)
+        {
             return("Winding reverse");
-        } else if (resp3 == AVC1394_VCR_OPERAND_WIND_FAST_FORWARD) {
+        }
+        else if (resp3 == AVC1394_VCR_OPERAND_WIND_FAST_FORWARD)
+        {
             return("Winding forward");
-        } else {
+        }
+        else
+        {
             return("Winding");
         }
-    } else {
+    }
+    else
+    {
         return("Unknown");
     }
 }
@@ -358,10 +475,11 @@ avc1394_vcr_get_timecode(raw1394handle_t handle, nodeid_t node)
     char      *output = NULL;
 
     request[0] = STATVCR0 | AVC1394_VCR_COMMAND_TIME_CODE |
-        AVC1394_VCR_OPERAND_TIME_CODE_STATUS;
+                 AVC1394_VCR_OPERAND_TIME_CODE_STATUS;
     request[1] = 0xFFFFFFFF;
     response = avc1394_transaction_block(handle, node, request, 2, AVC1394_RETRY);
-    if (response == NULL || response[1] == 0xffffffff) {
+    if (response == NULL || response[1] == 0xffffffff)
+    {
         avc1394_transaction_block_close(handle);
         return NULL;
     }
@@ -370,10 +488,10 @@ avc1394_vcr_get_timecode(raw1394handle_t handle, nodeid_t node)
     if (output)
         // consumer timecode format
         sprintf(output, "%2.2x:%2.2x:%2.2x:%2.2x",
-            response[1] & 0x000000ff,
-            (response[1] >> 8) & 0x000000ff,
-            (response[1] >> 16) & 0x000000ff,
-            (response[1] >> 24) & 0x000000ff);
+                response[1] & 0x000000ff,
+                (response[1] >> 8) & 0x000000ff,
+                (response[1] >> 16) & 0x000000ff,
+                (response[1] >> 24) & 0x000000ff);
 
     avc1394_transaction_block_close(handle);
     return output;
@@ -387,20 +505,21 @@ avc1394_vcr_get_timecode2(raw1394handle_t handle, nodeid_t node, char *output)
     quadlet_t *response;
 
     request[0] = STATVCR0 | AVC1394_VCR_COMMAND_TIME_CODE |
-        AVC1394_VCR_OPERAND_TIME_CODE_STATUS;
+                 AVC1394_VCR_OPERAND_TIME_CODE_STATUS;
     request[1] = 0xFFFFFFFF;
     response = avc1394_transaction_block(handle, node, request, 2, AVC1394_RETRY);
-    if (response == NULL || response[1] == 0xffffffff) {
+    if (response == NULL || response[1] == 0xffffffff)
+    {
         avc1394_transaction_block_close(handle);
         return -1;
     }
 
     // consumer timecode format
     sprintf(output, "%2.2x:%2.2x:%2.2x:%2.2x",
-        response[1] & 0x000000ff,
-        (response[1] >> 8) & 0x000000ff,
-        (response[1] >> 16) & 0x000000ff,
-        (response[1] >> 24) & 0x000000ff);
+            response[1] & 0x000000ff,
+            (response[1] >> 8) & 0x000000ff,
+            (response[1] >> 16) & 0x000000ff,
+            (response[1] >> 24) & 0x000000ff);
 
     avc1394_transaction_block_close(handle);
     return 0;
@@ -415,7 +534,7 @@ avc1394_vcr_seek_timecode(raw1394handle_t handle, nodeid_t node, char *timecode)
     unsigned int hh,mm,ss,ff;
 
     request[0] = CTLVCR0 | AVC1394_VCR_COMMAND_TIME_CODE |
-        AVC1394_VCR_OPERAND_TIME_CODE_CONTROL;
+                 AVC1394_VCR_OPERAND_TIME_CODE_CONTROL;
 
     // consumer timecode format
     sscanf(timecode, "%2x:%2x:%2x:%2x", &hh, &mm, &ss, &ff);

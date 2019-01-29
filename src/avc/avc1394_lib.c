@@ -109,9 +109,13 @@ static APTR avc1394_RunServer(void)
                              NP_Name,        (ULONG) "AVC1394 [FCP Serveur]",
                              TAG_DONE);
     if (NULL != proc)
+    {
         return proc;
+    }
     else
+    {
         log_Error("Failed to create the FCP server process");
+    }
 
     return NULL;
 }
@@ -122,7 +126,8 @@ static void avc1394_StopServer(void)
     struct MsgPort *port, *sv_port;
 
     port = CreateMsgPort();
-    if (NULL != port) {
+    if (NULL != port)
+    {
         msg.SysMsg.mn_Node.ln_Type = NT_MESSAGE;
         msg.SysMsg.mn_ReplyPort = port;
         msg.SysMsg.mn_Length = sizeof(msg);
@@ -131,21 +136,29 @@ static void avc1394_StopServer(void)
 
         ObtainSemaphore(&AVC1394Base->Sema);
         sv_port = AVC1394Base->ServerPort;
-        if (NULL != sv_port) {
+        if (NULL != sv_port)
+        {
             PutMsg(sv_port, (APTR) &msg);
             AVC1394Base->ServerPort = NULL;
         }
         ReleaseSemaphore(&AVC1394Base->Sema);
 
-        if (NULL != sv_port) {
+        if (NULL != sv_port)
+        {
             WaitPort(port);
             GetMsg(port);
-        } else
+        }
+        else
+        {
             log_Error("Server already dead");
+        }
 
         DeleteMsgPort(port);
-    } else
+    }
+    else
+    {
         log_Error("Can't allocate a msg port for the dead message");
+    }
 
     return;
 }
@@ -161,7 +174,8 @@ static ULONG LibExpunge(struct AVC1394Library *AVC1394Library)
 
     MySegment = AVC1394Library->SegList;
 
-    if (AVC1394Library->Lib.lib_OpenCnt) {
+    if (AVC1394Library->Lib.lib_OpenCnt)
+    {
         DEBUG_EXPUNGE(("LIB_Expunge: set LIBF_DELEXP\n"));
         AVC1394Library->Lib.lib_Flags |= LIBF_DELEXP;
         return NULL;
@@ -211,21 +225,28 @@ struct Library* LIB_Init(struct AVC1394Library * MyLibBase,
 
     /* Open needed resources */
     DOSBase = (struct DosLibrary *) OpenLibrary("dos.library", 0);
-    if (NULL != DOSBase) {
+    if (NULL != DOSBase)
+    {
         HeliosBase = OpenLibrary("helios.library", 0);
-        if (NULL != HeliosBase) {
+        if (NULL != HeliosBase)
+        {
             InitSemaphore(&MyLibBase->Sema);
-                
+
             MyLibBase->ServerPort = NULL;
             MyLibBase->HeliosBase = HeliosBase;
 
             if (NULL != avc1394_RunServer())
+            {
                 return &MyLibBase->Lib;
+            }
         }
 
         CloseLibrary((struct Library *)DOSBase);
-    } else
+    }
+    else
+    {
         SysError_NeedLibrary("dos.library", 0);
+    }
 
     FreeMem((APTR)((ULONG)(MyLibBase) - (ULONG)(MyLibBase->Lib.lib_NegSize)),
             MyLibBase->Lib.lib_NegSize + MyLibBase->Lib.lib_PosSize);
@@ -263,10 +284,14 @@ ULONG LIB_Close(void)
                  AVC1394Library->Lib.lib_Node.ln_Name,
                  AVC1394Library->Lib.lib_OpenCnt));
 
-    if ((--AVC1394Library->Lib.lib_OpenCnt) > 0) {
+    if ((--AVC1394Library->Lib.lib_OpenCnt) > 0)
+    {
         DEBUG_CLOSE(("LIB_Close: done\n"));
-    } else {
-        if (AVC1394Library->Lib.lib_Flags & LIBF_DELEXP) {
+    }
+    else
+    {
+        if (AVC1394Library->Lib.lib_Flags & LIBF_DELEXP)
+        {
             DEBUG_CLOSE(("LIB_Close: LIBF_DELEXP set\n"));
             return LibExpunge(AVC1394Library);
         }

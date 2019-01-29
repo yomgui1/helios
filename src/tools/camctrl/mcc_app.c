@@ -38,7 +38,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define VIDEO_FMT_NTSC 0x00
 #define VIDEO_FMT_PAL  0x80
 
-typedef struct IsoUserData {
+typedef struct IsoUserData
+{
     Object *    App;
     Object *    Decoder;
     AsyncFile * File;
@@ -53,7 +54,8 @@ typedef struct IsoUserData {
     UBYTE    LastDBC;
 } IsoUserData;
 
-typedef struct CamCtrlMCCData {
+typedef struct CamCtrlMCCData
+{
     struct MUI_InputHandlerNode ihnode;
 
     Object *RecSizeObj;
@@ -77,11 +79,14 @@ static UQUAD ppc_getcounter(void)
 {
     register ULONG tbu, tb, tbu2;
 
-  loop:
+loop:
     __asm volatile ("mftbu %0" : "=r" (tbu) );
     __asm volatile ("mftb  %0" : "=r" (tb)  );
     __asm volatile ("mftbu %0" : "=r" (tbu2));
-    if (tbu != tbu2) goto loop;
+    if (tbu != tbu2)
+    {
+        goto loop;
+    }
 
     return (((UQUAD) tbu) << 32) + tb;
 }
@@ -101,26 +106,35 @@ static void IsoCallback(HeliosIsoContext *ctx, HeliosIRBuffer *buffer, ULONG sta
     BOOL stop = FALSE;
 
     if (0 == buffer->HeaderLength)
+    {
         return;
+    }
 
     dbs_fn_qpc_sph = ((*header) >> 10) & 0x3fff;
     dbc = *header & 0xff;
     fmt = ((*(header + 1)) >> 24) & 0x3f;
     fdf = ((*(header + 1)) >> 16) & 0xff;
 
-    if ((0x1e00 == dbs_fn_qpc_sph) && (0x00 == fmt)) { /* DV */
+    if ((0x1e00 == dbs_fn_qpc_sph) && (0x00 == fmt))   /* DV */
+    {
         ULONG len = (dbs_fn_qpc_sph >> 8) << 4;
         ULONG sof;
 
-        if (udata->VideoFmt != VIDEO_FMT_NONE) {
+        if (udata->VideoFmt != VIDEO_FMT_NONE)
+        {
             /* inconsistent video format */
             if (fdf != udata->VideoFmt)
+            {
                 return;
-        } else {
+            }
+        }
+        else
+        {
             STRPTR s;
 
             udata->VideoFmt = fdf;
-            switch (fdf) {
+            switch (fdf)
+            {
                 case VIDEO_FMT_NTSC: s = "NTSC"; break;
                 case VIDEO_FMT_PAL : s = "PAL"; break;
                 default: s = "unknown";
@@ -131,10 +145,13 @@ static void IsoCallback(HeliosIsoContext *ctx, HeliosIRBuffer *buffer, ULONG sta
 
         /* Drop empty packets */
         if (0 == buffer->PayloadLength)
+        {
             return;
+        }
 
         /* Checking packet continuity */
-        if (((udata->LastDBC + 1) & 0xff) != dbc) {
+        if (((udata->LastDBC + 1) & 0xff) != dbc)
+        {
             DoMethod(udata->App, MUIM_Application_PushMethod, udata->App, 2, MUIM_Application_ReturnID, ID_PACKET_LOSS);
             DoMethod(udata->App, MUIM_Application_PushMethod, udata->App, 1, MM_CamCtrl_StopRT);
             return;
@@ -143,28 +160,33 @@ static void IsoCallback(HeliosIsoContext *ctx, HeliosIRBuffer *buffer, ULONG sta
         udata->LastDBC = dbc;
 
         /* File size limiter */
-        if ((udata->RecordMaxLength > 0) && ((udata->Total + len) >= udata->RecordMaxLength)) {
+        if ((udata->RecordMaxLength > 0) && ((udata->Total + len) >= udata->RecordMaxLength))
+        {
             len = udata->RecordMaxLength - udata->Total;
             stop = TRUE;
         }
 
         /* Push the packet in the decoder (with SOF detection if needed) */
         sof = FALSE;
-        if (len != DoMethod(udata->Decoder, MM_Decoder_Push, payload, len, udata->DetectSOF ? &sof : NULL)) {
+        if (len != DoMethod(udata->Decoder, MM_Decoder_Push, payload, len, udata->DetectSOF ? &sof : NULL))
+        {
             DoMethod(udata->App, MUIM_Application_PushMethod, udata->App, 2, MM_CamCtrl_StopDecoder);
             DoMethod(udata->App, MUIM_Application_PushMethod, udata->App, 3, MUIM_Set, MA_CamCtrl_Error, "Decoding error occured");
         }
 
-        if (!udata->Record && sof) {
+        if (!udata->Record && sof)
+        {
             udata->Record = TRUE;
             udata->DetectSOF = FALSE;
         }
 
         /* File recording ? */
-        if (udata->Record) {
+        if (udata->Record)
+        {
             ULONG x = WriteAsync(udata->File, payload, len);
 
-            if (len != x) {
+            if (len != x)
+            {
                 DoMethod(udata->App, MUIM_Application_PushMethod, udata->App, 3, MUIM_Set, MA_CamCtrl_Error, "File recording error occured");
                 stop = TRUE;
             }
@@ -175,21 +197,27 @@ static void IsoCallback(HeliosIsoContext *ctx, HeliosIRBuffer *buffer, ULONG sta
         ObtainSemaphore(&udata->Lock);
         udata->Total += len;
         ReleaseSemaphore(&udata->Lock);
-    } else if ((0x01b1 == dbs_fn_qpc_sph) && (0x20 == fmt)) { /* MPEG2-TS */
+    }
+    else if ((0x01b1 == dbs_fn_qpc_sph) && (0x20 == fmt))     /* MPEG2-TS */
+    {
         LONG payload_len = buffer->PayloadLength;
 
         payload += 4; /* skip SPH */
 
         /* Drop empty packets */
         if (0 == payload_len)
+        {
             return;
+        }
 
-        if (0 == udata->Total) {
+        if (0 == udata->Total)
+        {
             DoMethod(udata->App, MUIM_Application_PushMethod, udata->App, 3, MUIM_Set, MA_CamCtrl_VideoFmt, "ND");
         }
 
         /* File size limiter */
-        if (( udata->RecordMaxLength> 0) && ((udata->Total + payload_len) >= udata->RecordMaxLength)) {
+        if (( udata->RecordMaxLength> 0) && ((udata->Total + payload_len) >= udata->RecordMaxLength))
+        {
             payload_len = udata->RecordMaxLength - udata->Total;
 
             /* MAXLEN_LASTPACKET is forced for this codec */
@@ -197,7 +225,8 @@ static void IsoCallback(HeliosIsoContext *ctx, HeliosIRBuffer *buffer, ULONG sta
             stop = TRUE;
         }
 
-        for (; payload_len > IEC61883_MPEG2_TSP_SIZE; payload_len -= TSP_SPH_SIZE, payload += TSP_SPH_SIZE) {
+        for (; payload_len > IEC61883_MPEG2_TSP_SIZE; payload_len -= TSP_SPH_SIZE, payload += TSP_SPH_SIZE)
+        {
             WriteAsync(udata->File, payload, IEC61883_MPEG2_TSP_SIZE);
 
             ObtainSemaphore(&udata->Lock);
@@ -206,7 +235,8 @@ static void IsoCallback(HeliosIsoContext *ctx, HeliosIRBuffer *buffer, ULONG sta
         }
     }
 
-    if (stop) {
+    if (stop)
+    {
         Helios_IsoContext_Stop(ctx);
         DoMethod(udata->App, MUIM_Application_PushMethod, udata->App, 1, MM_CamCtrl_StopRT);
     }
@@ -229,8 +259,10 @@ static ULONG mSet(struct IClass *cl, Object *obj, struct opSet * msg)
     struct TagItem *tags, *tag;
 
     tags = msg->ops_AttrList;
-    while (NULL != (tag = NextTagItem(&tags))) {
-        switch (tag->ti_Tag) {
+    while (NULL != (tag = NextTagItem(&tags)))
+    {
+        switch (tag->ti_Tag)
+        {
             case MA_CamCtrl_RecordFilename:
                 data->RecordFilename = (STRPTR) tag->ti_Data;
                 break;
@@ -260,25 +292,34 @@ static ULONG mStartRT(struct IClass *cl, Object *obj, Msg msg)
 
     /* Must be stopped before */
     if (NULL != data->IsoCtx)
+    {
         return TRUE;
+    }
 
     if ((NULL == data->RecordFilename) || ('\0' == data->RecordFilename[0]))
+    {
         return FALSE;
+    }
 
     if (NULL == data->CaptureDevice)
+    {
         return FALSE;
+    }
 
     /*if (!get(obj_CacheTime, MUIA_Numeric_Value, &value))
         return FALSE;*/
 
+    // *INDENT-OFF*
     data->IsoUData.Decoder = DecoderObject,
         MUIA_Process_SourceClass, cl,
         MUIA_Process_SourceObject, obj,
         MUIA_Process_Name, "Test MUI Process",
         MUIA_Process_AutoLaunch, FALSE,
     End;
+    // *INDENT-ON*
 
-    if (NULL != data->IsoUData.Decoder) {
+    if (NULL != data->IsoUData.Decoder)
+    {
 
         /* Reset grab context */
         InitSemaphore(&data->IsoUData.Lock);
@@ -289,22 +330,26 @@ static ULONG mStartRT(struct IClass *cl, Object *obj, Msg msg)
         data->IsoUData.Record = FALSE;
 
         data->IsoUData.File = OpenAsync(data->RecordFilename, MODE_WRITE, 1024*1024); /* 1MB of write cache is reasonable */
-        if (NULL != data->IsoUData.File) {
+        if (NULL != data->IsoUData.File)
+        {
             data->IsoUData.Total = 0;
 
             /* Create an isochronous receive context using the just read broadcast channel */
             data->IsoCtx = Helios_IsoContext_Create(data->CaptureDevice->Handle->Bus, HELIOS_ISO_RECEIVE_CONTEXT,
-                                               HTTAG_ISO_DMA_MODE,      HELIOS_ISO_PACKET_PER_BUFFER,
-                                               HTTAG_ISO_IR_CALLBACK,   (ULONG) IsoCallback,
-                                               HTTAG_ISO_HEADER_LENGTH, IEC61883_CIP_HEADER_LEN,
-                                               HTTAG_ISO_BUFFER_SIZE,   1024, /* max iso packet size when speed = S100 */
-                                               HTTAG_ISO_BUFFER_COUNT,  8000 * 2, /* 8000 cycles per seconds by 2 seconds */
-                                               HTTAG_ISO_PAYLOAD_ALIGN, 16, /* optimisations requires that */
-                                               TAG_DONE);
-            if (NULL != data->IsoCtx) {
+                                                    HTTAG_ISO_DMA_MODE,      HELIOS_ISO_PACKET_PER_BUFFER,
+                                                    HTTAG_ISO_IR_CALLBACK,   (ULONG) IsoCallback,
+                                                    HTTAG_ISO_HEADER_LENGTH, IEC61883_CIP_HEADER_LEN,
+                                                    HTTAG_ISO_BUFFER_SIZE,   1024, /* max iso packet size when speed = S100 */
+                                                    HTTAG_ISO_BUFFER_COUNT,  8000 * 2, /* 8000 cycles per seconds by 2 seconds */
+                                                    HTTAG_ISO_PAYLOAD_ALIGN, 16, /* optimisations requires that */
+                                                    TAG_DONE);
+            if (NULL != data->IsoCtx)
+            {
                 data->IsoCtx->UserData = &data->IsoUData;
                 if (Helios_IsoContext_Start(data->IsoCtx, 63, IEC61883_TAG_WITH_CIP))
+                {
                     return TRUE;
+                }
             }
         }
     }
@@ -318,15 +363,19 @@ static ULONG mStopRT(struct IClass *cl, Object *obj, Msg msg)
 {
     MCCData *data = INST_DATA(cl, obj);
 
-    if (NULL != data->IsoCtx) {
+    if (NULL != data->IsoCtx)
+    {
         Helios_IsoContext_Destroy(data->IsoCtx);
         data->IsoCtx = NULL;
     }
 
     if (NULL != data->IsoUData.Decoder)
+    {
         MUI_DisposeObject(data->IsoUData.Decoder);
+    }
 
-    if (NULL != data->IsoUData.File) {
+    if (NULL != data->IsoUData.File)
+    {
         CloseAsync(data->IsoUData.File);
         data->IsoUData.File = NULL;
     }
@@ -374,9 +423,13 @@ static ULONG mSpeedRefresh(struct IClass *cl, Object *obj, Msg msg)
     ReleaseSemaphore(&data->IsoUData.Lock);
 
     if (data->TotalLastTime > 0)
+    {
         speed = ((value - data->TotalPrev) * 33333333) / (time2 - data->TotalLastTime);
+    }
     else
+    {
         speed = 0;
+    }
 
     data->TotalLastTime = time2;
     data->TotalPrev = value;
@@ -391,7 +444,8 @@ static ULONG mSpeedRefresh(struct IClass *cl, Object *obj, Msg msg)
 
 DISPATCHER(CamCtrlMCC)
 {
-    switch (msg->MethodID) {
+    switch (msg->MethodID)
+    {
         case OM_DISPOSE                 : mDispose(cl, obj, (APTR) msg);
         case OM_SET                     : mSet(cl, obj, (APTR) msg);
         case MM_CamCtrl_StartRT         : return mStartRT(cl, obj, (APTR) msg);
@@ -413,14 +467,20 @@ struct MUI_CustomClass *CamCtrlMCC_Create(void)
     struct MUI_CustomClass *mcc;
 
     AsyncIOBase = OpenLibrary("asyncio.library", 0);
-    if (AsyncIOBase) {
+    if (AsyncIOBase)
+    {
         mcc = MUI_CreateCustomClass(NULL, MUIC_Application, NULL, sizeof(MCCData), DISPATCHER_REF(CamCtrlMCC));
         if (NULL != mcc)
+        {
             return mcc;
+        }
 
         CloseLibrary(AsyncIOBase);
-    } else
+    }
+    else
+    {
         log_Error("can't open asyncio.library.");
+    }
 
     return NULL;
 }
@@ -428,6 +488,9 @@ struct MUI_CustomClass *CamCtrlMCC_Create(void)
 void CamCtrlMCC_Delete(struct MUI_CustomClass *mcc)
 {
     MUI_DeleteCustomClass(mcc);
-    if (NULL != AsyncIOBase) CloseLibrary(AsyncIOBase);
+    if (NULL != AsyncIOBase)
+    {
+        CloseLibrary(AsyncIOBase);
+    }
 }
 

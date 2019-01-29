@@ -86,18 +86,26 @@ HeliosClass *Helios_AddClass(STRPTR name, ULONG version)
                     Helios_SendEvent(&HeliosBase->hb_Listeners, HEVTF_NEW_CLASS, (ULONG)hc);
                 }
                 else
+                {
                     Helios_ReportMsg(HRMB_ERROR, "CLASS", "Failed to allocate class <%s>.", hc->hso_SysNode.ln_Name);
+                }
             }
             else
+            {
                 Helios_ReportMsg(HRMB_WARN, "CLASS", "Class <%s> already exist.", hc->hso_SysNode.ln_Name);
+            }
         }
         UNLOCK_REGION(HeliosBase);
 
         if (NULL != cls_base)
+        {
             CloseLibrary(cls_base);
+        }
     }
     else
+    {
         Helios_ReportMsg(HRMB_ERROR, "CLASS", "Class <%s> v%lu not found\n", name, version);
+    }
 
     return NULL;
 }
@@ -115,7 +123,7 @@ void Helios_RemoveClass(HeliosClass *hc)
      * and kill all unit tasks.
      */
     HeliosClass_DoMethod(HCM_ReleaseAllBindings);
-    
+
     /* Let applications release the class */
     Helios_ReportMsg(HRMB_INFO, "CLASS", "Class <%s> removed", hc->hso_SysNode.ln_Name);
     Helios_SendEvent(&hc->hc_Listeners, HEVTF_CLASS_REMOVED, 0);
@@ -137,7 +145,9 @@ void Helios_ReleaseClass(HeliosClass *hc)
     {
         /* Bad design? */
         if (old_refcnt <= 0)
+        {
             _WARN("Too many releases of class %p called (old refcnt: %d)\n", hc, old_refcnt);
+        }
 
         Helios_ReportMsg(HRMB_DBG, "CLASS", "Closing class %p <%s>", hc, hc->hc_Base->lib_Node.ln_Name);
 
@@ -157,12 +167,18 @@ void Helios_ReleaseClass(HeliosClass *hc)
 HeliosClass *Helios_GetNextClass(HeliosClass *hc)
 {
     if (NULL == hc)
+    {
         hc = (HeliosClass *)GetHead(&HeliosBase->hb_Classes);
+    }
     else
+    {
         hc = (HeliosClass *)GetSucc(&hc->hso_SysNode);
+    }
 
     if (NULL != hc)
+    {
         CLS_INCREF(hc);
+    }
 
     return hc;
 }

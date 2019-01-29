@@ -61,7 +61,7 @@ int main(int argc, char **argv)
                 listener.hm_Msg.mn_Length = sizeof(listener);
                 listener.hm_Type = HELIOS_MSGTYPE_FAST_EVENT;
                 listener.hm_EventMask = HEVTF_NEW_REPORTMSG;
-                
+
                 for (;;)
                 {
                     ULONG sigs;
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
                                (ULONG)type_str[msg->hrm_TypeBit],
                                (ULONG)msg->hrm_Label,
                                (ULONG)msg->hrm_Msg);
-                        
+
                         Helios_FreeReportMsg(msg);
                     }
 
@@ -83,7 +83,9 @@ int main(int argc, char **argv)
                     /* Wait for new reports or BREAK-C */
                     sigs = Wait((1ul << evt_port->mp_SigBit) | SIGBREAKF_CTRL_C);
                     if (sigs & SIGBREAKF_CTRL_C)
+                    {
                         break;
+                    }
 
                     /* I can get only one possible messages.
                      * In others cases a while loop is needed!

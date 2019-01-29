@@ -56,10 +56,12 @@ static void cmd_reply_ioreq(IOHeliosHWReq *ioreq, LONG err, BYTE status)
     struct Message *msg;
 
     ioreq->iohh_Req.io_Error = err;
-    
+
     msg = &ioreq->iohh_Req.io_Message;
     if (msg->mn_Node.ln_Type != NT_MESSAGE)
+    {
         _INFO("bad msg type (%p-%u)\n", msg, msg->mn_Node.ln_Type);
+    }
 
     ReplyMsg(msg);
 }
@@ -75,9 +77,13 @@ static void _cmd_HandlePHYATComplete(OHCI1394Unit *unit,
                ioreq, status, timestamp >> 13, timestamp & 0x1fff);
 
     if (HELIOS_ACK_COMPLETE == status)
+    {
         err = HHIOERR_NO_ERROR;
+    }
     else
+    {
         err = HHIOERR_FAILED;
+    }
 
     FreeMem(pdata, sizeof(*pdata));
     ioreq->iohh_Private = NULL;
@@ -126,13 +132,19 @@ static void _cmd_HandleResponse(HeliosTransaction *t,
             }
         }
         else if (TCODE_WRITE_QUADLET_REQUEST == t->htr_Packet.TCode)
+        {
             ioreq->iohhe_Req.iohh_Actual = sizeof(QUADLET);
+        }
         else if ((TCODE_WRITE_BLOCK_REQUEST == t->htr_Packet.TCode) ||
                  (TCODE_WRITE_STREAM == t->htr_Packet.TCode))
+        {
             ioreq->iohhe_Req.iohh_Actual = t->htr_Packet.PayloadLength;
+        }
     }
     else
+    {
         err = HHIOERR_FAILED;
+    }
 
     cmd_reply_ioreq(&ioreq->iohhe_Req, err, status);
 }
@@ -151,7 +163,8 @@ CMDP(cmdQueryDevice)
     tags = (struct TagItem *) ioreq->iohh_Data;
     while (NULL != (tag = NextTagItem(&tags)))
     {
-        switch (tag->ti_Tag) {
+        switch (tag->ti_Tag)
+        {
             case OHCI1394A_PciVendorId:
                 *(UWORD *)tag->ti_Data = unit->hu_PCI_VID;
                 count++;
@@ -231,9 +244,13 @@ CMDP(cmdQueryDevice)
                 LOCK_REGION_SHARED(unit);
                 {
                     if (unit->hu_Topology)
+                    {
                         *(ULONG *)tag->ti_Data = unit->hu_Topology->ht_Generation;
+                    }
                     else
+                    {
                         *(ULONG *)tag->ti_Data = 0;
+                    }
                 }
                 UNLOCK_REGION_SHARED(unit);
                 count++;
@@ -243,9 +260,13 @@ CMDP(cmdQueryDevice)
                 LOCK_REGION_SHARED(unit);
                 {
                     if (NULL != unit->hu_Topology)
+                    {
                         CopyMemQuick(unit->hu_Topology, (APTR)tag->ti_Data, sizeof(HeliosTopology));
+                    }
                     else
+                    {
                         ((HeliosTopology *)tag->ti_Data)->ht_Generation = 0;
+                    }
                 }
                 UNLOCK_REGION_SHARED(unit);
                 count++;
@@ -255,9 +276,13 @@ CMDP(cmdQueryDevice)
                 LOCK_REGION_SHARED(unit);
                 {
                     if (NULL != unit->hu_Topology)
+                    {
                         *(ULONG *)tag->ti_Data = unit->hu_Topology->ht_NodeCount;
+                    }
                     else
+                    {
                         *(ULONG *)tag->ti_Data = 0;
+                    }
                 }
                 UNLOCK_REGION_SHARED(unit);
                 count++;
@@ -297,7 +322,9 @@ CMDP(cmdEnable)
         _INFO_UNIT(unit, "HHIOCMD_ENABLE\n");
 
         if (!ohci_Enable(unit))
+        {
             ioreq->iohh_Req.io_Error = HHIOERR_FAILED;
+        }
     }
     UNLOCK_REGION(unit);
 
@@ -324,7 +351,9 @@ CMDP(cmdBusReset)
         _INFO_UNIT(unit, "HHIOCMD_BUSRESET\n");
 
         if (!ohci_RaiseBusReset(unit, (LONG)ioreq->iohh_Data))
+        {
             ioreq->iohh_Req.io_Error = HHIOERR_FAILED;
+        }
     }
     UNLOCK_REGION(unit);
 
@@ -357,9 +386,13 @@ CMDP(cmdSendRequest)
     LOCK_REGION_SHARED(unit);
     {
         if (unit->hu_Topology)
+        {
             topogen = unit->hu_Topology->ht_Generation;
+        }
         else
-            topogen = 0; /* will cause an error below */
+        {
+            topogen = 0;    /* will cause an error below */
+        }
         gen = unit->hu_OHCI_LastGeneration;
     }
     UNLOCK_REGION_SHARED(unit);
@@ -378,7 +411,9 @@ CMDP(cmdSendRequest)
         destid = ioreqext->iohhe_Device->hd_NodeID;
     }
     else
+    {
         destid = p->DestID;
+    }
 
     t->htr_Callback = _cmd_HandleResponse;
     t->htr_UserData = ioreq;
@@ -393,7 +428,9 @@ CMDP(cmdSendRequest)
     err = ohci_TL_SendRequest(unit, t, destid, p->Speed, gen, p->TCode,
                               p->ExtTCode, p->Offset, p->Payload, p->PayloadLength);
     if (HHIOERR_NO_ERROR == err)
+    {
         return TRUE;
+    }
 
     ioreq->iohh_Req.io_Error = err;
     return FALSE;
@@ -485,7 +522,9 @@ CMDP(cmdSetAttrs)
         }
 
         if (err)
+        {
             break;
+        }
     }
 
     ioreq->iohh_Req.io_Error = err;
@@ -553,11 +592,15 @@ CMDP(cmdCreateIsoCtx)
                 *ctx_p = ohci_IRContext_Create(unit, index, ibuf_size, ibuf_count,
                                                hlen, payload_align, callback, udata, flags);
                 if (NULL != *ctx_p)
+                {
                     err = 0;
+                }
             }
         }
         else
+        {
             DB_NotImplemented();
+        }
     }
 
     ioreq->iohh_Req.io_Error = err;
@@ -593,9 +636,13 @@ CMDP(cmdStartIsoCtx)
     if (NULL != ctx)
     {
         if (ctx->ctx_RegOffset >= OHCI1394_REG_IRECV_CONTEXT_CONTROL(0))
+        {
             ohci_IRContext_Start((OHCI1394IRCtx *)ctx, channel, isotag);
+        }
         else
+        {
             DB_NotImplemented();
+        }
     }
 
     ioreq->iohh_Req.io_Error = err;
@@ -610,9 +657,13 @@ CMDP(cmdStopIsoCtx)
 
     ctx = ioreq->iohh_Data;
     if (ctx->ctx_RegOffset >= OHCI1394_REG_IRECV_CONTEXT_CONTROL(0))
+    {
         ohci_IRContext_Stop((OHCI1394IRCtx *)ioreq->iohh_Data);
+    }
     else
+    {
         DB_NotImplemented();
+    }
 
     return FALSE;
 }

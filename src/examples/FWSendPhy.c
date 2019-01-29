@@ -78,9 +78,13 @@ int main(int argc, char **argv)
     if (NULL != rdargs)
     {
         if (NULL != args.hwno)
+        {
             hwno = *args.hwno;
+        }
         if (NULL != args.data)
+        {
             data = *args.data;
+        }
     }
     else
     {
@@ -99,7 +103,9 @@ int main(int argc, char **argv)
             while (NULL != (hw = Helios_GetNextHardware(hw)))
             {
                 if (hwno == cnt++)
+                {
                     break;
+                }
 
                 Helios_ReleaseHardware(hw);
             }

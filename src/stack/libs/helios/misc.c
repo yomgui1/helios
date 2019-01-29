@@ -64,14 +64,15 @@ static void helios_SubTaskEntry(HeliosSubTask *ctx)
     struct Task *waiter;
     struct Task *task = FindTask(NULL);
 
-    struct TagItem tags[] = {
+    struct TagItem tags[] =
+    {
         {HA_MsgPort, 0},
         {TAG_MORE, 0},
         {TAG_END, 0}
     };
 
     _INFO("+ SubTask %p-'%s', ctx %p\n", task, task->tc_Node.ln_Name, ctx);
-    
+
     /* Init task data */
     ctx->stc_Task = task;
     tags[0].ti_Data = (ULONG)ctx->stc_TaskPort;
@@ -134,12 +135,16 @@ struct timerequest *Helios_OpenTimer(struct MsgPort *port, ULONG unit)
             return tr;
         }
         else
+        {
             _ERR("Failed to open timer.device\n");
+        }
 
         DeleteExtIO((struct IORequest *)tr);
     }
     else
+    {
         _ERR("Failed to create timer request\n");
+    }
 
     return NULL;
 }
@@ -179,10 +184,13 @@ ULONG Helios_SignalSubTask(HeliosSubTask *ctx, ULONG sigmask)
 
     ObtainSemaphoreShared(&ctx->stc_Lock);
 
-    if (NULL != ctx->stc_Task) {
+    if (NULL != ctx->stc_Task)
+    {
         Signal(ctx->stc_Task, sigmask);
         err = HERR_NOERR;
-    } else {
+    }
+    else
+    {
         _INFO("Subtask %p killed\n", ctx->stc_Task);
         err = HERR_SYSTEM;
     }
@@ -198,12 +206,15 @@ LONG Helios_SendMsgToSubTask(HeliosSubTask *ctx, struct Message *msg)
 
     ObtainSemaphoreShared(&ctx->stc_Lock);
 
-    if (NULL != ctx->stc_Task) {
+    if (NULL != ctx->stc_Task)
+    {
         msg->mn_Node.ln_Type = NT_MESSAGE;
         _INFO("Send msg %p to subtask %p using replyport %p\n", msg, ctx->stc_Task, msg->mn_ReplyPort);
         PutMsg(ctx->stc_TaskPort, msg);
         err = HERR_NOERR;
-    } else {
+    }
+    else
+    {
         _INFO("Subtask %p killed\n", ctx->stc_Task);
         err = HERR_SYSTEM;
     }
@@ -229,18 +240,24 @@ LONG Helios_DoMsgToSubTask(HeliosSubTask *ctx, struct Message *msg, struct MsgPo
     }
 
     if (NULL != replyport)
+    {
         msg->mn_ReplyPort = replyport;
+    }
 
     err = Helios_SendMsgToSubTask(ctx, msg);
     if (HERR_NOERR != err)
+    {
         goto end;
+    }
 
     WaitPort(msg->mn_ReplyPort);
     GetMsg(msg->mn_ReplyPort);
 
 end:
     if (allocport)
+    {
         DeleteMsgPort(replyport);
+    }
 
     return err;
 }
@@ -271,9 +288,13 @@ HeliosSubTask *Helios_CreateSubTaskA(CONST_STRPTR name,
     size = sizeof(HeliosSubTask) + sizeof(struct TagItem) * (extra_tags_cnt+1) + name_len;
 
     if (NULL != pool)
+    {
         ctx = AllocVecPooled(pool, size);
+    }
     else
+    {
         ctx = AllocVec(size, MEMF_PUBLIC | MEMF_CLEAR);
+    }
 
     if (NULL != ctx)
     {
@@ -312,17 +333,27 @@ HeliosSubTask *Helios_CreateSubTaskA(CONST_STRPTR name,
                                       TASKTAG_PPC_ARG1,    (ULONG)ctx,
                                       TAG_DONE);
         if (NULL != ctx->stc_Task)
+        {
             return ctx;
+        }
         else
+        {
             _ERR("NewCreateTask(...) failed\n");
+        }
     }
     else
+    {
         _ERR("Subtask ctx allocation failed\n");
+    }
 
     if (NULL != pool)
+    {
         FreeVecPooled(pool, ctx);
+    }
     else
+    {
         FreeVec(ctx);
+    }
 
     return NULL;
 }
@@ -367,7 +398,9 @@ LONG Helios_KillSubTask(HeliosSubTask *ctx)
     msg.hm_Type = HELIOS_MSGTYPE_TASKKILL;
 
     if (HERR_NOMEM == Helios_DoMsgToSubTask(ctx, (struct Message *)&msg, NULL))
+    {
         return HERR_NOMEM;
+    }
 
     /* Wait for the end of task */
     _INFO("Wait for death of subtask %p\n", task);
@@ -375,14 +408,20 @@ LONG Helios_KillSubTask(HeliosSubTask *ctx)
     {
         Wait(SIGF_SINGLE);
         if (&ctx->stc_Msg == GetMsg(&port))
+        {
             break;
+        }
     }
     _INFO("Task %p not longer exist\n", task);
 
     if (NULL != ctx->stc_Pool)
+    {
         FreeVecPooled(ctx->stc_Pool, ctx);
+    }
     else
+    {
         FreeVec(ctx);
+    }
 
     return HERR_NOERR;
 }
@@ -396,15 +435,15 @@ LONG Helios_WaitTaskReady(HeliosSubTask *ctx, LONG sigs)
     {
         task = ctx->stc_Task;
         if (NULL != task)
-        if (32 != ctx->stc_ReadySigBit)
-        {
-            rsig = AllocSignal(-1);
-            if (-1 != rsig)
+            if (32 != ctx->stc_ReadySigBit)
             {
-                ctx->stc_Waiter = FindTask(NULL);
-                ctx->stc_ReadySigBit = rsig;
+                rsig = AllocSignal(-1);
+                if (-1 != rsig)
+                {
+                    ctx->stc_Waiter = FindTask(NULL);
+                    ctx->stc_ReadySigBit = rsig;
+                }
             }
-        }
     }
     ReleaseSemaphore(&ctx->stc_Lock);
 
@@ -429,7 +468,9 @@ LONG Helios_WaitTaskReady(HeliosSubTask *ctx, LONG sigs)
 
     FreeSignal(rsig);
     if (sigs & (1ul << rsig))
+    {
         return ctx->stc_Success?0:-1;
+    }
     return sigs;
 }
 
@@ -497,7 +538,9 @@ void Helios_SendEvent(HeliosEventListenerList *list, ULONG event, ULONG result)
         ForeachNodeSafe(list, node, next)
         {
             if (0 == (node->hm_EventMask & event))
+            {
                 continue;
+            }
 
             if (HELIOS_MSGTYPE_FAST_EVENT == node->hm_Type)
             {
@@ -514,7 +557,7 @@ void Helios_SendEvent(HeliosEventListenerList *list, ULONG event, ULONG result)
                     _ERR("Msg alloc failed\n");
                     continue;
                 }
-        
+
                 msg->hm_Msg.mn_ReplyPort = NULL;
                 msg->hm_Msg.mn_Length = sizeof(*msg);
                 msg->hm_Msg.mn_Node.ln_Type = NT_FREEMSG;
@@ -523,7 +566,7 @@ void Helios_SendEvent(HeliosEventListenerList *list, ULONG event, ULONG result)
                 msg->hm_EventMask = event;
                 msg->hm_Result = result;
                 msg->hm_UserData = node->hm_UserData;
-                
+
                 PutMsg(node->hm_Msg.mn_ReplyPort, &msg->hm_Msg);
             }
         }
@@ -569,7 +612,7 @@ LONG Helios_VReportMsg(ULONG type, CONST_STRPTR label, CONST_STRPTR fmt, va_list
             ADDHEAD(&HeliosBase->hb_ReportList, msg);
         }
         UNLOCK_REGION(HeliosBase);
-    
+
         Helios_SendEvent(&HeliosBase->hb_Listeners, HEVTF_NEW_REPORTMSG, 0);
         return len;
     }
@@ -593,7 +636,7 @@ HeliosReportMsg *Helios_GetNextReportMsg(void)
 {
     HeliosReportMsg *msg;
 
-    Helios_WriteLockBase();    
+    Helios_WriteLockBase();
     msg = (HeliosReportMsg *)REMTAIL(&HeliosBase->hb_ReportList);
     Helios_UnlockBase();
 

@@ -39,8 +39,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <proto/utility.h>
 
 static OHCI1394Device *devInit(OHCI1394Device *base,
-                                BPTR seglist,
-                                struct ExecBase *sysbase);
+                               BPTR seglist,
+                               struct ExecBase *sysbase);
 static OHCI1394Device *devOpen(void);
 static BPTR devExpunge(void);
 static BPTR devClose(void);
@@ -50,7 +50,8 @@ static int devReserved(void);
 
 /*------------------ PRIVATE GLOBALS SECTION ----------------------*/
 
-static const ULONG devFuncTable[] = {
+static const ULONG devFuncTable[] =
+{
     FUNCARRAY_32BIT_NATIVE,
 
     (ULONG) devOpen,
@@ -63,12 +64,14 @@ static const ULONG devFuncTable[] = {
     ~0
 };
 
-static const struct {
+static const struct
+{
     ULONG  LibSize;
     const void  *FuncTable;
     const void  *DataTable;
     void (*InitFunc)(void);
-} dev_init = {
+} dev_init =
+{
     sizeof(OHCI1394Device),
     devFuncTable,
     NULL,

@@ -36,7 +36,9 @@ int main(int argc, char **argv)
         CloseLibrary(HeliosBase);
     }
     else
+    {
         Printf("Failed to open helios.library v50\n");
+    }
 
     return 0;
 }

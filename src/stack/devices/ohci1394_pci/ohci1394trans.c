@@ -52,7 +52,8 @@ extern char *evt_strings;
 
 #define RETRY_X 1
 
-static HeliosResponse bad_address_response = {
+static HeliosResponse bad_address_response =
+{
     {RCode : HELIOS_RCODE_ADDRESS_ERROR},
     NULL, 0, 0
 };
@@ -66,7 +67,9 @@ LONG tl_SearchNextTLabel(OHCI1394Unit *unit)
 
     /* fully busy ? */
     if (-1 == unit->hu_TLabelMap)
+    {
         return -1;
+    }
 
     /* Starting from the last given TLabel, search a non-used one.
      * I don't check for a full scanning as I've already checked if
@@ -127,7 +130,7 @@ static void tl_ATCompleteCb(OHCI1394Unit *unit,
         default: /* status is already a valid RCode */
             ohci_TL_Finish(unit, t, status);
             break;
-	}
+    }
 }
 
 static void tl_DoReqHandleResp(HeliosTransaction *t,
@@ -145,7 +148,7 @@ static void tl_DoReqHandleResp(HeliosTransaction *t,
         if (NULL != payload)
         {
             udata->length = MIN(length, udata->length);
-            
+
             _INFO("Copy %lu bytes into buffer at $%p\n", udata->length, udata->payload);
             CopyMem(payload, udata->payload, udata->length);
         }
@@ -177,7 +180,9 @@ static void tl_Response_ATCompleteCb(OHCI1394Unit *unit,
     resp->hr_Packet.Ack = status;
     resp->hr_Packet.TimeStamp = timestamp;
     if (NULL != resp->hr_FreeFunc)
+    {
         resp->hr_FreeFunc(resp, resp->hr_AllocSize, resp->hr_FreeUData);
+    }
     FreePooled(unit->hu_MemPool, pdata, sizeof(*pdata));
 }
 
@@ -193,10 +198,12 @@ void tl_send_response(OHCI1394Unit *unit,
     _INFO_UNIT(unit, "resp@%p: RC=%d\n", resp, resp->hr_Packet.RCode);
 
     /* Don't response to unified transaction or broadcast transaction */
-	if ((req->Ack != HELIOS_ACK_PENDING) || ((req->DestID & 0x3f) == 0x3f))
+    if ((req->Ack != HELIOS_ACK_PENDING) || ((req->DestID & 0x3f) == 0x3f))
     {
-		if (NULL != resp->hr_FreeFunc)
+        if (NULL != resp->hr_FreeFunc)
+        {
             resp->hr_FreeFunc(resp, resp->hr_AllocSize, resp->hr_FreeUData);
+        }
         return;
     }
 
@@ -231,7 +238,7 @@ void tl_send_response(OHCI1394Unit *unit,
             resp->hr_Packet.Header[3] |= (resp->hr_Packet.PayloadLength << 16);
             tcode = req->TCode + 2;
             break;
-            
+
         default:
             _ERR_UNIT(unit, "bad tcode (%x)\n", req->TCode);
             return;
@@ -251,7 +258,9 @@ void tl_send_response(OHCI1394Unit *unit,
     if (HHIOERR_NO_ERROR != err)
     {
         if (NULL != resp->hr_FreeFunc)
+        {
             resp->hr_FreeFunc(resp, resp->hr_AllocSize, resp->hr_FreeUData);
+        }
         FreePooled(unit->hu_MemPool, pdata, sizeof(*pdata));
     }
 }
@@ -280,10 +289,12 @@ LONG ohci_TL_Register(OHCI1394Unit *unit,
         pdata->pd_AckCallback = cb;
         pdata->pd_UData = cb_udata;
         pdata->pd_Buffer = NULL;
-        t->htr_Private = pdata;        
+        t->htr_Private = pdata;
     }
     else
+    {
         _ERR_UNIT(unit, "No free tlabel\n");
+    }
 
     return t->htr_Packet.TLabel;
 }
@@ -301,7 +312,9 @@ void ohci_TL_FlushAll(OHCI1394Unit *unit)
             if (NULL != t)
             {
                 if (NULL != t->htr_Private)
+                {
                     ohci_CancelATPacket(unit, t->htr_Private);
+                }
                 ohci_TL_Finish(unit, t, HELIOS_RCODE_CANCELLED);
             }
         }
@@ -338,7 +351,9 @@ void ohci_TL_Finish(OHCI1394Unit *unit, HeliosTransaction *t, BYTE status)
 
                 req->transaction = NULL;
                 if (!CheckIO(&req->req.tr_node))
+                {
                     AbortIO(&req->req.tr_node);
+                }
                 t->htr_SplitTimerReq = NULL;
             }
         }
@@ -408,13 +423,17 @@ void ohci_TL_HandleResponse(OHCI1394Unit *unit, HeliosAPacket *resp)
             {
                 req->transaction = NULL;
                 if (!CheckIO(&req->req.tr_node))
+                {
                     AbortIO(&req->req.tr_node);
+                }
                 t->htr_SplitTimerReq = NULL;
             }
 
             /* Cancel ATComplete handler */
             if (NULL != pdata)
+            {
                 ohci_CancelATPacket(unit, pdata);
+            }
         }
         else
         {
@@ -427,7 +446,9 @@ void ohci_TL_HandleResponse(OHCI1394Unit *unit, HeliosAPacket *resp)
     UNLOCK_REGION(unit);
 
     if (NULL == t)
+    {
         return;
+    }
 
     if (TCODE_READ_QUADLET_RESPONSE == resp->TCode)
     {
@@ -448,7 +469,9 @@ void ohci_TL_HandleRequest(OHCI1394Unit *unit, HeliosAPacket *req, UBYTE generat
 
     /* don't handle if ack error */
     if ((req->Ack != HELIOS_ACK_PENDING) && (req->Ack != HELIOS_ACK_COMPLETE))
-		return;
+    {
+        return;
+    }
 
     LOCK_REGION_SHARED(&unit->hu_ReqHandlerData);
     {
@@ -475,7 +498,9 @@ void ohci_TL_HandleRequest(OHCI1394Unit *unit, HeliosAPacket *req, UBYTE generat
     UNLOCK_REGION_SHARED(&unit->hu_ReqHandlerData);
 
     if (NULL != response)
+    {
         tl_send_response(unit, req, response, generation);
+    }
 }
 
 
@@ -504,9 +529,9 @@ LONG ohci_TL_SendRequest(OHCI1394Unit *unit,
 
     /* Prepare the packet */
     t->htr_Packet.Header[0] = AT_HEADER_SPEED(speed) |
-        AT_HEADER_TLABEL(t->htr_Packet.TLabel) |
-        AT_HEADER_RT(RETRY_X) |
-        AT_HEADER_TCODE(tcode);
+                              AT_HEADER_TLABEL(t->htr_Packet.TLabel) |
+                              AT_HEADER_RT(RETRY_X) |
+                              AT_HEADER_TCODE(tcode);
     t->htr_Packet.Header[1] = AT_HEADER_DEST_ID(destid) | (UWORD)(offset >> 32);
     t->htr_Packet.Header[2] = offset;
 
@@ -527,7 +552,9 @@ LONG ohci_TL_SendRequest(OHCI1394Unit *unit,
     }
 
     if (-1 == ohci_TL_Register(unit, t, tl_ATCompleteCb, t))
+    {
         return IOERR_UNITBUSY;
+    }
 
     pdata = t->htr_Private;
 
@@ -579,13 +606,13 @@ LONG ohci_TL_SendRequest(OHCI1394Unit *unit,
             resp.Header[2] = t->htr_Packet.Header[2];
             resp.Header[3] = t->htr_Packet.Header[3];
             break;
-            
+
         case TCODE_READ_QUADLET_REQUEST:
             t->htr_Packet.Payload = NULL;
             t->htr_Packet.PayloadLength = 0;
             t->htr_Packet.Offset = offset;
             break;
-            
+
         default:
             _ERR_UNIT(unit, "Unsupported TCode $%X as local request\n", tcode);
 
@@ -593,11 +620,11 @@ LONG ohci_TL_SendRequest(OHCI1394Unit *unit,
             tl_ATCompleteCb(unit, HELIOS_ACK_TYPE_ERROR, ohci_GetTimeStamp(unit), pdata);
             return HHIOERR_NO_ERROR;
     }
-    
+
     t->htr_Packet.TCode = tcode;
     t->htr_Packet.Speed = speed;
     t->htr_Packet.Retry = 1;
-    
+
     /* Locking the region now, because a block of data (i.e. ROM) may be
      * used as payload response and we need to wait its usage during
      * the call to ohci_TL_HandleResponse() before modifications.
@@ -608,7 +635,7 @@ LONG ohci_TL_SendRequest(OHCI1394Unit *unit,
         {
             /* Fill the response packet */
             ohci_HandleLocalRequest(unit, &t->htr_Packet, &resp);
-        
+
             /* Handle the response as received from the AR-Resp context */
             ohci_TL_HandleResponse(unit, &resp);
         }
@@ -655,15 +682,21 @@ LONG ohci_TL_DoRequest(OHCI1394Unit *unit,
     if (HHIOERR_NO_ERROR == res)
     {
         ULONG sigs;
-        
+
         sigs = Wait(udata.signal | SIGBREAKF_CTRL_C);
         if (0 == (sigs & udata.signal))
+        {
             ohci_TL_Cancel(unit, &t);
+        }
     }
     else if (IOERR_UNITBUSY)
+    {
         return HELIOS_RCODE_BUSY;
+    }
     else
+    {
         return HELIOS_RCODE_SEND_ERROR;
+    }
 
     return udata.status;
 }
@@ -675,7 +708,7 @@ LONG ohci_TL_DoPHYPacket(OHCI1394Unit *unit,
     OHCI1394ATPacketData pdata;
     DoRequestUData udata;
     LONG res;
-    
+
     udata.task = FindTask(NULL);
     udata.signal = 1ul << sigbit;
     udata.status = HELIOS_ACK_NOTSET;
@@ -691,12 +724,18 @@ LONG ohci_TL_DoPHYPacket(OHCI1394Unit *unit,
 
         sigs = Wait(sig | SIGBREAKF_CTRL_C);
         if (0 == (sigs & sig))
+        {
             ohci_CancelATPacket(unit, &pdata);
+        }
     }
     else if (IOERR_UNITBUSY)
+    {
         return HELIOS_ACK_BUSY_X;
+    }
     else
+    {
         return HELIOS_ACK_TYPE_ERROR;
+    }
 
     return udata.status;
 }
@@ -718,11 +757,15 @@ LONG ohci_TL_AddReqHandler(OHCI1394Unit *unit, HeliosHWReqHandler *reqh)
         (reqh->rh_RegionStart >= reqh->rh_RegionStop) ||
         (reqh->rh_Length & 3) ||
         (0 == reqh->rh_Length))
+    {
         return IOERR_BADADDRESS;
+    }
 
     /* TODO: I support only HHF_REQH_ALLOCLEN allocation type */
     if (reqh->rh_Flags != HHF_REQH_ALLOCLEN)
+    {
         return HHIOERR_FAILED;
+    }
 
     start = reqh->rh_RegionStart;
     node = (APTR)GetHead(&unit->hu_ReqHandlerData.rhd_List);

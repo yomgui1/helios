@@ -36,7 +36,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 typedef u_int32_t QUADLET;
 typedef UQUAD HeliosOffset; /* The 48-bit Node address space */
 
-typedef enum {
+typedef enum
+{
     S100=0,
     S200=1,
     S400=2,
@@ -111,9 +112,9 @@ typedef enum {
 /* Types for Helios_GetAttrs, Helios_SetAttrs */
 #define HGA_BASE      1
 #define HGA_HARDWARE  2
-#define HGA_DEVICE    3 
-#define HGA_UNIT      4 
-#define HGA_CLASS     5 
+#define HGA_DEVICE    3
+#define HGA_UNIT      4
+#define HGA_CLASS     5
 
 /* Helios Tags (Lib: 0x00..0xff, HW device: 0x100..0x1ff), classes: 0x200..0x2ff) */
 #define HELIOS_TAGBASE         (0x8E710000)         /* Reserved area: range len = 0x10000 */
@@ -273,11 +274,26 @@ typedef enum {
 /*=== Helios nodes ===========================================================*/
 
 #ifndef HELIOS_INTERNAL
-struct HeliosEventListenerList {struct MinNode *Node;};
-struct HeliosHardware {struct MinNode *Node;};
-struct HeliosDevice {struct MinNode *Node;};
-struct HeliosUnit {struct MinNode *Node;};
-struct HeliosClass {struct MinNode *Node;};
+struct HeliosEventListenerList
+{
+    struct MinNode *Node;
+};
+struct HeliosHardware
+{
+    struct MinNode *Node;
+};
+struct HeliosDevice
+{
+    struct MinNode *Node;
+};
+struct HeliosUnit
+{
+    struct MinNode *Node;
+};
+struct HeliosClass
+{
+    struct MinNode *Node;
+};
 #else
 struct HeliosEventListenerList;
 struct HeliosHardware;
@@ -299,11 +315,13 @@ typedef struct HeliosClass HeliosClass;
     ULONG           hm_Type;                    \
     ULONG           hm_Result;
 
-typedef struct HeliosMsg {
+typedef struct HeliosMsg
+{
     HELIOS_MSG_HEADER;
 } HeliosMsg;
 
-typedef struct HeliosEventMsg {
+typedef struct HeliosEventMsg
+{
     HELIOS_MSG_HEADER;
     struct timeval  hm_Time;
     ULONG           hm_EventMask;
@@ -311,7 +329,8 @@ typedef struct HeliosEventMsg {
 } HeliosEventMsg;
 
 /* Helios messages types */
-enum {
+enum
+{
     HELIOS_MSGTYPE_TASKKILL,
     HELIOS_MSGTYPE_EVENT,
     HELIOS_MSGTYPE_FAST_EVENT,
@@ -325,23 +344,25 @@ typedef struct HeliosReportMsg
     CONST_STRPTR   hrm_Msg;
 } HeliosReportMsg;
 
-typedef union HeliosBusOptions {
+typedef union HeliosBusOptions
+{
     QUADLET value;
 
-    struct {
-    /* bits from 31 to 0 */
-    QUADLET IsoRsrcMgr      : 1;
-    QUADLET CycleMaster     : 1;
-    QUADLET Isochronous     : 1;
-    QUADLET BusMgr          : 1;
-    QUADLET PowerMgt        : 1;
-    QUADLET Reserved2       : 3;
-    QUADLET CycleClockAcc   : 8;
-    QUADLET MaxRec          : 4;
-    QUADLET Reserved1       : 4;
-    QUADLET CfgROMChg       : 2;
-    QUADLET Reserved0       : 3;
-    QUADLET MaxLinkSpeed    : 3;
+    struct
+    {
+        /* bits from 31 to 0 */
+        QUADLET IsoRsrcMgr      : 1;
+        QUADLET CycleMaster     : 1;
+        QUADLET Isochronous     : 1;
+        QUADLET BusMgr          : 1;
+        QUADLET PowerMgt        : 1;
+        QUADLET Reserved2       : 3;
+        QUADLET CycleClockAcc   : 8;
+        QUADLET MaxRec          : 4;
+        QUADLET Reserved1       : 4;
+        QUADLET CfgROMChg       : 2;
+        QUADLET Reserved0       : 3;
+        QUADLET MaxLinkSpeed    : 3;
     } r;
 } HeliosBusOptions;
 
@@ -351,7 +372,8 @@ typedef union HeliosBusOptions {
  * This last will build its own suitable packet using data here.
  * Not all fields are filled or used, depends on the TCode value.
  */
-typedef struct HeliosAPacket {
+typedef struct HeliosAPacket
+{
     QUADLET         Header[4];
     UWORD           HeaderLength;
     UWORD           PayloadLength;
@@ -395,7 +417,8 @@ typedef void (*HeliosIRCallback)(HeliosIRBuffer *irbuf, ULONG status, APTR userd
 typedef struct HeliosNode
 {
     UBYTE          n_PhyID;
-    struct {
+    struct
+    {
         UBYTE ResetInitiator:1;
         UBYTE LinkOn:1;
     }              n_Flags;

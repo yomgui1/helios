@@ -9,6 +9,7 @@ include/inline/*.h
 *.map
 *.library
 *.device
+*.class
 mapfile.txt
 helios_rom_start
 helios_remove

@@ -30,9 +30,8 @@ Current SDK is in testing stage, API may changes at any moments.
 
 In a shell, go into helios root directory and type:
 
-1. ```make -s -C src/stack/libs/Helios sdk```
-2. ```make -s all```
-3. ```make -s release```
+1. ```make -s all```
+2. ```make -s release```
 
 You will obtain in T: the Helios LHA package. Install from it following instructions below.
 

@@ -256,7 +256,7 @@ struct Library* LIB_Open(void)
                 CloseLibrary((struct Library *) IntuitionBase);
             }
             else
-                dprintf(msg);
+                kprintf(msg);
         }
 
         base->hb_Lib.lib_Flags |= LIBF_DELEXP;

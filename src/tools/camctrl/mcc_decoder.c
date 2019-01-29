@@ -100,7 +100,7 @@ static ULONG mProcess(struct IClass *cl, Object *obj, struct MUIP_Process_Proces
     APTR oldwindowptr = myproc->pr_WindowPtr;
     LONG data_ready;
 
-    dprintf("[Proc %p] obj %p, proc %p\n", myproc, obj, msg->proc);
+    kprintf("[Proc %p] obj %p, proc %p\n", myproc, obj, msg->proc);
 
     myproc->pr_WindowPtr = (APTR) -1;
 
@@ -123,7 +123,7 @@ static ULONG mProcess(struct IClass *cl, Object *obj, struct MUIP_Process_Proces
     }
 
     myproc->pr_WindowPtr = oldwindowptr;
-    dprintf("[Proc %p] bye\n");
+    kprintf("[Proc %p] bye\n");
     return 0;
 }
 //-

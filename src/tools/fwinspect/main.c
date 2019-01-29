@@ -251,7 +251,7 @@ static void fw_to_eeprom(ULONG iobase, int cs, int clock, int dataout)
 {
     ULONG value = 0x10 /* enable outputs */ | (cs ? 8 : 0) | (clock ? 4 : 0) | (dataout ? 2 : 0);
 
-    //dprintf(stderr, " %c%c%c ", cs ? ' ' : '-', clock ? 'c' : ' ', dataout ? '1' : '0');
+    //kprintf(stderr, " %c%c%c ", cs ? ' ' : '-', clock ? 'c' : ' ', dataout ? '1' : '0');
     reg_Write(iobase + 0x20, value);
 }
 //-
@@ -274,7 +274,7 @@ static void write_4w(ULONG iobase, UBYTE address, UWORD value)
 {
     value = BE_SWAPWORD(value);
 
-    //dprintf("writing 0x%04X at address 0x%02X\n", value, address);
+    //kprintf("writing 0x%04X at address 0x%02X\n", value, address);
 
     fw_to_eeprom(iobase, 0, 0, 0); usleep(10); /* Init */
 

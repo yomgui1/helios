@@ -401,7 +401,7 @@ static void devBeginIO(void)
             break;
 
         default:
-            dprintf("[ERR] SBP2 > Not supported IO cmd: %u\n", ioreq->io_Command);
+            kprintf("[ERR] SBP2 > Not supported IO cmd: %u\n", ioreq->io_Command);
             ioreq->io_Actual = 0;
             ret = IOERR_NOCMD;
             break;

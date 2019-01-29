@@ -49,18 +49,18 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define INITFUNC inithelios
 #endif
 
-extern void dprintf(char *, ...);
-extern void vdprintf(char *, void *);
+extern void kprintf(char *, ...);
+extern void vkprintf(char *, void *);
 
 #ifndef NDEBUG
 
-#define DB(x, a...) dprintf("HELIOS: "x , ## a)
-#define DB_Raw(x, a...) dprintf(x , ## a)
+#define DB(x, a...) kprintf("HELIOS: "x , ## a)
+#define DB_Raw(x, a...) kprintf(x , ## a)
 #define DB_NotImplemented() DB("%s: %s() not implemented\n", __FILE__, __FUNCTION__)
 #define DB_NotFinished() DB("%s: %s() not finished\n", __FILE__, __FUNCTION__)
 #define DB_IN(fmt, a...) DB("+ "__FUNCTION__" + "fmt"\n", ## a)
 #define DB_OUT() DB("- "__FUNCTION__" -\n")
-#define log_Debug(m, a...) dprintf("HELIOS-Debug: "m"\n" ,## a)
+#define log_Debug(m, a...) kprintf("HELIOS-Debug: "m"\n" ,## a)
 #else
 
 #define DB(x, a...)
@@ -79,7 +79,7 @@ static inline void _log_APIError(CONST_STRPTR fname, CONST_STRPTR msg)
     DB("  Function '%s' failed: \"%s\"\n", fname, msg);
 }
 
-#define log_Error(m, a...) dprintf("HELIOS-Error: "m"\n" ,## a)
+#define log_Error(m, a...) kprintf("HELIOS-Error: "m"\n" ,## a)
 
 /* Python useful macros */
 #define ADD_TYPE(m, s, t) {Py_INCREF(t); PyModule_AddObject(m, s, (PyObject *)(t));}

@@ -392,7 +392,7 @@ void ohci_DumpRegisters(OHCI1394Unit *unit)
 //+ ohci_OnUnrecoverableError
 static void ohci_OnUnrecoverableError(OHCI1394Unit *unit, STRPTR msg)
 {
-    dprintf("UnrecoverableError, unit #%lu shall be reset now! Reason: '%s'\n",
+    kprintf("UnrecoverableError, unit #%lu shall be reset now! Reason: '%s'\n",
             unit->hu_UnitNo, msg);
 
     LOCK_REGION(unit);
@@ -1259,7 +1259,7 @@ static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
             p.QuadletData = p.Header[3] = data[3];
 #ifdef WARN_DOUBLE_TL
             if (AT_GET_HEADER_TLABEL(BE_SWAPLONG(data[0])) == _prev_tl)
-                dprintf("[WRN] Double TL detected (DestID=$%04x)\n", AT_GET_HEADER_DEST_ID(BE_SWAPLONG(data[0])));
+                kprintf("[WRN] Double TL detected (DestID=$%04x)\n", AT_GET_HEADER_DEST_ID(BE_SWAPLONG(data[0])));
             _prev_tl = AT_GET_HEADER_TLABEL(BE_SWAPLONG(data[0]));
 #endif
             data[0] = 0;
@@ -1318,7 +1318,7 @@ static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
     else if (TCODE_WRITE_PHY == p.TCode)
     {
         //_INFO_ARDMA_CTX(ctx, "PHY packet received, data=$%08x\n", p.Header[1]);
-        dprintf("PHY packet received, data=$%08x\n", p.Header[1]);
+        kprintf("PHY packet received, data=$%08x\n", p.Header[1]);
     }
     else /* XXX: other evt_*? Currently considering that everything is ok */
     {
@@ -1990,7 +1990,7 @@ static void ohci_IRContext_PacketPerBufferCallback(OHCI1394Context *_ctx)
      * as not more descriptors are available => we restart the ctx.
      */
 
-    dprintf("IR #%u buffers full! (reset and run)", ctx->irc_Base.ic_Index);
+    kprintf("IR #%u buffers full! (reset and run)", ctx->irc_Base.ic_Index);
 
     /* Protected because someone else can call the stop function */
     LOCK_CTX(ctx);
@@ -3814,7 +3814,7 @@ void Helios_DumpOHCI(HeliosBus *_bus)
     _HELIOS_Bus *bus = (APTR) _bus;
     _OHCI1394_Chipset *ohci = (APTR) _bus;
 
-    dprintf("\t\n\t\nOHCI Reg 0x%08x ========\n", ohci->Registers);
+    kprintf("\t\n\t\nOHCI Reg 0x%08x ========\n", ohci->Registers);
 
     LOCK_REGION(ohci);
     {
@@ -3826,17 +3826,17 @@ void Helios_DumpOHCI(HeliosBus *_bus)
 
 
             q = ohci_RegRead((APTR)bus, offset);
-            dprintf("$%03x - %25s : 0x%08x\n", offset, ohci_reg_names[i].Name, q);
+            kprintf("$%03x - %25s : 0x%08x\n", offset, ohci_reg_names[i].Name, q);
         }
 
-        dprintf("\t\nDumping IR contexts\n");
+        kprintf("\t\nDumping IR contexts\n");
         ForeachNode(&ohci->IRCtxList, ir_ctx) {
             if (NULL != ir_ctx) {
-                dprintf("IR Ctx %u-%p:\n", i, ir_ctx);
-                dprintf("\tCtrl   : $%08x\n", ohci_RegRead(ohci, OHCI1394_REG_IRECV_CONTEXT_CONTROL(i)));
-                dprintf("\tCmdPtr : $%08x\n", ohci_RegRead(ohci, OHCI1394_REG_IRECV_COMMAND_PTR(i)));
-                dprintf("\tMatch  : $%08x\n", ohci_RegRead(ohci, OHCI1394_REG_IRECV_COMMAND_MATCH(i)));
-                dprintf("----------------\n\t\n");
+                kprintf("IR Ctx %u-%p:\n", i, ir_ctx);
+                kprintf("\tCtrl   : $%08x\n", ohci_RegRead(ohci, OHCI1394_REG_IRECV_CONTEXT_CONTROL(i)));
+                kprintf("\tCmdPtr : $%08x\n", ohci_RegRead(ohci, OHCI1394_REG_IRECV_COMMAND_PTR(i)));
+                kprintf("\tMatch  : $%08x\n", ohci_RegRead(ohci, OHCI1394_REG_IRECV_COMMAND_MATCH(i)));
+                kprintf("----------------\n\t\n");
 
                 iso_IRContext_Dump(ir_ctx, ohci->PciBoardObject);
             }
@@ -3844,61 +3844,61 @@ void Helios_DumpOHCI(HeliosBus *_bus)
     }
     UNLOCK_REGION(ohci);
 
-    dprintf("\t\n");
+    kprintf("\t\n");
 
     LOCK_REGION(bus);
     {
         ULONG tlabel;
         _HELIOS_Transaction **ptr_t;
 
-        dprintf("Bus TLabels mask : $%016llx\n", bus->TLabelBitmap);
-        dprintf("Dumping bus pending transactions array:\n");
+        kprintf("Bus TLabels mask : $%016llx\n", bus->TLabelBitmap);
+        kprintf("Dumping bus pending transactions array:\n");
         ptr_t = bus->PendingTransactions;
         for (tlabel=0; tlabel < 64; tlabel++, ptr_t++) {
             if (NULL == *ptr_t) continue;
-            dprintf("[%02u] %p, ack %d, rcode %d\n", tlabel, *ptr_t, (*ptr_t)->RequestSA.Ack, (*ptr_t)->Response.RCode);
+            kprintf("[%02u] %p, ack %d, rcode %d\n", tlabel, *ptr_t, (*ptr_t)->RequestSA.Ack, (*ptr_t)->Response.RCode);
         }
-        dprintf("\t\n");
+        kprintf("\t\n");
     }
     UNLOCK_REGION(bus);
 
-    dprintf("ATRequestCtx   usecount : %lu\n", ohci_Context_UseCount(&ohci->ATRequestCtx.Context));
-    dprintf("ATResponseCtx  usecount : %lu\n", ohci_Context_UseCount(&ohci->ATResponseCtx.Context));
-    dprintf("ARRequestCtx   usecount : %lu\n", ohci_Context_UseCount(&ohci->ARRequestCtx.Context));
-    dprintf("ARResponseCtx  usecount : %lu\n", ohci_Context_UseCount(&ohci->ARResponseCtx.Context));
+    kprintf("ATRequestCtx   usecount : %lu\n", ohci_Context_UseCount(&ohci->ATRequestCtx.Context));
+    kprintf("ATResponseCtx  usecount : %lu\n", ohci_Context_UseCount(&ohci->ATResponseCtx.Context));
+    kprintf("ARRequestCtx   usecount : %lu\n", ohci_Context_UseCount(&ohci->ARRequestCtx.Context));
+    kprintf("ARResponseCtx  usecount : %lu\n", ohci_Context_UseCount(&ohci->ARResponseCtx.Context));
 
     LOCK_REGION(&ohci->ATRequestCtx.Context);
     {
         _OHCI1394_ATBuffer *buffer, *next;
 
-        dprintf("\t\nDumping ATRequestCtx in-use buffers...");
+        kprintf("\t\nDumping ATRequestCtx in-use buffers...");
 
         buffer = (APTR) ATOMIC_FETCH((ULONG *) &ohci->ATRequestCtx.LastBufferDone);
         if (NULL != buffer) {
             ULONG j, i, *mem;
 
-            dprintf("\nDescriptors of the last done buffer %p:\n", buffer);
+            kprintf("\nDescriptors of the last done buffer %p:\n", buffer);
 
             for (j=0; j < 3; j++) {
                 mem = (APTR) &buffer->Descriptors[j];
                 for (i=0; i < sizeof(_OHCI1394_Descriptor); i += 4, mem++)
-                    dprintf("$%08x: %08x\n", PCIXDMAGetPhysical(ohci->PciBoardObject, mem), SWAPLONG(*mem));
+                    kprintf("$%08x: %08x\n", PCIXDMAGetPhysical(ohci->PciBoardObject, mem), SWAPLONG(*mem));
             }
-            dprintf("\t\n");
+            kprintf("\t\n");
         }
 
         ForeachNodeSafe(&ohci->ATRequestCtx.Context.UsedList, buffer, next) {
             ULONG j, i, *mem;
 
-            dprintf("\t\nDescriptors of buffer %p:\n", buffer);
+            kprintf("\t\nDescriptors of buffer %p:\n", buffer);
 
             for (j=0; j < 3; j++) {
                 mem = (APTR) &buffer->Descriptors[j];
                 for (i=0; i < sizeof(_OHCI1394_Descriptor); i += 4, mem++)
-                    dprintf("$%08x: %08x\n", PCIXDMAGetPhysical(ohci->PciBoardObject, mem), SWAPLONG(*mem));
+                    kprintf("$%08x: %08x\n", PCIXDMAGetPhysical(ohci->PciBoardObject, mem), SWAPLONG(*mem));
             }
         }
-        dprintf("\t\n");
+        kprintf("\t\n");
     }
     UNLOCK_REGION(&ohci->ATRequestCtx.Context);
 
@@ -3908,10 +3908,10 @@ void Helios_DumpOHCI(HeliosBus *_bus)
         ULONG i;
 
         buf = ohci->ARResponseCtx.Context.AlignedBigBufferStart;
-        dprintf("Checking AR buffers... (already read: %u)\n",
+        kprintf("Checking AR buffers... (already read: %u)\n",
             (APTR) ohci->ARResponseCtx.FirstQuadlet - (APTR) ohci->ARResponseCtx.FirstBuffer->Page);
         for (i=0; i < ARBUFFER_PAGE_COUNT; i++, buf++)
-            dprintf("[%03u]: $%08x -> $%08x, len=%u, Status: $%04x %s%s\n", i,
+            kprintf("[%03u]: $%08x -> $%08x, len=%u, Status: $%04x %s%s\n", i,
                 ohci_GetPhyAddress(&ohci->ARResponseCtx.Context, &buf->Descriptor),
                 BE_SWAPLONG(buf->Descriptor.d_BranchAddress),
                 ARBUFFER_PAGE_SIZE - BE_SWAPWORD(buf->Descriptor.d_ResCount),
@@ -3921,7 +3921,7 @@ void Helios_DumpOHCI(HeliosBus *_bus)
     }
     UNLOCK_REGION(&ohci->ARResponseCtx.Context);
 
-    dprintf("Done ===========================\n");
+    kprintf("Done ===========================\n");
 }
 //-
 #endif /* 0 */

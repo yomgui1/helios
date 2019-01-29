@@ -126,7 +126,7 @@ enum {
 #define MV_Decoder_Error_None   0
 #define MV_Decoder_Error_TooBig 1
 
-extern void dprintf();
+extern void kprintf();
 
 extern void log_Debug(STRPTR fmt, ...);
 extern void log_Warn(STRPTR fmt, ...);

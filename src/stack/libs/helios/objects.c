@@ -1667,8 +1667,8 @@ void Helios_DBG_DumpDevices(HeliosHardware *hw)
     ULONG count;
     struct TagItem tags[] = {{HA_Hardware, (ULONG)hw}, {TAG_DONE, 0}};
 
-    dprintf("HeliosBase:          $%p\n", (ULONG)HeliosBase);
-    dprintf("Using base hardware: $%p\n\n", (ULONG)hw);
+    kprintf("HeliosBase:          $%p\n", (ULONG)HeliosBase);
+    kprintf("Using base hardware: $%p\n\n", (ULONG)hw);
 
 
     LOCK_REGION_SHARED(HeliosBase);
@@ -1677,39 +1677,39 @@ void Helios_DBG_DumpDevices(HeliosHardware *hw)
         {
             LOCK_REGION_SHARED(dev);
             {
-                dprintf("Device @ $%p:\n", (ULONG)dev);
-                dprintf("\tRefCnt:     %lu\n", dev->hso_RefCnt);
-                dprintf("\t\tHardware:   $%p\n", (ULONG)dev->hd_Hardware);
-                dprintf("\t\tGeneration: %lu\n", dev->hd_Generation);
-                dprintf("\t\tNodeID:     $%08x\n", dev->hd_NodeID);
-                dprintf("\t\tNodeInfo:\n");
-                dprintf("\t\t\tPhyID:      %u\n", dev->hd_NodeInfo.n_PhyID);
-                dprintf("\t\t\tFlags:      $%02x %s%s\n", *(UBYTE*)&dev->hd_NodeInfo.n_Flags,
+                kprintf("Device @ $%p:\n", (ULONG)dev);
+                kprintf("\tRefCnt:     %lu\n", dev->hso_RefCnt);
+                kprintf("\t\tHardware:   $%p\n", (ULONG)dev->hd_Hardware);
+                kprintf("\t\tGeneration: %lu\n", dev->hd_Generation);
+                kprintf("\t\tNodeID:     $%08x\n", dev->hd_NodeID);
+                kprintf("\t\tNodeInfo:\n");
+                kprintf("\t\t\tPhyID:      %u\n", dev->hd_NodeInfo.n_PhyID);
+                kprintf("\t\t\tFlags:      $%02x %s%s\n", *(UBYTE*)&dev->hd_NodeInfo.n_Flags,
                        dev->hd_NodeInfo.n_Flags.ResetInitiator?'I':c,
                        dev->hd_NodeInfo.n_Flags.LinkOn?'L':c);
-                dprintf("\t\t\tPortCount:  %u\n", dev->hd_NodeInfo.n_PortCount);
-                dprintf("\t\t\tPhySpeed:   %u\n", dev->hd_NodeInfo.n_PhySpeed);
-                dprintf("\t\t\tMaxSpeed:   %u\n", dev->hd_NodeInfo.n_MaxSpeed);
-                dprintf("\t\t\tMaxHops:    %u\n", dev->hd_NodeInfo.n_MaxHops);
-                dprintf("\t\t\tMaxDepth:   %u\n", dev->hd_NodeInfo.n_MaxDepth);
-                dprintf("\t\t\tParentPort: %d\n", dev->hd_NodeInfo.n_ParentPort);
-                dprintf("\t\t\tDevice:     $%p\n", (ULONG)dev->hd_NodeInfo.n_Device);
-                dprintf("\t\tRomScanner: $%p\n", (ULONG)dev->hd_RomScanner);
-                dprintf("\t\tRom:        $%p\n", (ULONG)dev->hd_Rom);
-                dprintf("\t\tRomLength:  %lu\n", dev->hd_RomLength);
-                dprintf("\t\tGUID:       $%016llx\n", dev->hd_GUID.q);
-                dprintf("\t\tUnits:      $%p -> $%p\n", (ULONG)GetHead(&dev->hd_Units), (ULONG)GetTail(&dev->hd_Units));
+                kprintf("\t\t\tPortCount:  %u\n", dev->hd_NodeInfo.n_PortCount);
+                kprintf("\t\t\tPhySpeed:   %u\n", dev->hd_NodeInfo.n_PhySpeed);
+                kprintf("\t\t\tMaxSpeed:   %u\n", dev->hd_NodeInfo.n_MaxSpeed);
+                kprintf("\t\t\tMaxHops:    %u\n", dev->hd_NodeInfo.n_MaxHops);
+                kprintf("\t\t\tMaxDepth:   %u\n", dev->hd_NodeInfo.n_MaxDepth);
+                kprintf("\t\t\tParentPort: %d\n", dev->hd_NodeInfo.n_ParentPort);
+                kprintf("\t\t\tDevice:     $%p\n", (ULONG)dev->hd_NodeInfo.n_Device);
+                kprintf("\t\tRomScanner: $%p\n", (ULONG)dev->hd_RomScanner);
+                kprintf("\t\tRom:        $%p\n", (ULONG)dev->hd_Rom);
+                kprintf("\t\tRomLength:  %lu\n", dev->hd_RomLength);
+                kprintf("\t\tGUID:       $%016llx\n", dev->hd_GUID.q);
+                kprintf("\t\tUnits:      $%p -> $%p\n", (ULONG)GetHead(&dev->hd_Units), (ULONG)GetTail(&dev->hd_Units));
                 ListLength(&dev->hd_Units, count);
-                dprintf("\t\tUnits:      %lu item(s)\n", count);
+                kprintf("\t\tUnits:      %lu item(s)\n", count);
             }
             UNLOCK_REGION_SHARED(dev);
 
             Helios_ReleaseDevice(dev);
-            dprintf("\n");
+            kprintf("\n");
         }
     }
     UNLOCK_REGION_SHARED(HeliosBase);
 
-    dprintf("=== DUMP END ===\n");
+    kprintf("=== DUMP END ===\n");
 }
 //-

@@ -33,18 +33,18 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <stdarg.h>
 
-extern void dprintf();
-extern void vdprintf();
+extern void kprintf();
+extern void vkprintf();
 
 #ifndef NDEBUG
 
-#define DB(x, a...) dprintf("FCP: "x , ## a)
-#define DB_Raw(x, a...) dprintf(x , ## a)
+#define DB(x, a...) kprintf("FCP: "x , ## a)
+#define DB_Raw(x, a...) kprintf(x , ## a)
 #define DB_NotImplemented() DB("%s: %s() not implemented\n", __FILE__, __FUNCTION__)
 #define DB_NotFinished() DB("%s: %s() not finished\n", __FILE__, __FUNCTION__)
 #define DB_IN(fmt, a...) DB("+ "__FUNCTION__" + "fmt"\n", ## a)
 #define DB_OUT() DB("- "__FUNCTION__" -\n")
-#define log_Debug(m, a...) dprintf("FCP-Debug: "m"\n" ,## a)
+#define log_Debug(m, a...) kprintf("FCP-Debug: "m"\n" ,## a)
 #else
 
 #define DB(x, a...)
@@ -61,7 +61,7 @@ static inline void _log_APIError(CONST_STRPTR fname, CONST_STRPTR msg)
 {
     DB("  Function '%s' failed: \"%s\"\n", fname, msg);
 }
-#define log_Error(m, a...) dprintf("FCP-Error: "m"\n" ,## a)
+#define log_Error(m, a...) kprintf("FCP-Error: "m"\n" ,## a)
 
 #ifdef DEBUG_MEM
 static inline void log_DumpMem(APTR mem, ULONG len, BOOL swap, const char *title)

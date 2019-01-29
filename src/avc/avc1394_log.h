@@ -35,15 +35,15 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef NDEBUG
 
-#define DB(x, a...) dprintf("AVC1394: "x , ## a)
-#define DB_Raw(x, a...) dprintf(x , ## a)
+#define DB(x, a...) kprintf("AVC1394: "x , ## a)
+#define DB_Raw(x, a...) kprintf(x , ## a)
 #define DB_NotImplemented() DB("%s: %s() not implemented\n", __FILE__, __FUNCTION__)
 #define DB_NotFinished() DB("%s: %s() not finished\n", __FILE__, __FUNCTION__)
 #define DB_IN(fmt, a...) DB("+ "__FUNCTION__" + "fmt"\n", ## a)
 #define DB_OUT() DB("- "__FUNCTION__" -\n")
 
-extern void dprintf();
-extern void vdprintf();
+extern void kprintf();
+extern void vkprintf();
 
 #else
 

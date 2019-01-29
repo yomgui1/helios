@@ -31,21 +31,18 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include <stdarg.h>
 
-extern void dprintf();
-extern void vdprintf();
-
 #ifndef NDEBUG
 
-#define XDBFN(h, x, a...) dprintf(h"["DBNAME"-%-28s:%4lu] "x,__FUNCTION__,__LINE__ ,##a)
+#define XDBFN(h, x, a...) kprintf(h"["DBNAME"-%-28s:%4lu] "x,__FUNCTION__,__LINE__ ,##a)
 
-#define DB(x, a...) dprintf("OHCI1394: "x , ##a)
-#define IRQDB(x, a...) dprintf("{IRQ} "x , ##a)
-#define DB_Raw(x, a...) dprintf(x , ## a)
+#define DB(x, a...) kprintf("OHCI1394: "x , ##a)
+#define IRQDB(x, a...) kprintf("{IRQ} "x , ##a)
+#define DB_Raw(x, a...) kprintf(x , ## a)
 #define DB_NotImplemented() DB("%s: %s() not implemented\n",__FILE__,__FUNCTION__)
 #define DB_NotFinished() DB("%s: %s() not finished\n",__FILE__,__FUNCTION__)
 #define DB_IN(fmt, a...) DB("+ %s + "fmt"\n",__FUNCTION__,##a)
 #define DB_OUT() DB("- %s -\n",__FUNCTION__)
-#define log_Debug(m, a...) dprintf("OHCI1394-Debug: "m"\n" ,##a)
+#define log_Debug(m, a...) kprintf("OHCI1394-Debug: "m"\n" ,##a)
 #else
 
 #define XDBFN(h, x, a...) ({;})
@@ -86,7 +83,7 @@ static inline void _log_APIError(CONST_STRPTR fname, CONST_STRPTR msg)
 {
     DB("  Function '%s' failed: \"%s\"\n", fname, msg);
 }
-#define log_Error(m, a...) dprintf("OHCI1394-Error: "m"\n" ,##a)
+#define log_Error(m, a...) kprintf("OHCI1394-Error: "m"\n" ,##a)
 
 #ifdef DEBUG_MEM
 #include <hardware/byteswap.h>

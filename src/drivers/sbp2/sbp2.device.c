@@ -98,7 +98,6 @@ static struct TagItem QueryTags[] =
 
 /*------------------- PUBLIC CODE SECTION -------------------------*/
 
-//+ devInit
 SBP2Device *devInit(SBP2Device *base,
                     BPTR seglist,
                     struct ExecBase *sbase)
@@ -112,8 +111,7 @@ SBP2Device *devInit(SBP2Device *base,
 
     return base;
 }
-//-
-//+ devCleanup
+
 BPTR devCleanup(SBP2Device *base)
 {
     _INFO_LIB("Remove from mem device %s\n", DEVNAME);
@@ -129,15 +127,13 @@ BPTR devCleanup(SBP2Device *base)
 
     return 0;
 }
-//-
-//+ devReserved
+
 static ULONG devReserved(void)
 {
     return 0;
 }
-//-
 
-//+ sbp2_io_addchangeint
+
 static LONG sbp2_io_addchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     APTR node=NULL;
@@ -171,8 +167,7 @@ static LONG sbp2_io_addchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdR
 
     return (ioreq->io_Error = TDERR_NoMem);
 }
-//-
-//+ sbp2_io_remchangeint
+
 static LONG sbp2_io_remchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     APTR node=NULL;
@@ -200,11 +195,10 @@ static LONG sbp2_io_remchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdR
 	
     return RC_OK;
 }
-//-
+
 
 /*------------------- PRIVATE CODE SECTION ------------------------*/
 
-//+ devOpen
 SBP2Device *devOpen(void)
 {
     LONG unitno = REG_D0;
@@ -278,15 +272,13 @@ SBP2Device *devOpen(void)
               base->dv_Library.lib_OpenCnt);
     return ret;
 }
-//-
-//+ devExpunge
+
 static BPTR devExpunge(void)
 {
     /* This device is expunged by the SBP2 class itself, not externally */
     return 0;
 }
-//-
-//+ devClose
+
 static BPTR devClose(void)
 {
     struct IORequest *ioreq = (APTR) REG_A1;
@@ -309,8 +301,7 @@ static BPTR devClose(void)
 
     return 0;
 }
-//- 
-//+ devBeginIO
+
 static void devBeginIO(void)
 {
     SBP2Device *base = (APTR) REG_A6;
@@ -421,8 +412,7 @@ static void devBeginIO(void)
             ReplyMsg(&ioreq->io_Message);
     }
 }
-//-
-//+ devAbortIO
+
 static void devAbortIO(void)
 {
     struct IOStdReq *ioreq = (APTR) REG_A1;
@@ -440,8 +430,7 @@ static void devAbortIO(void)
         sbp2_cancel_orbs(sbp2_unit);
     }
 }
-//-
-//+ devQuery
+
 static int devQuery(void)
 {
     SBP2Device *base = (APTR) REG_A6;
@@ -508,8 +497,7 @@ static int devQuery(void)
 
     return FALSE;
 }
-//-
-//+ devCreateDiskPort
+
 static struct DiskPort *devCreateDiskPort(void)
 {
     //SBP2Device *base = (APTR) REG_A6;
@@ -519,8 +507,7 @@ static struct DiskPort *devCreateDiskPort(void)
 
     return NULL;
 }
-//-
-//+ devDeleteDiskPort
+
 static void devDeleteDiskPort(void)
 {
     //SBP2Device *base = (APTR) REG_A6;
@@ -529,8 +516,7 @@ static void devDeleteDiskPort(void)
     /* TODO */
     DB_NotImplemented();
 }
-//-
-//+ devInquiry
+
 static ULONG devInquiry(void)
 {
     //SBP2Device *base = (APTR) REG_A6;
@@ -542,8 +528,7 @@ static ULONG devInquiry(void)
 
     return 0;
 }
-//-
-//+ devMount
+
 static ULONG devMount(void)
 {
     SBP2Device *base = (APTR) REG_A6;
@@ -553,8 +538,7 @@ static ULONG devMount(void)
     _INFO("Mount unit %p\n", sbp2_unit);
     return !MountMountTags(sbp2_unit->u_NotifyUnit, TAG_END);
 }
-//-
-//+ devDisMount
+
 static void devDisMount(void)
 {
     //SBP2Device *base = (APTR) REG_A6;
@@ -563,4 +547,4 @@ static void devDisMount(void)
     
     sbp2_unmount_all(sbp2_unit);
 }
-//-
+

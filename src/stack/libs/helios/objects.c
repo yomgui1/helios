@@ -129,7 +129,6 @@ static const UBYTE gHeliosGapCountTable[] =
 /*----------------------------------------------------------------------------*/
 /*--- LOCAL CODE SECTION -----------------------------------------------------*/
 
-//+ helios_do_simple_ioreq
 static LONG helios_do_simple_ioreq(HeliosHardware *hw, IOHeliosHWReq *ioreq)
 {
     struct MsgPort port;
@@ -146,15 +145,13 @@ static LONG helios_do_simple_ioreq(HeliosHardware *hw, IOHeliosHWReq *ioreq)
 
     return DoIO((struct IORequest *)ioreq);
 }
-//-
-//+ helios_free_unit
+
 static void helios_free_unit(HeliosUnit *unit)
 {
     _INFO("freeing unit %p\n", unit);
     FreePooled(HeliosBase->hb_MemPool, unit, sizeof(*unit));
 }
-//-
-//+ helios_free_dev
+
 static void helios_free_dev(HeliosDevice *dev)
 {
     _INFO("freeing dev %p (#%u)\n", dev, dev->hd_NodeInfo.n_PhyID);
@@ -163,8 +160,7 @@ static void helios_free_dev(HeliosDevice *dev)
         FreePooled(HeliosBase->hb_MemPool, dev->hd_Rom, dev->hd_RomLength);
     FreePooled(HeliosBase->hb_MemPool, dev, sizeof(*dev));
 }
-//-
-//+ helios_remove_unit
+
 /* WARNING: HeliosBase must be w-locked */
 static void helios_remove_unit(HeliosUnit *unit)
 {
@@ -199,8 +195,7 @@ static void helios_remove_unit(HeliosUnit *unit)
     Helios_ReleaseDevice(dev);
     Helios_ReleaseHardware(hw);
 }
-//-
-//+ helios_dev_set_dead
+
 /* WARNING: HeliosBase/Device must be w-locked. */
 static void helios_dev_set_dead(HeliosDevice *dev)
 {
@@ -225,8 +220,7 @@ static void helios_dev_set_dead(HeliosDevice *dev)
         Helios_SendEvent(&dev->hd_Listeners, HEVTF_DEVICE_DEAD, (ULONG)dev);
     }
 }
-//-
-//+ helios_get_ids
+
 static void helios_get_ids(const QUADLET *rom, QUADLET *id)
 {
     HeliosRomIterator ri;
@@ -244,8 +238,7 @@ static void helios_get_ids(const QUADLET *rom, QUADLET *id)
 		}
     }
 }
-//-
-//+ helios_create_unit
+
 /* WARNING: HeliosBase must be w-locked and device must be w-locked */
 static void helios_create_unit(HeliosDevice *dev, const QUADLET *directory, LONG unitno)
 {
@@ -291,8 +284,7 @@ static void helios_create_unit(HeliosDevice *dev, const QUADLET *directory, LONG
     /* Let the rest of system know this unit */
     Helios_SendEvent(&dev->hd_Listeners, HEVTF_DEVICE_NEW_UNIT, (ULONG)unit);
 }
-//-
-//+ helios_process_bm
+
 static void helios_process_bm(HeliosHardware *hw,
                               struct timeval *time,
                               ULONG gen,
@@ -430,8 +422,7 @@ set_config:
     else
         _WARN("Too late\n");
 }
-//-
-//+ helios_hardware_task
+
 static void helios_hardware_task(HeliosSubTask *self, struct TagItem *tags)
 {
     struct MsgPort *taskport, *hwport, *evtport;
@@ -582,8 +573,7 @@ error:
     if (NULL != evtport) DeleteMsgPort(evtport);
     if (NULL != hwport) DeleteMsgPort(hwport);
 }
-//-
-//+ helios_read_dev_name
+
 static void helios_read_dev_name(HeliosDevice *dev, const QUADLET *dir)
 {
     UBYTE buf[61];
@@ -601,8 +591,7 @@ static void helios_read_dev_name(HeliosDevice *dev, const QUADLET *dir)
     else
         _ERR("Helios_ReadTextualDescriptor() failed\n");
 }
-//-
-//+ helios_scanner_task
+
 static void helios_scanner_task(HeliosDevice *dev, STRPTR task_name, ULONG topogen)
 {
     QUADLET *rom;
@@ -756,8 +745,7 @@ bye:
 
     Helios_ReleaseDevice(dev);
 }
-//-
-//+ helios_dev_next_unit
+
 /* HeliosBase must be r-locked */
 static HeliosUnit *helios_dev_next_unit(HeliosDevice *dev, HeliosUnit *unit)
 {
@@ -771,8 +759,7 @@ static HeliosUnit *helios_dev_next_unit(HeliosDevice *dev, HeliosUnit *unit)
 
     return unit;
 }
-//-
-//+ helios_hw_next_device
+
 /* HeliosBase must be r-locked */
 static HeliosDevice *helios_hw_next_device(HeliosHardware *hw, HeliosDevice *dev)
 {
@@ -786,8 +773,7 @@ static HeliosDevice *helios_hw_next_device(HeliosHardware *hw, HeliosDevice *dev
 
     return dev;
 }
-//-
-//+ helios_hw_next_unit
+
 /* HeliosBase must be r-locked */
 static HeliosUnit *helios_hw_next_unit(HeliosHardware *hw, HeliosUnit *unit)
 {
@@ -829,12 +815,11 @@ static HeliosUnit *helios_hw_next_unit(HeliosHardware *hw, HeliosUnit *unit)
 
     return unit;
 }
-//-
+
 
 /*============================================================================*/
 /*--- LIBRARY CODE SECTION ---------------------------------------------------*/
 
-//+ Helios_GetAttrsA
 LONG Helios_GetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
 {
     LONG count=0;
@@ -994,8 +979,7 @@ LONG Helios_GetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
 
     return count;
 }
-//-
-//+ Helios_SetAttrs
+
 LONG Helios_SetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
 {
     LONG count=0;
@@ -1027,8 +1011,7 @@ LONG Helios_SetAttrsA(ULONG type, APTR obj, struct TagItem *tags)
 
     return count;
 }
-//-
-//+ Helios_DoIO
+
 LONG Helios_DoIO(ULONG type, APTR obj, IOHeliosHWReq *ioreq)
 {
     HeliosHardware *hw=NULL;
@@ -1041,8 +1024,7 @@ LONG Helios_DoIO(ULONG type, APTR obj, IOHeliosHWReq *ioreq)
 
     return helios_do_simple_ioreq(hw, ioreq);
 }
-//-
-//+ Helios_InitIO
+
 void Helios_InitIO(ULONG type, APTR obj, IOHeliosHWReq *ioreq)
 {
     HeliosHardware *hw;
@@ -1057,12 +1039,11 @@ void Helios_InitIO(ULONG type, APTR obj, IOHeliosHWReq *ioreq)
     ioreq->iohh_Req.io_Device = hw->hu_Device;
     ioreq->iohh_Req.io_Unit = &hw->hu_Unit;
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- Hardwares --------------------------------------------------------------*/
 
-//+ Helios_GetNextHardware
 /* WARNING: Caller shall lock HeliosBase before calling this function */
 HeliosHardware *Helios_GetNextHardware(HeliosHardware *hw)
 {
@@ -1083,14 +1064,12 @@ HeliosHardware *Helios_GetNextHardware(HeliosHardware *hw)
     _INFO("hw=%p\n", hw);
     return hw;
 }
-//-
-//+ Helios_ReleaseHardware
+
 void Helios_ReleaseHardware(HeliosHardware *hw)
 {
     HW_DECREF(hw);
 }
-//-
-//+ Helios_DisableHardware
+
 LONG Helios_DisableHardware(HeliosHardware *hw, BOOL state)
 {
     IOHeliosHWReq ioreq;
@@ -1099,8 +1078,7 @@ LONG Helios_DisableHardware(HeliosHardware *hw, BOOL state)
     ioreq.iohh_Req.io_Command = state?HHIOCMD_DISABLE:HHIOCMD_ENABLE;
     return helios_do_simple_ioreq(hw, &ioreq);
 }
-//-
-//+ Helios_BusReset
+
 LONG Helios_BusReset(HeliosHardware *hw, BOOL short_br)
 {
     IOHeliosHWReq ioreq;
@@ -1110,8 +1088,7 @@ LONG Helios_BusReset(HeliosHardware *hw, BOOL short_br)
     ioreq.iohh_Data = (APTR)(short_br&1);
     return helios_do_simple_ioreq(hw, &ioreq);
 }
-//-
-//+ Helios_AddHardware
+
 HeliosHardware *Helios_AddHardware(STRPTR name, LONG unit)
 {
     HeliosHardware *hw = NULL;
@@ -1145,8 +1122,7 @@ HeliosHardware *Helios_AddHardware(STRPTR name, LONG unit)
 
     return hw;
 }
-//-
-//+ Helios_RemoveHardware
+
 LONG Helios_RemoveHardware(HeliosHardware *hw)
 {
     LONG refcnt;
@@ -1171,12 +1147,11 @@ LONG Helios_RemoveHardware(HeliosHardware *hw)
     Helios_KillSubTask(hw->hu_HWTask);
     return TRUE;
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- Devices ----------------------------------------------------------------*/
 
-//+ Helios_GetNextDeviceA
 /* WARNING: Caller shall w-lock HeliosBase before calling this function */
 HeliosDevice *Helios_GetNextDeviceA(HeliosDevice *dev, struct TagItem *tags)
 {
@@ -1240,8 +1215,7 @@ HeliosDevice *Helios_GetNextDeviceA(HeliosDevice *dev, struct TagItem *tags)
     _INFO("dev=$%p\n", dev);
     return dev;
 }
-//-
-//+ Helios_ObtainDevice
+
 /* Note: this function is not safe!
 ** If the caller get a dev pointer and if this device has not been incref,
 ** it may be invalid if refcnt reaches 0 before the base lock.
@@ -1251,8 +1225,7 @@ LONG Helios_ObtainDevice(HeliosDevice *dev)
 {
     return DEV_INCREF(dev) > 0;
 }
-//-
-//+ Helios_ReleaseDevice
+
 void Helios_ReleaseDevice(HeliosDevice *dev)
 {
     LONG old_refcnt;
@@ -1267,8 +1240,7 @@ void Helios_ReleaseDevice(HeliosDevice *dev)
         helios_free_dev(dev);
     }
 }
-//-
-//+ Helios_RemoveDevice
+
 void Helios_RemoveDevice(HeliosDevice *dev)
 {
     HeliosHardware *hw;
@@ -1291,8 +1263,7 @@ void Helios_RemoveDevice(HeliosDevice *dev)
     Helios_ReleaseDevice(dev);
     Helios_ReleaseHardware(hw);
 }
-//-
-//+ Helios_AddDevice
+
 /* HW must be w-locked */
 HeliosDevice *Helios_AddDevice(HeliosHardware *hw,
                                HeliosNode *node,
@@ -1331,8 +1302,7 @@ HeliosDevice *Helios_AddDevice(HeliosHardware *hw,
 
     return dev;
 }
-//-
-//+ Helios_UpdateDevice
+
 void Helios_UpdateDevice(HeliosDevice *dev, HeliosNode *node, ULONG topogen)
 {
     LOCK_REGION(HeliosBase); /* because we may remove units */
@@ -1361,8 +1331,7 @@ void Helios_UpdateDevice(HeliosDevice *dev, HeliosNode *node, ULONG topogen)
     }
     UNLOCK_REGION(HeliosBase);
 }
-//-
-//+ Helios_ScanDevice
+
 /* WARNING: dev shall be incref'ed before calling */
 void Helios_ScanDevice(HeliosDevice *dev)
 {
@@ -1418,31 +1387,27 @@ void Helios_ScanDevice(HeliosDevice *dev)
     else
         _WARN("already dead device, not scanned\n");
 }
-//-
-//+ Helios_ReadLockDevice
+
 void Helios_ReadLockDevice(HeliosDevice *dev)
 {
     LOCK_REGION_SHARED(dev);
 }
-//-
-//+ Helios_WriteLockDevice
+
 void Helios_WriteLockDevice(HeliosDevice *dev)
 {
     LOCK_REGION(dev);
 }
-//-
-//+ Helios_UnlockDevice
+
 void Helios_UnlockDevice(HeliosDevice *dev)
 {
     UNLOCK_REGION(dev);
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- Unit -------------------------------------------------------------------*/
 
 
-//+ Helios_ObtainUnit
 /* Requirements:
  * a) unit != NULL
  * b) unit not removed.
@@ -1476,8 +1441,7 @@ LONG Helios_ObtainUnit(HeliosUnit *unit)
 
     return res;
 }
-//-
-//+ Helios_ReleaseUnit
+
 /* Requirements:
  * a) caller shall own a ref on the unit.
  */
@@ -1495,8 +1459,7 @@ void Helios_ReleaseUnit(HeliosUnit *unit)
         helios_free_unit(unit);
     }
 }
-//-
-//+ Helios_GetNextUnitA
+
 /* WARNING:Caller shall r-lock HeliosBase before calling this function */
 HeliosUnit *Helios_GetNextUnitA(HeliosUnit *unit, struct TagItem *tags)
 {
@@ -1587,8 +1550,7 @@ HeliosUnit *Helios_GetNextUnitA(HeliosUnit *unit, struct TagItem *tags)
     _INFO("unit=$%p\n", unit);
     return unit;
 }
-//-
-//+ Helios_BindUnit
+
 LONG Helios_BindUnit(HeliosUnit *unit, HeliosClass *hc, APTR udata)
 {
     HeliosDevice *dev = unit->hu_Device;
@@ -1627,8 +1589,7 @@ LONG Helios_BindUnit(HeliosUnit *unit, HeliosClass *hc, APTR udata)
 
     return res;
 }
-//-
-//+ Helios_UnbindUnit
+
 LONG Helios_UnbindUnit(HeliosUnit *unit)
 {
     HeliosDevice *dev = unit->hu_Device;
@@ -1654,12 +1615,11 @@ LONG Helios_UnbindUnit(HeliosUnit *unit)
 
     return res;
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- Debug ------------------------------------------------------------------*/
 
-//+ Helios_DBG_DumpDevices
 void Helios_DBG_DumpDevices(HeliosHardware *hw)
 {
     HeliosDevice *dev = NULL;
@@ -1712,4 +1672,4 @@ void Helios_DBG_DumpDevices(HeliosHardware *hw)
 
     kprintf("=== DUMP END ===\n");
 }
-//-
+

@@ -60,7 +60,6 @@ static HeliosResponse bad_address_response = {
 /*----------------------------------------------------------------------------*/
 /*--- LOCAL CODE SECTION -----------------------------------------------------*/
 
-//+ tl_SearchNextTLabel
 LONG tl_SearchNextTLabel(OHCI1394Unit *unit)
 {
     LONG tlabel;
@@ -85,8 +84,7 @@ LONG tl_SearchNextTLabel(OHCI1394Unit *unit)
 
     return tlabel;
 }
-//-
-//+ tl_ATCompleteCb
+
 /* This callback shall implement the TR_DATA.confirmation service */
 static void tl_ATCompleteCb(OHCI1394Unit *unit,
                             BYTE status, UWORD timestamp,
@@ -131,8 +129,7 @@ static void tl_ATCompleteCb(OHCI1394Unit *unit,
             break;
 	}
 }
-//-
-//+ tl_DoReqHandleResp
+
 static void tl_DoReqHandleResp(HeliosTransaction *t,
                                BYTE status,
                                QUADLET *payload,
@@ -156,8 +153,7 @@ static void tl_DoReqHandleResp(HeliosTransaction *t,
 
     Signal(udata->task, udata->signal);
 }
-//-
-//+ tl_PHY_ATCompleteCb
+
 static void tl_PHY_ATCompleteCb(OHCI1394Unit *unit,
                                 BYTE status, UWORD timestamp,
                                 OHCI1394ATPacketData *pdata)
@@ -169,8 +165,7 @@ static void tl_PHY_ATCompleteCb(OHCI1394Unit *unit,
     udata->status = status;
     Signal(udata->task, udata->signal);
 }
-//-
-//+ tl_Response_ATCompleteCb
+
 static void tl_Response_ATCompleteCb(OHCI1394Unit *unit,
                                      BYTE status, UWORD timestamp,
                                      OHCI1394ATPacketData *pdata)
@@ -185,8 +180,7 @@ static void tl_Response_ATCompleteCb(OHCI1394Unit *unit,
         resp->hr_FreeFunc(resp, resp->hr_AllocSize, resp->hr_FreeUData);
     FreePooled(unit->hu_MemPool, pdata, sizeof(*pdata));
 }
-//-
-//+ tl_send_response
+
 void tl_send_response(OHCI1394Unit *unit,
                       HeliosAPacket *req,
                       HeliosResponse *resp,
@@ -261,12 +255,11 @@ void tl_send_response(OHCI1394Unit *unit,
         FreePooled(unit->hu_MemPool, pdata, sizeof(*pdata));
     }
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- PUBLIC CODE SECTION ----------------------------------------------------*/
 
-//+ ohci_TL_Register
 LONG ohci_TL_Register(OHCI1394Unit *unit,
                       HeliosTransaction *t,
                       OHCI1394ATCompleteCallback cb,
@@ -294,8 +287,7 @@ LONG ohci_TL_Register(OHCI1394Unit *unit,
 
     return t->htr_Packet.TLabel;
 }
-//-
-//+ ohci_TL_FlushAll
+
 void ohci_TL_FlushAll(OHCI1394Unit *unit)
 {
     LOCK_REGION(unit);
@@ -319,8 +311,7 @@ void ohci_TL_FlushAll(OHCI1394Unit *unit)
     }
     UNLOCK_REGION(unit);
 }
-//-
-//+ ohci_TL_Finish
+
 /* The transaction shall be cancelled at AT-layer before calling this function */
 void ohci_TL_Finish(OHCI1394Unit *unit, HeliosTransaction *t, BYTE status)
 {
@@ -361,8 +352,7 @@ void ohci_TL_Finish(OHCI1394Unit *unit, HeliosTransaction *t, BYTE status)
         t->htr_Callback(t, status, NULL, 0);
     }
 }
-//-
-//+ ohci_TL_Cancel
+
 void ohci_TL_Cancel(OHCI1394Unit *unit, HeliosTransaction *t)
 {
     OHCI1394ATPacketData *pdata;
@@ -381,9 +371,8 @@ void ohci_TL_Cancel(OHCI1394Unit *unit, HeliosTransaction *t)
         ohci_TL_Finish(unit, t, HELIOS_RCODE_CANCELLED);
     }
 }
-//-
 
-//+ ohci_TL_HandleResponse
+
 void ohci_TL_HandleResponse(OHCI1394Unit *unit, HeliosAPacket *resp)
 {
     HeliosTransaction *t;
@@ -449,8 +438,7 @@ void ohci_TL_HandleResponse(OHCI1394Unit *unit, HeliosAPacket *resp)
     /* Let the transaction layer handle the response */
     t->htr_Callback(t, resp->RCode, resp->Payload, resp->PayloadLength);
 }
-//-
-//+ ohci_TL_HandleRequest
+
 void ohci_TL_HandleRequest(OHCI1394Unit *unit, HeliosAPacket *req, UBYTE generation)
 {
     HeliosResponse *response = NULL;
@@ -489,9 +477,8 @@ void ohci_TL_HandleRequest(OHCI1394Unit *unit, HeliosAPacket *req, UBYTE generat
     if (NULL != response)
         tl_send_response(unit, req, response, generation);
 }
-//-
 
-//+ ohci_TL_SendRequest
+
 /* do not use it if tcode one of :
  * TCODE_WRITE_PHY, TCODE_WRITE_STREAM
  */
@@ -636,8 +623,7 @@ LONG ohci_TL_SendRequest(OHCI1394Unit *unit,
 
     return HHIOERR_NO_ERROR;
 }
-//-
-//+ ohci_TL_DoRequest
+
 /* TCODE_WRITE_STREAM not supported */
 LONG ohci_TL_DoRequest(OHCI1394Unit *unit,
                        UBYTE sigbit,
@@ -681,8 +667,7 @@ LONG ohci_TL_DoRequest(OHCI1394Unit *unit,
 
     return udata.status;
 }
-//-
-//+ ohci_TL_DoPHYPacket
+
 LONG ohci_TL_DoPHYPacket(OHCI1394Unit *unit,
                          UBYTE sigbit,
                          QUADLET value)
@@ -715,9 +700,8 @@ LONG ohci_TL_DoPHYPacket(OHCI1394Unit *unit,
 
     return udata.status;
 }
-//-
 
-//+ ohci_TL_AddReqHandler
+
 LONG ohci_TL_AddReqHandler(OHCI1394Unit *unit, HeliosHWReqHandler *reqh)
 {
     LONG err = HHIOERR_FAILED;
@@ -768,8 +752,7 @@ LONG ohci_TL_AddReqHandler(OHCI1394Unit *unit, HeliosHWReqHandler *reqh)
 
     return err;
 }
-//-
-//+ ohci_TL_RemReqHandler
+
 LONG ohci_TL_RemReqHandler(OHCI1394Unit *unit, HeliosHWReqHandler *reqh)
 {
     LOCK_REGION(&unit->hu_ReqHandlerData);
@@ -778,4 +761,4 @@ LONG ohci_TL_RemReqHandler(OHCI1394Unit *unit, HeliosHWReqHandler *reqh)
 
     return HHIOERR_NO_ERROR;
 }
-//-
+

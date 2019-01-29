@@ -43,7 +43,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define SELFID_PORT_NCONN	0x1
 #define SELFID_PORT_NOPORT	0x0
 
-//+ SelfIDPkt
 /* Bits definition of Self-ID packets */
 typedef union SelfIDPkt
 {
@@ -86,12 +85,11 @@ typedef union SelfIDPkt
         QUADLET More:1;         // Next packet should be a extended packet for this node
     } PacketN;
 } SelfIDPkt;
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- LOCAL CODE SECTION -----------------------------------------------------*/
 
-//+ topo_count_ports
 static SelfIDPkt * topo_count_ports(SelfIDPkt *sid, ULONG *total_port_count, ULONG *child_port_count)
 {
 	ULONG shift, seq;
@@ -145,8 +143,7 @@ static SelfIDPkt * topo_count_ports(SelfIDPkt *sid, ULONG *total_port_count, ULO
 		}
 	}
 }
-//-
-//+ topo_fill_node
+
 static HeliosNode *topo_fill_node(HeliosTopology *topo, SelfIDPkt *sid, UBYTE phy_id, ULONG port_count)
 {
     HeliosNode *node;
@@ -164,8 +161,7 @@ static HeliosNode *topo_fill_node(HeliosTopology *topo, SelfIDPkt *sid, UBYTE ph
 
     return node;
 }
-//-
-//+ topo_get_port_type
+
 static ULONG topo_get_port_type(QUADLET *sid, ULONG port_index)
 {
     ULONG index, shift;
@@ -174,8 +170,7 @@ static ULONG topo_get_port_type(QUADLET *sid, ULONG port_index)
     shift = 16 - ((port_index + 4) & 7) * 2;
     return (sid[index] >> shift) & 3;
 }
-//-
-//+ topo_compute_hop_count
+
 static void topo_compute_hop_count(HeliosTopology *topo, HeliosNode *node)
 {
     LONG max_depths[2] = {-1, -1};
@@ -209,8 +204,7 @@ static void topo_compute_hop_count(HeliosTopology *topo, HeliosNode *node)
     node->n_MaxDepth = max_depths[0] + 1;
     node->n_MaxHops = MAX(max_hops, max_depths[0] + max_depths[1] + 2);
 }
-//-
-//+ topo_set_max_speed
+
 /* Recursive function, max depth = 64 */
 static void topo_set_max_speed(HeliosTopology *topo,
                                HeliosNode *current,
@@ -250,8 +244,7 @@ static void topo_set_max_speed(HeliosTopology *topo,
         topo_set_max_speed(topo, child, current);
     }
 }
-//-
-//+ topo_for_each_node
+
 static void topo_for_each_node(OHCI1394Unit *unit,
                                HeliosNode *node,
                                HeliosNode *parent,
@@ -276,8 +269,7 @@ static void topo_for_each_node(OHCI1394Unit *unit,
         topo_for_each_node(unit, child, node, func);
     }
 }
-//-
-//+ topo_compare_trees
+
 static void topo_compare_trees(OHCI1394Unit *unit,
                                HeliosNode *current,
                                HeliosNode *previous,
@@ -335,12 +327,11 @@ static void topo_compare_trees(OHCI1394Unit *unit,
         topo_compare_trees(unit, child, prev_child, current);
     }
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- PUBLIC CODE SECTION ----------------------------------------------------*/
 
-//+ ohci_FreeTopology
 void ohci_FreeTopology(OHCI1394Unit *unit)
 {
     if (NULL != unit->hu_Topology)
@@ -354,8 +345,7 @@ void ohci_FreeTopology(OHCI1394Unit *unit)
         unit->hu_OldTopology = NULL;
     }
 }
-//-
-//+ ohci_ResetTopology
+
 /* WARNING: w-lock unit before call */
 void ohci_ResetTopology(OHCI1394Unit *unit)
 {
@@ -367,8 +357,7 @@ void ohci_ResetTopology(OHCI1394Unit *unit)
     if (NULL != unit->hu_OldTopology)
         unit->hu_OldTopology->ht_NodeCount = 0;
 }
-//-
-//+ ohci_InvalidTopology
+
 /* WARNING: w-lock unit before call */
 void ohci_InvalidTopology(OHCI1394Unit *unit)
 {
@@ -381,8 +370,7 @@ void ohci_InvalidTopology(OHCI1394Unit *unit)
         unit->hu_Topology = NULL; /* will be regenerated later */
     }
 }
-//-
-//+ ohci_UpdateTopologyMapping
+
 /* Must be called in the context of the BusReset task
  * and after a valid SelfID stream.
  */
@@ -586,4 +574,4 @@ failed:
     ohci_ResetTopology(unit);
     return FALSE;
 }
-//-
+

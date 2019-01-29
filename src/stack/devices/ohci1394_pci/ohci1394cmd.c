@@ -50,7 +50,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 /*----------------------------------------------------------------------------*/
 /*--- LOCAL CODE SECTION -----------------------------------------------------*/
 
-//+ ohci_ReplyIOReq
 /* WARNING: call it with a locked unit */
 static void cmd_reply_ioreq(IOHeliosHWReq *ioreq, LONG err, BYTE status)
 {
@@ -64,8 +63,7 @@ static void cmd_reply_ioreq(IOHeliosHWReq *ioreq, LONG err, BYTE status)
 
     ReplyMsg(msg);
 }
-//-
-//+ _cmd_HandlePHYATComplete
+
 static void _cmd_HandlePHYATComplete(OHCI1394Unit *unit,
                                      BYTE status, UWORD timestamp,
                                      OHCI1394ATPacketData *pdata)
@@ -87,8 +85,7 @@ static void _cmd_HandlePHYATComplete(OHCI1394Unit *unit,
     ioreq->iohh_Actual = timestamp;
     cmd_reply_ioreq(ioreq, err, status);
 }
-//-
-//+ _cmd_HandleResponse
+
 static void _cmd_HandleResponse(HeliosTransaction *t,
                                 BYTE status,
                                 QUADLET *payload,
@@ -139,12 +136,11 @@ static void _cmd_HandleResponse(HeliosTransaction *t,
 
     cmd_reply_ioreq(&ioreq->iohhe_Req, err, status);
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- PUBLIC CODE SECTION ----------------------------------------------------*/
 
-//+ cmdQueryDevice
 CMDP(cmdQueryDevice)
 {
     struct TagItem *tag, *tags;
@@ -272,8 +268,7 @@ CMDP(cmdQueryDevice)
     ioreq->iohh_Actual = count;
     return FALSE;
 }
-//-
-//+ cmdReset
+
 CMDP(cmdReset)
 {
     LOCK_REGION(unit);
@@ -294,8 +289,7 @@ CMDP(cmdReset)
 
     return FALSE;
 }
-//-
-//+ cmdEnable
+
 CMDP(cmdEnable)
 {
     LOCK_REGION(unit);
@@ -309,8 +303,7 @@ CMDP(cmdEnable)
 
     return FALSE;
 }
-//-
-//+ cmdDisable
+
 CMDP(cmdDisable)
 {
     LOCK_REGION(unit);
@@ -323,8 +316,7 @@ CMDP(cmdDisable)
 
     return FALSE;
 }
-//-
-//+ cmdBusReset
+
 CMDP(cmdBusReset)
 {
     LOCK_REGION(unit);
@@ -338,8 +330,7 @@ CMDP(cmdBusReset)
 
     return FALSE;
 }
-//-
-//+ cmdSendRequest
+
 CMDP(cmdSendRequest)
 {
     IOHeliosHWSendRequest *ioreqext;
@@ -407,8 +398,7 @@ CMDP(cmdSendRequest)
     ioreq->iohh_Req.io_Error = err;
     return FALSE;
 }
-//-
-//+ abortSendRequest
+
 CMDP(abortSendRequest)
 {
     HeliosTransaction *t = (HeliosTransaction *)ioreq->iohh_Data;
@@ -418,8 +408,7 @@ CMDP(abortSendRequest)
     ohci_TL_Cancel(unit, t);
     return TRUE;
 }
-//-
-//+ cmdSendPhy
+
 CMDP(cmdSendPhy)
 {
     OHCI1394ATPacketData *pdata;
@@ -450,8 +439,7 @@ CMDP(cmdSendPhy)
 
     return TRUE;
 }
-//-
-//+ cmdAddReqHandler
+
 CMDP(cmdAddReqHandler)
 {
     LONG err;
@@ -463,8 +451,7 @@ CMDP(cmdAddReqHandler)
 
     return FALSE;
 }
-//-
-//+ cmdRemReqHandler
+
 CMDP(cmdRemReqHandler)
 {
     LONG err;
@@ -476,8 +463,7 @@ CMDP(cmdRemReqHandler)
 
     return FALSE;
 }
-//-
-//+ cmdSetAttrs
+
 CMDP(cmdSetAttrs)
 {
     struct TagItem *tag, *tags;
@@ -506,8 +492,7 @@ CMDP(cmdSetAttrs)
 
     return FALSE;
 }
-//-
-//+ cmdDelIsoCtx
+
 CMDP(cmdDelIsoCtx)
 {
     _INFO_UNIT(unit, "HHIOCMD_DELETEISOCONTEXT\n");
@@ -516,8 +501,7 @@ CMDP(cmdDelIsoCtx)
 
     return FALSE;
 }
-//-
-//+ cmdCreateIsoCtx
+
 CMDP(cmdCreateIsoCtx)
 {
     OHCI1394IRCtx **ctx_p=NULL;
@@ -579,8 +563,7 @@ CMDP(cmdCreateIsoCtx)
     ioreq->iohh_Req.io_Error = err;
     return FALSE;
 }
-//-
-//+ cmdStartIsoCtx
+
 CMDP(cmdStartIsoCtx)
 {
     struct TagItem *tag, *tags;
@@ -618,8 +601,7 @@ CMDP(cmdStartIsoCtx)
     ioreq->iohh_Req.io_Error = err;
     return FALSE;
 }
-//-
-//+ cmdStopIsoCtx
+
 CMDP(cmdStopIsoCtx)
 {
     OHCI1394Context *ctx;
@@ -634,5 +616,5 @@ CMDP(cmdStopIsoCtx)
 
     return FALSE;
 }
-//-
+
 

@@ -128,7 +128,6 @@ static PyTypeObject PyHeliosOHCIDevice_Type;
 ** Private Functions
 */
 
-//+ all_ins
 static int
 all_ins(PyObject *m) {
     /* Bus speeds */
@@ -153,9 +152,8 @@ all_ins(PyObject *m) {
 
     return 0;
 }
-//- all_ins
 
-//+ ReadCPUClock
+
 static void
 ReadCPUClock(UQUAD *v)
 {
@@ -172,15 +170,13 @@ loop:
     ((long*)(v))[0] = tbu;
     ((long*)(v))[1] = tb;
 }
-//-
-//+ copy_ioreq
+
 void copy_ioreq(IOHeliosHWReq *base, IOHeliosHWReq *dest, ULONG dstsize)
 {
     CopyMem(base, dest, sizeof(IOHeliosHWReq));
     dest->iohh_Req.io_Message.mn_Length = dstsize;
 }
-//-
-//+ do_ioreq
+
 static LONG do_ioreq(struct IORequest *ioreq)
 {
     struct MsgPort *port = ioreq->io_Message.mn_ReplyPort;
@@ -210,14 +206,13 @@ static LONG do_ioreq(struct IORequest *ioreq)
 
     return -1;
 }
-//-
+
 
 
 /*******************************************************************************************
  ** PyHeliosDevice_Type
  */
 
-//+ ohcidev_new
 static PyObject *
 ohcidev_new(PyTypeObject *type, PyObject *args)
 {
@@ -263,8 +258,7 @@ ohcidev_new(PyTypeObject *type, PyObject *args)
 
     return NULL;
 }
-//-
-//+ ohcidev_dealloc
+
 static void
 ohcidev_dealloc(PyHeliosOHCIDevice *self)
 {
@@ -292,9 +286,8 @@ ohcidev_dealloc(PyHeliosOHCIDevice *self)
 
     self->ob_type->tp_free((PyObject *) self);
 }
-//-
 
-//+ ohcidev_BusReset
+
 static PyObject *
 ohcidev_BusReset(PyHeliosOHCIDevice *self, PyObject *args)
 {
@@ -321,8 +314,7 @@ ohcidev_BusReset(PyHeliosOHCIDevice *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
-//-
-//+ ohcidev_WritePHY
+
 static PyObject *
 ohcidev_WritePHY(PyHeliosOHCIDevice *self, PyObject *args)
 {
@@ -350,8 +342,7 @@ ohcidev_WritePHY(PyHeliosOHCIDevice *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
-//-
-//+ ohcidev_ReadQ
+
 static PyObject *
 ohcidev_ReadQ(PyHeliosOHCIDevice *self, PyObject *args)
 {
@@ -384,8 +375,7 @@ ohcidev_ReadQ(PyHeliosOHCIDevice *self, PyObject *args)
     DB("err=%d\n", ioreq.iohhe_Req.iohh_Req.io_Error);
     return Py_BuildValue("kbi", q, p->RCode, ioreq.iohhe_Req.iohh_Req.io_Error);
 }
-//-
-//+ ohcidev_Read
+
 static PyObject *
 ohcidev_Read(PyHeliosOHCIDevice *self, PyObject *args)
 {
@@ -424,8 +414,7 @@ ohcidev_Read(PyHeliosOHCIDevice *self, PyObject *args)
     DB("err=%d\n", ioreq.iohhe_Req.iohh_Req.io_Error);
     return Py_BuildValue("Nbi", buffer, p->RCode, ioreq.iohhe_Req.iohh_Req.io_Error);
 }
-//-
-//+ ohcidev_WriteQ
+
 static PyObject *
 ohcidev_WriteQ(PyHeliosOHCIDevice *self, PyObject *args)
 {
@@ -457,14 +446,13 @@ ohcidev_WriteQ(PyHeliosOHCIDevice *self, PyObject *args)
     DB("err=%d\n", ioreq.iohhe_Req.iohh_Req.io_Error);
     return Py_BuildValue("bi", p->RCode, ioreq.iohhe_Req.iohh_Req.io_Error);
 }
-//-
+
 
 PyDoc_STRVAR(PyHeliosOHCIDevice_Type__doc__,
              "Helios OHCI Device Object."
              "\nThis is direct Python wrapper type on a Helios OHCI-PCI device."
              "\nGive a unit number as first parameter.");
 
-//+ ohcidev_methods
 static struct PyMethodDef ohcidev_methods[] =
 {
     ADDVAFUNC("BusReset", ohcidev_BusReset, "BusReset(short=True) -> None"
@@ -477,9 +465,8 @@ static struct PyMethodDef ohcidev_methods[] =
     ADDVAFUNC("WriteQ", ohcidev_WriteQ, "WriteQ(destid, offset, quadlet, speed=S100) -> (rcode, err)"),
     {NULL} /* Sentinel */
 };
-//-
 
-//+ PyHeliosDevice_Type
+
 static PyTypeObject PyHeliosOHCIDevice_Type =
 {
     PyObject_HEAD_INIT(NULL)
@@ -494,7 +481,7 @@ static PyTypeObject PyHeliosOHCIDevice_Type =
 
     tp_methods      : ohcidev_methods,
 };
-//- 
+
 
 /*
 ** Module Functions
@@ -513,7 +500,6 @@ PyDoc_STRVAR(module__doc__, "This module provides a complete binding to the IEEE
 ** Public Functions
 */
 
-//+ PyMorphOS_CloseModule
 void
 PyMorphOS_TermModule(void) {
     DB("Closing module...\n");
@@ -526,8 +512,7 @@ PyMorphOS_TermModule(void) {
 
     DB("Bye\n");
 }
-//- PyMorphOS_CloseModule
-//+ INITFUNC()
+
 PyMODINIT_FUNC
 INITFUNC(void)
 {
@@ -545,4 +530,4 @@ INITFUNC(void)
 
     ADD_TYPE(m, "OHCIDev", &PyHeliosOHCIDevice_Type);
 }
-//-
+

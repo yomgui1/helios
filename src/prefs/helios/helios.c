@@ -29,7 +29,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #define	DEBUG(x)	;
 
-//+ HeliosPrefs_New
 static ULONG HeliosPrefs_New(struct IClass *cl,Object *obj,struct opSet *msg)
 {
     Object *actionobj;
@@ -48,13 +47,12 @@ static ULONG HeliosPrefs_New(struct IClass *cl,Object *obj,struct opSet *msg)
 
     return 0;
 }
-//-
-//+ HeliosPrefs_Dispose
+
 static ULONG HeliosPrefs_Dispose(struct IClass *cl,Object *obj,Msg msg)
 {
     return DoSuperMethodA(cl,obj,msg);
 }
-//-
+
 
 BEGINMTABLE2(HeliosPrefs)
     case OM_NEW     : return HeliosPrefs_New     (cl,obj,(APTR)msg);

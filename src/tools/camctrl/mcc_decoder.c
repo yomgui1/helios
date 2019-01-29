@@ -42,7 +42,6 @@ typedef struct MCCData {
 
 /*==========================================================================================================================*/
 
-//+ mNew
 static ULONG mNew(struct IClass *cl, Object *obj, struct opSet *msg)
 {
     MCCData *data;
@@ -77,8 +76,7 @@ static ULONG mNew(struct IClass *cl, Object *obj, struct opSet *msg)
     CoerceMethod(cl, obj, OM_DISPOSE);
     return 0;
 }
-//-
-//+ mDispose
+
 static ULONG mDispose(struct IClass *cl, Object *obj, Msg msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -91,8 +89,7 @@ static ULONG mDispose(struct IClass *cl, Object *obj, Msg msg)
 
     return DoSuperMethodA(cl, obj, msg);
 }
-//-
-//+ mProcess
+
 static ULONG mProcess(struct IClass *cl, Object *obj, struct MUIP_Process_Process *msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -126,8 +123,7 @@ static ULONG mProcess(struct IClass *cl, Object *obj, struct MUIP_Process_Proces
     kprintf("[Proc %p] bye\n");
     return 0;
 }
-//-
-//+ mPush
+
 static ULONG mPush(struct IClass *cl, Object *obj, struct MP_Decoder_Push *msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -138,9 +134,8 @@ static ULONG mPush(struct IClass *cl, Object *obj, struct MP_Decoder_Push *msg)
 
     return DoMethod(data->RingBufferObj, MM_RingBuffer_Write, msg->Buffer, msg->Length);
 }
-//-
 
-//+ DISPATCHER(MyMCC)
+
 DISPATCHER(MyMCC)
 {
     switch (msg->MethodID) {
@@ -153,19 +148,17 @@ DISPATCHER(MyMCC)
     return DoSuperMethodA(cl, obj, msg);
 }
 DISPATCHER_END
-//-
+
 
 /*==========================================================================================================================*/
 
-//+ DecoderMCC_Create
 struct MUI_CustomClass *DecoderMCC_Create(void)
 {
     return MUI_CreateCustomClass(NULL, MUIC_Process, NULL, sizeof(MCCData), DISPATCHER_REF(MyMCC));
 }
-//-
-//+ DecoderMCC_Delete
+
 void DecoderMCC_Delete(struct MUI_CustomClass *mcc)
 {
     MUI_DeleteCustomClass(mcc);
 }
-//-
+

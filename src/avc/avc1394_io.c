@@ -39,7 +39,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
-//+ avc1394_SendCommandBlock
 static LONG avc1394_SendCommandBlock(HeliosDeviceHandler *  handler,
                                      HeliosATRequest *      req,
                                      QUADLET *              block,
@@ -79,11 +78,10 @@ static LONG avc1394_SendCommandBlock(HeliosDeviceHandler *  handler,
     Helios_ReleaseATRequest(handler, req); // We don't need data here as they are never data in a write response.
     return err;
 }
-//-
+
 
 /*------------------ EXTERNAL CODE SECTION ------------------------*/
 
-//+ avc1394_Server
 void avc1394_Server(void)
 {
     HeliosRequestHandler fcp_response_handler;
@@ -345,8 +343,7 @@ void avc1394_Server(void)
     DB("FCP server says: byebye!\n");
     return;
 }
-//-
-//+ avc1394_SendServerMsg
+
 AVC1394_ServerMsg *avc1394_SendServerMsg(AVC1394_ServerMsg *sv_msg, struct MsgPort *reply_port)
 {
     struct MsgPort *sv_port;
@@ -371,10 +368,9 @@ AVC1394_ServerMsg *avc1394_SendServerMsg(AVC1394_ServerMsg *sv_msg, struct MsgPo
 
     return sv_msg;
 }
-//-
+
 
 #if 0
-//+ to implement
 
 /*---------------------
  * HIGH-LEVEL-FUNCTIONS
@@ -504,19 +500,17 @@ unsigned char *avc1394_read_descriptor(raw1394handle_t handle, nodeid_t node,
 
     return (unsigned char *) response;
 }
-//-
+
 #endif
 
 /*------------------ LIBRARY CODE SECTION -------------------------*/
 
-//+ AVC1394_FreeServerMsg
 void AVC1394_FreeServerMsg(AVC1394_ServerMsg *msg)
 {
     if (NULL != msg->FCPMsg) ReplyMsg((APTR) msg->FCPMsg);
     FreeMem(msg, sizeof(*msg));
 }
-//-
-//+ AVC1394_GetUnitInfo
+
 AVC1394_ServerMsg *AVC1394_GetUnitInfo(HeliosBus *bus, UWORD nodeid)
 {
     HeliosDeviceHandler *handler;
@@ -564,8 +558,7 @@ AVC1394_ServerMsg *AVC1394_GetUnitInfo(HeliosBus *bus, UWORD nodeid)
 
     return msg;
 }
-//-
-//+ AVC1394_GetSubUnitInfo
+
 #define EXTENSION_CODE 7
 LONG AVC1394_GetSubUnitInfo(HeliosBus *bus, UWORD nodeid, QUADLET *table)
 {
@@ -627,8 +620,7 @@ LONG AVC1394_GetSubUnitInfo(HeliosBus *bus, UWORD nodeid, QUADLET *table)
     return err;
 
 }
-//-
-//+ AVC1394_CheckSubUnitType
+
 LONG AVC1394_CheckSubUnitType(HeliosBus *bus, UWORD nodeid, LONG type)
 {
     QUADLET table[8];
@@ -650,4 +642,4 @@ LONG AVC1394_CheckSubUnitType(HeliosBus *bus, UWORD nodeid, LONG type)
 
     return 0;
 }
-//-
+

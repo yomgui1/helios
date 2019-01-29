@@ -73,7 +73,6 @@ static struct Library *AsyncIOBase = NULL;
 
 /*==========================================================================================================================*/
 
-//+ ppc_getcounter
 static UQUAD ppc_getcounter(void)
 {
     register ULONG tbu, tb, tbu2;
@@ -86,14 +85,12 @@ static UQUAD ppc_getcounter(void)
 
     return (((UQUAD) tbu) << 32) + tb;
 }
-//-
-//+ set_max_len
+
 static void set_max_len(Object *obj, MCCData *data)
 {
     data->IsoUData.RecordMaxLength = data->RecordMaxLength * 1 << (data->RecordMaxLenFactor * 10);
 }
-//-
-//+ IsoCallback
+
 static void IsoCallback(HeliosIsoContext *ctx, HeliosIRBuffer *buffer, ULONG status)
 {
     IsoUserData *udata = ctx->UserData;
@@ -214,11 +211,10 @@ static void IsoCallback(HeliosIsoContext *ctx, HeliosIRBuffer *buffer, ULONG sta
         DoMethod(udata->App, MUIM_Application_PushMethod, udata->App, 1, MM_CamCtrl_StopRT);
     }
 }
-//-
+
 
 /*==========================================================================================================================*/
 
-//+ mDispose
 static ULONG mDispose(struct IClass *cl, Object *obj, Msg msg)
 {
     DoMethod(obj, MM_CamCtrl_StopRT);
@@ -226,8 +222,7 @@ static ULONG mDispose(struct IClass *cl, Object *obj, Msg msg)
 
     return DoSuperMethodA(cl, obj, msg);
 }
-//-
-//+ mSet
+
 static ULONG mSet(struct IClass *cl, Object *obj, struct opSet * msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -258,8 +253,7 @@ static ULONG mSet(struct IClass *cl, Object *obj, struct opSet * msg)
 
     return DoSuperMethodA(cl, obj, (APTR) msg);
 }
-//-
-//+ mStartRT
+
 static ULONG mStartRT(struct IClass *cl, Object *obj, Msg msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -319,8 +313,7 @@ static ULONG mStartRT(struct IClass *cl, Object *obj, Msg msg)
 
     return FALSE;
 }
-//-
-//+ mStopRT
+
 static ULONG mStopRT(struct IClass *cl, Object *obj, Msg msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -340,8 +333,7 @@ static ULONG mStopRT(struct IClass *cl, Object *obj, Msg msg)
 
     return TRUE;
 }
-//-
-//+ mSartSpeedMeter
+
 static ULONG mStartSpeedMeter(struct IClass *cl, Object *obj, Msg msg)
 {
     MCCData *data;
@@ -359,8 +351,7 @@ static ULONG mStartSpeedMeter(struct IClass *cl, Object *obj, Msg msg)
 
     return TRUE;
 }
-//-
-//+ mStopSpeedMeter
+
 static ULONG mStopSpeedMeter(struct IClass *cl, Object *obj, Msg msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -369,8 +360,7 @@ static ULONG mStopSpeedMeter(struct IClass *cl, Object *obj, Msg msg)
 
     return TRUE;
 }
-//-
-//+ mSpeedRefresh
+
 static ULONG mSpeedRefresh(struct IClass *cl, Object *obj, Msg msg)
 {
     MCCData *data = INST_DATA(cl, obj);
@@ -397,9 +387,8 @@ static ULONG mSpeedRefresh(struct IClass *cl, Object *obj, Msg msg)
 
     return TRUE;
 }
-//-
 
-//+ DISPATCHER(CamCtrlMCC)
+
 DISPATCHER(CamCtrlMCC)
 {
     switch (msg->MethodID) {
@@ -415,11 +404,10 @@ DISPATCHER(CamCtrlMCC)
     return DoSuperMethodA(cl, obj, msg);
 }
 DISPATCHER_END
-//-
+
 
 /*==========================================================================================================================*/
 
-//+ CamCtrlMCC_Create
 struct MUI_CustomClass *CamCtrlMCC_Create(void)
 {
     struct MUI_CustomClass *mcc;
@@ -436,11 +424,10 @@ struct MUI_CustomClass *CamCtrlMCC_Create(void)
 
     return NULL;
 }
-//-
-//+ CamCtrlMCC_Delete
+
 void CamCtrlMCC_Delete(struct MUI_CustomClass *mcc)
 {
     MUI_DeleteCustomClass(mcc);
     if (NULL != AsyncIOBase) CloseLibrary(AsyncIOBase);
 }
-//-
+

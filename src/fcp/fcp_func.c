@@ -35,7 +35,6 @@ typedef struct FCPCommandNode
     QUADLET *      Cmd;   
 } FCPCommandNode;
 
-//+ fcp_ComputResponseTimeStamp
 UWORD fcp_ComputResponseTimeStamp(HeliosPacket *request, UWORD offset)
 {
     UWORD timestamp;
@@ -49,11 +48,10 @@ UWORD fcp_ComputResponseTimeStamp(HeliosPacket *request, UWORD offset)
         timestamp += (request->TimeStamp & ~0x1fff);
     return timestamp;
 }
-//-
+
 
 /*------------------ EXTERNAL CODE SECTION -------------------------*/
 
-//+ fcp_RequestHandler
 void fcp_RequestHandler(HeliosBus *    bus,
                         HeliosPacket * request,
                         HeliosPacket * response,
@@ -68,8 +66,7 @@ void fcp_RequestHandler(HeliosBus *    bus,
         Helios_SendResponse(bus, response);
     }
 }
-//-
-//+ fcp_ResponseHandler
+
 void fcp_ResponseHandler(HeliosBus *    bus,
                          HeliosPacket * request,
                          HeliosPacket * response,
@@ -116,10 +113,9 @@ void fcp_ResponseHandler(HeliosBus *    bus,
         Helios_SendResponse(bus, response);
     }
 }
-//-
-//+ fcp_cmd_Write
+
 LONG fcp_cmd_Write(struct IOExtFCP *ioreq)
 {
     return 0;
 }
-//-
+

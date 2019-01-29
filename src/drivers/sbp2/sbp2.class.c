@@ -91,13 +91,11 @@ CONST STRPTR __abox__ __attribute__((section (".rodata"))) = VERSTAG;
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
-//+ SysError_NeedLibrary
 static void SysError_NeedLibrary(STRPTR libname, ULONG version)
 {
     _ERR_LIB("OpenLibrary(\"%s\", %lu) failed\n", libname, version);
 }
-//-
-//+ LibExpunge
+
 static ULONG LibExpunge(SBP2ClassLib *base)
 {
     BPTR MySegment;
@@ -137,18 +135,16 @@ static ULONG LibExpunge(SBP2ClassLib *base)
     _INFO_LIB("Return Segment %lx to ramlib\n", MySegment);
     return (ULONG)MySegment;
 }
-//-
+
 
 /*------------------ LIBRARY CODE SECTION -------------------------*/
 
-//+ NoExecute
 // The lib execute init protection which simply returns
 LONG NoExecute(void)
 {
     return -1;
 }
-//-
-//+ LIB_Init
+
 struct Library* LIB_Init(SBP2ClassLib *base,
                          BPTR SegList,
                          struct ExecBase *sBase)
@@ -214,14 +210,12 @@ struct Library* LIB_Init(SBP2ClassLib *base,
     _INFO_LIB("- Failed\n");
     return NULL;
 }
-//-
-//+ LIB_Expunge
+
 ULONG LIB_Expunge(void)
 {
     return LibExpunge((SBP2ClassLib *)REG_A6);
 }
-//-
-//+ LIB_Open
+
 struct Library* LIB_Open(void)
 {
     SBP2ClassLib *base = (SBP2ClassLib *)REG_A6;
@@ -246,8 +240,7 @@ struct Library* LIB_Open(void)
 
     return NULL;
 }
-//-
-//+ LIB_Close
+
 ULONG LIB_Close(void)
 {
     SBP2ClassLib *base = (SBP2ClassLib *) REG_A6;
@@ -272,14 +265,12 @@ ULONG LIB_Close(void)
 
     return 0;
 }
-//-
-//+ LIB_Reserved
+
 ULONG LIB_Reserved(void)
 {
     return 0;
 }
-//-
-//+ HeliosClass_DoMethodA
+
 LONG HeliosClass_DoMethodA(SBP2ClassLib *base, ULONG methodid, ULONG *data)
 {
     _INFO("base=%p, methodid=%x, data[0]=%p\n", base, methodid, data[0]);
@@ -297,15 +288,14 @@ LONG HeliosClass_DoMethodA(SBP2ClassLib *base, ULONG methodid, ULONG *data)
 
     return 0;
 }
-//-
+
 
 #undef SysBase
 
-//+ memcpy
 void *memcpy(void *dst, void *src, size_t size)
 {
     struct ExecBase *SysBase = *(struct ExecBase **)4;
     CopyMem(src, dst, size);
     return dst;
 }
-//-
+

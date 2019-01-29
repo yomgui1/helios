@@ -58,7 +58,6 @@ struct HeliosSubTask
 /*----------------------------------------------------------------------------*/
 /*--- LOCAL CODE SECTION -----------------------------------------------------*/
 
-//+ helios_SubTaskEntry
 static void helios_SubTaskEntry(HeliosSubTask *ctx)
 {
     BYTE rsb;
@@ -100,30 +99,26 @@ static void helios_SubTaskEntry(HeliosSubTask *ctx)
 
     _INFO("- SubTask %p-'%s' says bye\n", task, task->tc_Node.ln_Name);
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- LIBRARY CODE SECTION ---------------------------------------------------*/
 
-//+ Helios_WriteLockBase
 void Helios_WriteLockBase(void)
 {
     LOCK_REGION(HeliosBase);
 }
-//-
-//+ Helios_ReadLockBase
+
 void Helios_ReadLockBase(void)
 {
     LOCK_REGION_SHARED(HeliosBase);
 }
-//-
-//+ Helios_UnlockBase
+
 void Helios_UnlockBase(void)
 {
     UNLOCK_REGION(HeliosBase);
 }
-//-
-//+ Helios_OpenTimer
+
 struct timerequest *Helios_OpenTimer(struct MsgPort *port, ULONG unit)
 {
     struct timerequest *tr = NULL;
@@ -148,8 +143,7 @@ struct timerequest *Helios_OpenTimer(struct MsgPort *port, ULONG unit)
 
     return NULL;
 }
-//-
-//+ Helios_CloseTimer
+
 void Helios_CloseTimer(struct timerequest *tr)
 {
     _INFO("Closing timer.device request @ %p\n", tr);
@@ -157,8 +151,7 @@ void Helios_CloseTimer(struct timerequest *tr)
     CloseDevice((struct IORequest *)tr);
     DeleteExtIO((struct IORequest *)tr);
 }
-//-
-//+ Helios_DelayMS
+
 void Helios_DelayMS(ULONG milli)
 {
     struct MsgPort port;
@@ -179,8 +172,7 @@ void Helios_DelayMS(ULONG milli)
 
     DoIO((struct IORequest *)&tr);
 }
-//-
-//+ Helios_SignalSubTask
+
 ULONG Helios_SignalSubTask(HeliosSubTask *ctx, ULONG sigmask)
 {
     ULONG err;
@@ -199,8 +191,7 @@ ULONG Helios_SignalSubTask(HeliosSubTask *ctx, ULONG sigmask)
 
     return err;
 }
-//-
-//+ Helios_SendMsgToSubTask
+
 LONG Helios_SendMsgToSubTask(HeliosSubTask *ctx, struct Message *msg)
 {
     ULONG err;
@@ -221,8 +212,7 @@ LONG Helios_SendMsgToSubTask(HeliosSubTask *ctx, struct Message *msg)
 
     return err;
 }
-//-
-//+ Helios_DoMsgToSubTask
+
 LONG Helios_DoMsgToSubTask(HeliosSubTask *ctx, struct Message *msg, struct MsgPort *replyport)
 {
     BOOL allocport = (NULL == replyport) || (NULL != msg->mn_ReplyPort);
@@ -254,8 +244,7 @@ end:
 
     return err;
 }
-//-
-//+ Helios_CreateSubTaskA
+
 HeliosSubTask *Helios_CreateSubTaskA(CONST_STRPTR name,
                                      HeliosSubTaskEntry entry,
                                      struct TagItem *tags)
@@ -337,8 +326,7 @@ HeliosSubTask *Helios_CreateSubTaskA(CONST_STRPTR name,
 
     return NULL;
 }
-//-
-//+ Helios_KillSubTask
+
 LONG Helios_KillSubTask(HeliosSubTask *ctx)
 {
     HeliosMsg msg;
@@ -398,8 +386,7 @@ LONG Helios_KillSubTask(HeliosSubTask *ctx)
 
     return HERR_NOERR;
 }
-//-
-//+ Helios_WaitTaskReady
+
 LONG Helios_WaitTaskReady(HeliosSubTask *ctx, LONG sigs)
 {
     struct Task *task;
@@ -445,8 +432,7 @@ LONG Helios_WaitTaskReady(HeliosSubTask *ctx, LONG sigs)
         return ctx->stc_Success?0:-1;
     return sigs;
 }
-//-
-//+ Helios_TaskReady
+
 void Helios_TaskReady(HeliosSubTask *ctx, BOOL success)
 {
     BYTE rsb;
@@ -470,8 +456,7 @@ void Helios_TaskReady(HeliosSubTask *ctx, BOOL success)
         Signal(waiter, sig);
     }
 }
-//-
-//+ Helios_IsSubTaskKilled
+
 LONG Helios_IsSubTaskKilled(HeliosSubTask *ctx)
 {
     LONG killed;
@@ -482,24 +467,21 @@ LONG Helios_IsSubTaskKilled(HeliosSubTask *ctx)
 
     return killed;
 }
-//-
-//+ Helios_AddEventListener
+
 void Helios_AddEventListener(HeliosEventListenerList *list, HeliosEventMsg *node)
 {
     LOCK_REGION(list);
     ADDTAIL(&list->ell_SysList, node);
     UNLOCK_REGION(list);
 }
-//-
-//+ Helios_RemoveEventListener
+
 void Helios_RemoveEventListener(HeliosEventListenerList *list, HeliosEventMsg *node)
 {
     LOCK_REGION(list);
     REMOVE(node);
     UNLOCK_REGION(list);
 }
-//-
-//+ Helios_SendEvent
+
 /* WARNING: this function assumes that the list is protected against modifications */
 void Helios_SendEvent(HeliosEventListenerList *list, ULONG event, ULONG result)
 {
@@ -548,8 +530,7 @@ void Helios_SendEvent(HeliosEventListenerList *list, ULONG event, ULONG result)
     }
     UNLOCK_REGION(list);
 }
-//-
-//+ Helios_VReportMsg
+
 LONG Helios_VReportMsg(ULONG type, CONST_STRPTR label, CONST_STRPTR fmt, va_list args)
 {
     ULONG len=0, label_len, msg_size;
@@ -595,8 +576,7 @@ LONG Helios_VReportMsg(ULONG type, CONST_STRPTR label, CONST_STRPTR fmt, va_list
 
     return -1;
 }
-//-
-//+ Helios_ReportMsg
+
 LONG Helios_ReportMsg(ULONG type, CONST_STRPTR label, CONST_STRPTR fmt, ...)
 {
     ULONG res;
@@ -608,8 +588,7 @@ LONG Helios_ReportMsg(ULONG type, CONST_STRPTR label, CONST_STRPTR fmt, ...)
 
     return res;
 }
-//-
-//+ Helios_GetNextReportMsg
+
 HeliosReportMsg *Helios_GetNextReportMsg(void)
 {
     HeliosReportMsg *msg;
@@ -620,16 +599,14 @@ HeliosReportMsg *Helios_GetNextReportMsg(void)
 
     return msg;
 }
-//-
-//+ Helios_FreeReportMsg
+
 void Helios_FreeReportMsg(HeliosReportMsg *msg)
 {
     FreeVecPooled(HeliosBase->hb_MemPool, msg);
 }
-//-
-//+ Helios_ComputeCRC32
+
 UWORD Helios_ComputeCRC16(const QUADLET *data, ULONG len)
 {
     return utils_GetBlockCRC16((QUADLET *)data, len);
 }
-//-
+

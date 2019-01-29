@@ -106,7 +106,6 @@ UBYTE key_types[] = {
 /*----------------------------------------------------------------------------*/
 /*--- LOCAL CODE SECTION -----------------------------------------------------*/
 
-//+ rom_SetDefault
 void rom_SetDefault(QUADLET *rom, UQUAD guid, QUADLET opts, QUADLET vendor_comp_id)
 {
     HeliosBusOptions options;
@@ -184,12 +183,11 @@ void rom_SetDefault(QUADLET *rom, UQUAD guid, QUADLET opts, QUADLET vendor_comp_
     length = 11 - 5 - 1;
     rom[5] = (length << 16) | utils_GetBlockCRC16(&rom[6], length);
 }
-//-
+
 
 /*============================================================================*/
 /*--- LIBRARY CODE SECTION ---------------------------------------------------*/
 
-//+ Helios_CreateROMTagList
 QUADLET *Helios_CreateROMTagList(APTR pool, CONST struct TagItem *tags)
 {
     QUADLET *rom;
@@ -220,8 +218,7 @@ QUADLET *Helios_CreateROMTagList(APTR pool, CONST struct TagItem *tags)
 
     return rom;
 }
-//-
-//+ Helios_FreeROM
+
 void Helios_FreeROM(APTR pool, QUADLET *rom)
 {
     if (NULL != pool)
@@ -229,8 +226,7 @@ void Helios_FreeROM(APTR pool, QUADLET *rom)
     else
         FreeMem(rom, CSR_CONFIG_ROM_SIZE);
 }
-//-
-//+ Helios_ReadROM
+
 LONG Helios_ReadROM(HeliosDevice *dev, QUADLET *storage, ULONG *length)
 {
     IOHeliosHWSendRequest ioreq;
@@ -439,15 +435,13 @@ check_crc:
 
     return HERR_NOERR;
 }
-//-
-//+ Helios_InitRomIterator
+
 void Helios_InitRomIterator(HeliosRomIterator *ri, const QUADLET *rom)
 {
     ri->actual = rom + 1;
     ri->end = ri->actual + (rom[0] >> 16);
 }
-//-
-//+ Helios_RomIterate
+
 LONG Helios_RomIterate(HeliosRomIterator *ri, QUADLET *key, QUADLET *value)
 {
     *key = *ri->actual >> 24;
@@ -455,8 +449,7 @@ LONG Helios_RomIterate(HeliosRomIterator *ri, QUADLET *key, QUADLET *value)
 
 	return ri->actual++ < ri->end;
 }
-//-
-//+ Helios_ReadTextualDescriptor
+
 LONG Helios_ReadTextualDescriptor(const QUADLET *dir, STRPTR buffer, ULONG length)
 {
     UWORD crc, len = dir[0] >> 16;
@@ -483,4 +476,4 @@ LONG Helios_ReadTextualDescriptor(const QUADLET *dir, STRPTR buffer, ULONG lengt
 
     return -1;
 }
-//-
+

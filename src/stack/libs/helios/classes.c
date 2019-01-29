@@ -34,7 +34,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 /*============================================================================*/
 /*--- LIBRARY CODE SECTION ---------------------------------------------------*/
 
-//+ Helios_AddClass
 HeliosClass *Helios_AddClass(STRPTR name, ULONG version)
 {
     struct Library *cls_base;
@@ -102,8 +101,7 @@ HeliosClass *Helios_AddClass(STRPTR name, ULONG version)
 
     return NULL;
 }
-//-
-//+ Helios_RemoveClass
+
 void Helios_RemoveClass(HeliosClass *hc)
 {
     _INFO("Removing class %p\n", hc);
@@ -124,14 +122,12 @@ void Helios_RemoveClass(HeliosClass *hc)
 
     Helios_ReleaseClass(hc);
 }
-//-
-//+ Helios_ObtainClass
+
 LONG Helios_ObtainClass(HeliosClass *hc)
 {
     return (CLS_INCREF(hc) > 0);
 }
-//-
-//+ Helios_ReleaseClass
+
 void Helios_ReleaseClass(HeliosClass *hc)
 {
     LONG old_refcnt;
@@ -157,8 +153,7 @@ void Helios_ReleaseClass(HeliosClass *hc)
         FreePooled(HeliosBase->hb_MemPool, hc, sizeof(*hc));
     }
 }
-//-
-//+ Helios_GetNextClass
+
 HeliosClass *Helios_GetNextClass(HeliosClass *hc)
 {
     if (NULL == hc)
@@ -171,6 +166,6 @@ HeliosClass *Helios_GetNextClass(HeliosClass *hc)
 
     return hc;
 }
-//-
+
 
 /* EOF */

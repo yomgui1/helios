@@ -86,13 +86,11 @@ const STRPTR version = VERSTAG;
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
-//+ SysError_NeedLibrary
 static void SysError_NeedLibrary(STRPTR libname, ULONG version)
 {
     _ERR("OpenLibrary(\"%s\", %lu) failed\n", libname, version);
 }
-//-
-//+ LibExpunge
+
 static ULONG LibExpunge(struct HeliosBase *base)
 {
     BPTR MySegment;
@@ -129,18 +127,16 @@ static ULONG LibExpunge(struct HeliosBase *base)
     _INFO("Return Segment %lx to ramlib\n", MySegment);
     return (ULONG)MySegment;
 }
-//-
+
 
 /*------------------ LIBRARY CODE SECTION -------------------------*/
 
-//+ NoExecute
 // The lib execute init protection which simply returns
 LONG NoExecute(void)
 {
     return -1;
 }
-//-
-//+ LIB_Init
+
 struct Library* LIB_Init(struct HeliosBase * base,
                          BPTR                SegList,
                          struct ExecBase *   sBase)
@@ -192,14 +188,12 @@ struct Library* LIB_Init(struct HeliosBase * base,
     _INFO("- Failed\n");
     return NULL;
 }
-//-
-//+ LIB_Expunge
+
 ULONG LIB_Expunge(void)
 {
     return LibExpunge((struct HeliosBase *)REG_A6);
 }
-//-
-//+ LIB_Open
+
 struct Library* LIB_Open(void)
 {
     struct HeliosBase *base = (struct HeliosBase *)REG_A6;
@@ -274,8 +268,7 @@ out:
     _INFO("- ret=%p, OpenCnt=%ld\n", ret, base->hb_Lib.lib_OpenCnt);
     return ret;
 }
-//-
-//+ LIB_Close
+
 ULONG LIB_Close(void)
 {
     struct HeliosBase *base = (struct HeliosBase *) REG_A6;
@@ -306,10 +299,9 @@ ULONG LIB_Close(void)
     _INFO("-Base %p, OpenCount %ld\n", base, base->hb_Lib.lib_OpenCnt);
     return 0;
 }
-//-
-//+ LIB_Reserved
+
 ULONG LIB_Reserved(void)
 {
     return 0;
 }
-//-
+

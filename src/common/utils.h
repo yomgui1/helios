@@ -112,7 +112,6 @@ extern APTR utils_SafeSPrintF(STRPTR buf, ULONG size, STRPTR fmt, ...);
 extern STRPTR utils_DupStr(APTR pool, CONST_STRPTR src);
 extern ULONG utils_GetPhyAddress(APTR addr);
 
-//+ utils_GetQuadletCRC16
 /* CRC-16 calculation, performed on quadlets at a time
 **
 ** (Taken from the IEEE13213-1994 CSR Architecture documentation)
@@ -128,8 +127,7 @@ static inline UWORD utils_GetQuadletCRC16(QUADLET data, QUADLET check)
 
    return next & 0xFFFF; /* 16-bit CRC value */
 }
-//-
-//+ utils_GetBlockCRC16
+
 static inline UWORD utils_GetBlockCRC16(QUADLET *ptr, ULONG length)
 {
     UWORD crc = 0;
@@ -139,8 +137,7 @@ static inline UWORD utils_GetBlockCRC16(QUADLET *ptr, ULONG length)
 
     return crc;
 }
-//-
-//+ utils_CountBits32
+
 static inline ULONG utils_CountBits32(ULONG value, ULONG state)
 {
     ULONG s, cnt;
@@ -154,6 +151,6 @@ static inline ULONG utils_CountBits32(ULONG value, ULONG state)
 
     return cnt;
 }
-//-
+
 
 #endif /* UTILS_H */

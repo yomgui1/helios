@@ -252,7 +252,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define OHCI1394_INTF_SOFTINTERRUPT         (1<<OHCI1394_INTB_SOFTINTERRUPT)
 #define OHCI1394_INTF_VENDORSPECIFIC        (1<<OHCI1394_INTB_VENDORSPECIFIC)
 #define OHCI1394_INTF_MASTERINTENABLE       (1<<OHCI1394_INTB_MASTERINTENABLE)
-//-
 
 //+ LinkControl register bits
 #define OHCI1394_LCB_TAG1SYNCFILTERLOCK  6
@@ -268,7 +267,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define OHCI1394_LCF_CYCLETIMERENABLE   (1<<OHCI1394_LCB_CYCLETIMERENABLE)
 #define OHCI1394_LCF_CYCLEMASTER        (1<<OHCI1394_LCB_CYCLEMASTER)
 #define OHCI1394_LCF_CYCLESOURCE        (1<<OHCI1394_LCB_CYCLESOURCE)
-//-
 
 //+ Phy Control register bits
 #define OHCI1394_PCB_WR_DATA     0
@@ -287,7 +285,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #define OHCI1394_PC_READ_DATA(r)    (((r) >> OHCI1394_PCB_RD_DATA) & 0xff)
 #define OHCI1394_PC_READ_ADDR(r)    (((r) >> OHCI1394_PCB_RD_ADDR) & 0x0f)
-//-
 
 //+ NodeID register bits
 #define OHCI1394_NODEIDB_NODENUMBER          0
@@ -307,7 +304,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define OHCI1394_NODEID_BUSNUMBER(r)        (((r) & OHCI1394_NODEID_BUSNUMBER_MASK) >> OHCI1394_NODEIDB_BUSNUMBER)
 
 #define OHCI1394_LOCAL_BUS                  OHCI1394_NODEID_BUSNUMBER_MASK
-//-
+
 
 /* SelfID Count register bits */
 #define OHCI1394_SELFIDCOUNTB_SELFIDSIZE             2
@@ -429,7 +426,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 /*----------------------------------------------------------------------------*/
 /*--- STRUCTURES SECTION -----------------------------------------------------*/
 
-//+ Structures
 struct OHCI1394Unit;
 
 typedef struct OHCI1394SplitTimeReq {
@@ -596,8 +592,7 @@ typedef struct {
     ULONG UnrecoverableError:1;
 } OHCI1394Flags;
 
-//-
-//+ OHCI1394Unit
+
 typedef struct OHCI1394Unit
 {
     HELIOS_HW_HEAD
@@ -675,7 +670,7 @@ typedef struct OHCI1394Unit
     OHCI1394ARCtx         hu_ARRequestCtx;
     OHCI1394ARCtx         hu_ARResponseCtx;
 } OHCI1394Unit;
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- EXPORTED API -----------------------------------------------------------*/

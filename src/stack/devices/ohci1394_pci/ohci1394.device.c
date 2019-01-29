@@ -106,10 +106,8 @@ const char *vers = "\0$VER:"DEVNAME" "VERSION_STR"."REVISION_STR" ("DATE") "COPY
 
 /*------------------ PRIVATE CODE SECTION -------------------------*/
 
-//+ devReserved
 static int devReserved(void) { return 0; }
-//-
-//+ devInit
+
 static OHCI1394Device *devInit(OHCI1394Device *base,
                                BPTR seglist,
                                struct ExecBase *sysbase)
@@ -171,8 +169,7 @@ static OHCI1394Device *devInit(OHCI1394Device *base,
     _INFO("- Failed\n");
     return NULL;
 }
-//-
-//+ devOpen
+
 OHCI1394Device *devOpen(void)
 {
     LONG unit = REG_D0;
@@ -225,8 +222,7 @@ OHCI1394Device *devOpen(void)
     _INFO("- ret=%p, err=%ld, dev.OpenCnt=%ld\n", ret, err, base->hd_Library.lib_OpenCnt);
     return ret;
 }
-//-
-//+ internalExpunge
+
 static BPTR internalExpunge(OHCI1394Device *base) {
     BPTR ret = 0;
 
@@ -245,15 +241,13 @@ static BPTR internalExpunge(OHCI1394Device *base) {
 
     return ret;
 }
-//-
-//+ devExpunge
+
 static BPTR devExpunge(void)
 {
     OHCI1394Device *base = (APTR) REG_A6;
     return internalExpunge(base);
 }
-//-
-//+ devClose
+
 static BPTR devClose(void)
 {
     IOHeliosHWReq *ioreq = (APTR) REG_A1;
@@ -284,8 +278,7 @@ static BPTR devClose(void)
     _INFO("- dev.OpenCnt=%ld\n", base->hd_Library.lib_OpenCnt);
     return ret;
 }
-//- 
-//+ devBeginIO
+
 static void devBeginIO(void)
 {
     IOHeliosHWReq *ioreq = (APTR) REG_A1;
@@ -388,8 +381,7 @@ static void devBeginIO(void)
 
     _INFO("- ret=%lu\n", ret);
 }
-//-
-//+ devAbortIO
+
 static void devAbortIO(void)
 {
     IOHeliosHWReq *ioreq = (APTR) REG_A1;
@@ -416,4 +408,4 @@ static void devAbortIO(void)
 
     _INFO("-\n");
 }
-//-
+

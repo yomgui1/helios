@@ -248,12 +248,11 @@ static const char *power[] = {
 };
 #endif
 static const char port[] = { '.', '-', 'p', 'c', };
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- LOCAL CODE SECTION -----------------------------------------------------*/
 
-//+ log_IrqEvents
 static void log_IrqEvents(QUADLET events)
 {
     /* CAUTION: called from IRQ context */
@@ -288,38 +287,33 @@ static void log_IrqEvents(QUADLET events)
                      | OHCI1394_INTF_BUSRESET
                      | OHCI1394_INTF_UNRECOVERABLEERROR)  ? " ?"             : "");
 }
-//-
-//+ log_IrqIsoRecvEvents
+
 static void log_IrqIsoRecvEvents(QUADLET events)
 {
     /* CAUTION: called from IRQ context */
 
     IRQDB("iso receive events received: $%08x\n", events);
 }
-//-
-//+ log_IrqIsoXmitEvents
+
 static void log_IrqIsoXmitEvents(QUADLET events)
 {
     /* CAUTION: called from IRQ context */
 
     IRQDB("iso transmit events received: $%08x\n", events);
 }
-//-
-//+ log_IrqError
+
 static void log_IrqError(const char *msg, QUADLET events)
 {
     /* CAUTION: called from IRQ context */
 
     IRQDB("error events received: $%08x \"%s\"\n", events, msg);
 }
-//-
-//+ _p
+
 static inline char _p(QUADLET *s, ULONG shift)
 {
     return port[*s >> shift & 3];
 }
-//-
-//+ log_SelfIDs
+
 static void log_SelfIDs(UWORD node_id, UBYTE generation, ULONG self_id_count, QUADLET *s)
 {
     _INFO("%u selfIDs, generation %u, local node ID $%04x\n", self_id_count, generation, node_id);
@@ -340,10 +334,9 @@ static void log_SelfIDs(UWORD node_id, UBYTE generation, ULONG self_id_count, QU
                   _p(s,  8), _p(s,  6), _p(s,  4), _p(s,  2));
     }
 }
-//-
+
 
 /*--- OHCI level API ---*/
-//+ ohci_RegRead
 static QUADLET ohci_RegRead(OHCI1394Unit * const unit, LONG offset)
 {
     register QUADLET ret;
@@ -358,8 +351,7 @@ static QUADLET ohci_RegRead(OHCI1394Unit * const unit, LONG offset)
 
     return ret;
 }
-//-
-//+ ohci_RegWrite
+
 static void ohci_RegWrite(OHCI1394Unit * const unit, LONG offset, QUADLET value)
 {
     register volatile QUADLET * address = (APTR)unit->hu_PCI_RegBase + offset;
@@ -371,8 +363,7 @@ static void ohci_RegWrite(OHCI1394Unit * const unit, LONG offset, QUADLET value)
     *address = BE_SWAPLONG(value);
 #endif
 }
-//-
-//+ ohci_DumpRegisters
+
 void ohci_DumpRegisters(OHCI1394Unit *unit)
 {
 #ifndef NDEBUG
@@ -388,8 +379,7 @@ void ohci_DumpRegisters(OHCI1394Unit *unit)
     DB_Raw("\n");
 #endif
 }
-//-
-//+ ohci_OnUnrecoverableError
+
 static void ohci_OnUnrecoverableError(OHCI1394Unit *unit, STRPTR msg)
 {
     kprintf("UnrecoverableError, unit #%lu shall be reset now! Reason: '%s'\n",
@@ -401,8 +391,7 @@ static void ohci_OnUnrecoverableError(OHCI1394Unit *unit, STRPTR msg)
 
     DB_NotFinished();
 }
-//-
-//+ ohci_WritePHY
+
 static BOOL ohci_WritePHY(OHCI1394Unit *unit,
                           UBYTE addr,
                           UBYTE bits_clear,
@@ -464,10 +453,9 @@ static BOOL ohci_WritePHY(OHCI1394Unit *unit,
 
     return FALSE;
 }
-//-
+
 
 /*--- PCI level API ---*/
-//+ ohci_PCI_IrqHandler
 /*! \brief Top IRQ handler, called by the system when a PCI IRQ is raised.
  *
  * \Note: This function shall not lock and be fast, so use subtasks to process data.
@@ -549,8 +537,7 @@ static ULONG ohci_PCI_IrqHandler(APTR data)
 
     return 0;
 }
-//-
-//+ ohci_PCI_InstallIRQ
+
 static BOOL ohci_PCI_InstallIRQ(OHCI1394Unit *unit)
 {
     _INFO_UNIT(unit, "Installing IRQ...\n");
@@ -568,8 +555,7 @@ static BOOL ohci_PCI_InstallIRQ(OHCI1394Unit *unit)
 
     return TRUE;
 }
-//-
-//+ ohci_PCI_RemoveIRQ
+
 static void ohci_PCI_RemoveIRQ(OHCI1394Unit *unit)
 {
     _INFO_UNIT(unit, "Removing IRQ...\n");
@@ -581,8 +567,7 @@ static void ohci_PCI_RemoveIRQ(OHCI1394Unit *unit)
         unit->hu_PCI_IRQHandlerObject = NULL;
     }
 }
-//-
-//+ ohci_PCI_OpenUnit
+
 static LONG ohci_PCI_OpenUnit(OHCI1394Unit *unit)
 {
     APTR board = unit->hu_PCI_BoardObject;
@@ -633,8 +618,7 @@ static LONG ohci_PCI_OpenUnit(OHCI1394Unit *unit)
 
     return FALSE;
 }
-//-
-//+ ohci_PCI_CloseUnit
+
 static void ohci_PCI_CloseUnit(OHCI1394Unit *unit)
 {
     APTR board = unit->hu_PCI_BoardObject;
@@ -652,10 +636,9 @@ static void ohci_PCI_CloseUnit(OHCI1394Unit *unit)
 
     PCIXReleaseBoard(board);
 }
-//-
+
 
 /*--- Local request handlers ---*/
-//+ ohci_HandleLocalROM
 static UBYTE ohci_HandleLocalROM(OHCI1394Unit *unit,
                                  ULONG csr,
                                  HeliosAPacket *req,
@@ -693,8 +676,7 @@ static UBYTE ohci_HandleLocalROM(OHCI1394Unit *unit,
 
     return rcode;
 }
-//-
-//+ ohci_HandleLocalCSRLock
+
 static UBYTE ohci_HandleLocalCSRLock(OHCI1394Unit *unit,
                                     ULONG csr,
                                     HeliosAPacket *req,
@@ -753,10 +735,9 @@ static UBYTE ohci_HandleLocalCSRLock(OHCI1394Unit *unit,
 
     return HELIOS_RCODE_COMPLETE;
 }
-//-
+
 
 /*--- Generic context API ---*/
-//+ ohci_Context_SubTask
 static void ohci_Context_SubTask(HeliosSubTask *self, struct TagItem *tags)
 {
     OHCI1394Context *ctx;
@@ -814,8 +795,7 @@ static void ohci_Context_SubTask(HeliosSubTask *self, struct TagItem *tags)
 out:
     FreeSignal(signal);
 }
-//-
-//+ ohci_Context_Init
+
 static BOOL ohci_Context_Init(OHCI1394Unit *     unit,
                               OHCI1394Context *  ctx,
                               ULONG              reg_offset,
@@ -839,20 +819,17 @@ static BOOL ohci_Context_Init(OHCI1394Unit *     unit,
 
     return 0 == Helios_WaitTaskReady(ctx->ctx_SubTask, SIGBREAKF_CTRL_E);
 }
-//-
-//+ ohci_Context_Term
+
 static void ohci_Context_Term(OHCI1394Context *ctx)
 {
     Helios_KillSubTask(ctx->ctx_SubTask);
 }
-//-
-//+ ohci_Context_IsDead
+
 static BOOL ohci_Context_IsDead(OHCI1394Context *ctx)
 {
     return ohci_RegRead(ctx->ctx_Unit, CTX_CTRL_SET(ctx->ctx_RegOffset)) & CTX_DEAD;
 }
-//-
-//+ ohci_Context_Stop
+
 static BOOL ohci_Context_Stop(OHCI1394Context *ctx)
 {
     OHCI1394Unit *unit = ctx->ctx_Unit;
@@ -877,11 +854,10 @@ static BOOL ohci_Context_Stop(OHCI1394Context *ctx)
 
     return FALSE;
 }
-//-
+
 
 /*--- AT Context API ---*/
 /* WARNING: All AT context functions shall be locked before calling */
-//+ ohci_ATContext_InitDMABuffers
 static void ohci_ATContext_InitDMABuffers(OHCI1394ATCtx *ctx)
 {
     const static ULONG cnt = AT_DMA_BUFFER_SIZE / sizeof(OHCI1394ATBuffer);
@@ -893,8 +869,7 @@ static void ohci_ATContext_InitDMABuffers(OHCI1394ATCtx *ctx)
     for (i=0; i<cnt; i++)
         ADDTAIL((struct List *)&ctx->atc_BufferList, (struct Node *)&ctx->atc_CpuDMABuffers[i]);
 }
-//-
-//+ ohci_ATContext_GetBuffer
+
 static OHCI1394ATBuffer *ohci_ATContext_GetBuffer(OHCI1394ATCtx *ctx)
 {
     OHCI1394ATBuffer *buf;
@@ -907,8 +882,7 @@ static OHCI1394ATBuffer *ohci_ATContext_GetBuffer(OHCI1394ATCtx *ctx)
     
     return buf;
 }
-//-
-//+ ohci_ATContext_ReleaseBuffer
+
 static void ohci_ATContext_ReleaseBuffer(OHCI1394ATCtx *ctx, OHCI1394ATBuffer *buf)
 {
     /* Tail when removed, head when get: rotate buffers usage */
@@ -916,20 +890,17 @@ static void ohci_ATContext_ReleaseBuffer(OHCI1394ATCtx *ctx, OHCI1394ATBuffer *b
     ADDTAIL((struct List *)&ctx->atc_BufferList, (struct Node *)buf);
     ctx->atc_BufferUsage++;
 }
-//-
-//+ ohci_ATContext_GetPhyAddress
+
 static ULONG ohci_ATContext_GetPhyAddress(OHCI1394ATCtx *ctx, APTR ptr)
 {
     return ctx->atc_PhyDMABuffers + (ptr - (APTR)ctx->atc_CpuDMABuffers);
 }
-//-
-//+ ohci_ATContext_GetCPUAddress
+
 static ULONG ohci_ATContext_GetCPUAddress(OHCI1394ATCtx *ctx, ULONG ptr)
 {
     return ((ULONG)ctx->atc_CpuDMABuffers) + (ptr - ctx->atc_PhyDMABuffers);
 }
-//-
-//+ ohci_ATContext_Run
+
 static void ohci_ATContext_Run(OHCI1394ATCtx *ctx)
 {
     OHCI1394Unit *unit = ctx->atc_Context.ctx_Unit;
@@ -968,8 +939,7 @@ static void ohci_ATContext_Run(OHCI1394ATCtx *ctx)
 
     _INFO_ATDMA_CTX(ctx, "-\n");
 }
-//-
-//+ ohci_ATContext_AppendBuffer
+
 static void ohci_ATContext_AppendBuffer(OHCI1394ATCtx *    ctx,
                                         OHCI1394ATBuffer * buffer,
                                         ULONG              z)
@@ -1013,9 +983,8 @@ static void ohci_ATContext_AppendBuffer(OHCI1394ATCtx *    ctx,
     _INFO_CTX(ctx, "wake-up ... (status = %08x)\n", ohci_RegRead(unit, CTX_CTRL_SET(regoff)));
     ohci_RegWrite(unit, CTX_CTRL_SET(regoff), CTX_WAKE);
 }
-//-
 
-//+ ohci_ATContext_Init
+
 static BOOL ohci_ATContext_Init(OHCI1394Unit *        unit,
                                 OHCI1394ATCtx *       ctx,
                                 ULONG                 regoffset,
@@ -1052,8 +1021,7 @@ static BOOL ohci_ATContext_Init(OHCI1394Unit *        unit,
 
     return TRUE;
 }
-//-
-//+ ohci_ATContext_Term
+
 static void ohci_ATContext_Term(OHCI1394ATCtx *ctx)
 {
     LOCK_CTX(ctx);
@@ -1063,9 +1031,8 @@ static void ohci_ATContext_Term(OHCI1394ATCtx *ctx)
     ohci_Context_Term(&ctx->atc_Context);
     FreeVecDMA(ctx->atc_AllocDMABuffers);
 }
-//-
 
-//+ ohci_ATContexts_Init
+
 static BOOL ohci_ATContexts_Init(OHCI1394Unit *unit)
 {
     if (ohci_ATContext_Init(unit, &unit->hu_ATRequestCtx,
@@ -1085,15 +1052,13 @@ static BOOL ohci_ATContexts_Init(OHCI1394Unit *unit)
         _ERR_UNIT(unit, "AT request context creation failed\n");
     return FALSE;
 }
-//-
-//+ ohci_ATContexts_Term
+
 static void ohci_ATContexts_Term(OHCI1394Unit *unit)
 {
     ohci_ATContext_Term(&unit->hu_ATRequestCtx);
     ohci_ATContext_Term(&unit->hu_ATResponseCtx);
 }
-//-
-//+ ohci_ATContexts_Stop
+
 static void ohci_ATContexts_Stop(OHCI1394Unit *unit)
 {
     LOCK_CTX(&unit->hu_ATRequestCtx); 
@@ -1104,18 +1069,16 @@ static void ohci_ATContexts_Stop(OHCI1394Unit *unit)
     ohci_Context_Stop(&unit->hu_ATResponseCtx.atc_Context);
     UNLOCK_CTX(&unit->hu_ATResponseCtx);
 }
-//-
+
 
 /*--- AR Context API ---*/
 /* WARNING: All AR context functions shall be locked before calling */
 
-//+ ohci_ARContext_GetPhyAddress
 static ULONG ohci_ARContext_GetPhyAddress(OHCI1394ARCtx *ctx, APTR ptr)
 {
     return ctx->arc_PhyDMABuffers + (ptr - (APTR)ctx->arc_CpuDMABuffers);
 }
-//-
-//+ ohci_ARContext_SetupBuffer
+
 static void ohci_ARContext_SetupBuffer(OHCI1394ARCtx *    ctx,
                                        OHCI1394ARBuffer * buffer,
                                        OHCI1394ARBuffer * next,
@@ -1142,8 +1105,7 @@ static void ohci_ARContext_SetupBuffer(OHCI1394ARCtx *    ctx,
     utils_SPrintF(buf, "Dumping AR descriptor @ %p:\n", d);
     log_DumpMem(d, sizeof(OHCI1394Descriptor), TRUE, buf);
 }
-//-
-//+ ohci_ARContext_Reset
+
 static void ohci_ARContext_Reset(OHCI1394ARCtx *ctx)
 {
     OHCI1394ARBuffer *buf, *next;
@@ -1171,8 +1133,7 @@ static void ohci_ARContext_Reset(OHCI1394ARCtx *ctx)
     ctx->arc_LastBuffer = ctx->arc_RealLastBuffer;
     ctx->arc_FirstQuadlet = ctx->arc_Pages;
 }
-//-
-//+ ohci_ARContext_Start
+
 static void ohci_ARContext_Start(OHCI1394ARCtx *ctx)
 {
     OHCI1394Unit *unit = ctx->arc_Context.ctx_Unit;
@@ -1198,8 +1159,7 @@ static void ohci_ARContext_Start(OHCI1394ARCtx *ctx)
 
     _INFO_ARDMA_CTX(ctx, "- ctrl=$%08x\n", ohci_RegRead(unit, CTX_CTRL_SET(regoff)));
 }
-//-
-//+ ohci_ARContext_Wake
+
 static void ohci_ARContext_Wake(OHCI1394ARCtx *ctx)
 {
     OHCI1394Unit *unit = ctx->arc_Context.ctx_Unit;
@@ -1207,9 +1167,8 @@ static void ohci_ARContext_Wake(OHCI1394ARCtx *ctx)
     ohci_RegWrite(unit, CTX_CTRL_SET(ctx->arc_Context.ctx_RegOffset), CTX_WAKE);
     _INFO_ARDMA_CTX(ctx, "wake-up: Ctrl=%08x\n", ohci_RegRead(unit, CTX_CTRL_SET(ctx->arc_Context.ctx_RegOffset)));
 }
-//-
 
-//+ ohci_ARContext_ParsePacket
+
 // Called in a task context, but keep it as fast possible
 static QUADLET *ohci_ARContext_ParsePacket(OHCI1394ARCtx *ctx,
                                            OHCI1394Unit *unit,
@@ -1364,8 +1323,7 @@ bye:
     /* Return the possible next packet address */
     return data + len + 1;
 }
-//-
-//+ ohci_ARContext_PktHandler
+
 static void ohci_ARContext_PktHandler(OHCI1394Context *_ctx)
 {
     OHCI1394ARCtx *ctx = (APTR)_ctx;
@@ -1507,9 +1465,8 @@ static void ohci_ARContext_PktHandler(OHCI1394Context *_ctx)
      * doesn't give better perf.
      */
 }
-//-
 
-//+ ohci_ARContext_Init
+
 static BOOL ohci_ARContext_Init(OHCI1394Unit *        unit,
                                 OHCI1394ARCtx *       ctx,
                                 ULONG                 regoffset,
@@ -1559,8 +1516,7 @@ static BOOL ohci_ARContext_Init(OHCI1394Unit *        unit,
 
     return TRUE;
 }
-//-
-//+ ohci_ARContext_Term
+
 static void ohci_ARContext_Term(OHCI1394ARCtx *ctx)
 {
     LOCK_CTX(ctx);
@@ -1571,9 +1527,8 @@ static void ohci_ARContext_Term(OHCI1394ARCtx *ctx)
     FreeVecDMA(ctx->arc_AllocDMABuffers);
     FreeVecDMA(ctx->arc_Pages);
 }
-//-
 
-//+ ohci_ARContexts_Start
+
 static void ohci_ARContexts_Start(OHCI1394Unit *unit)
 {
     LOCK_CTX(&unit->hu_ARRequestCtx);
@@ -1584,8 +1539,7 @@ static void ohci_ARContexts_Start(OHCI1394Unit *unit)
     ohci_ARContext_Start(&unit->hu_ARResponseCtx);
     UNLOCK_CTX(&unit->hu_ARResponseCtx);
 }
-//-
-//+ ohci_ARContexts_Stop
+
 static void ohci_ARContexts_Stop(OHCI1394Unit *unit)
 {
     LOCK_CTX(&unit->hu_ARRequestCtx);
@@ -1596,9 +1550,8 @@ static void ohci_ARContexts_Stop(OHCI1394Unit *unit)
     ohci_Context_Stop(&unit->hu_ARResponseCtx.arc_Context);
     UNLOCK_CTX(&unit->hu_ARResponseCtx);
 }
-//-
 
-//+ ohci_ARContexts_Init
+
 static BOOL ohci_ARContexts_Init(OHCI1394Unit *unit)
 {
     if (ohci_ARContext_Init(unit, &unit->hu_ARRequestCtx,
@@ -1619,17 +1572,15 @@ static BOOL ohci_ARContexts_Init(OHCI1394Unit *unit)
 
     return FALSE;
 }
-//-
-//+ ohci_ARContexts_Term
+
 static void ohci_ARContexts_Term(OHCI1394Unit *unit)
 {
     ohci_ARContext_Term(&unit->hu_ARRequestCtx);
     ohci_ARContext_Term(&unit->hu_ARResponseCtx);
 }
-//-
+
 
 /*--- AT Context packet handlers ---*/
-//+ ohci_ATContext_ATCompleteHandler
 static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *_ctx)
 {
     OHCI1394ATCtx *ctx = (APTR)_ctx;
@@ -1805,11 +1756,10 @@ static void ohci_ATContext_ATCompleteHandler(OHCI1394Context *_ctx)
 
     _INFO_ATDMA_CTX(ctx, "-\n");
 }
-//-
+
 
 /*--- Isochrone API ---*/
 
-//+ ohci_IRContext_Run
 static void ohci_IRContext_Run(OHCI1394IRCtx *ctx)
 {
     _INFO_IRDMA_CTX(ctx, "[%u]: run (CmdPtr=$%08x)\n", ctx->irc_Base.ic_Index,
@@ -1819,16 +1769,14 @@ static void ohci_IRContext_Run(OHCI1394IRCtx *ctx)
                   OHCI1394_REG_IRECV_CONTEXT_CONTROL_SET(ctx->irc_Base.ic_Index),
                   CTX_RUN);
 }
-//-
-//+ ohci_IRContext_Wake
+
 static void ohci_IRContext_Wake(OHCI1394IRCtx *ctx)
 {
     ohci_RegWrite(ctx->irc_Base.ic_Context.ctx_Unit,
                   OHCI1394_REG_IRECV_CONTEXT_CONTROL_SET(ctx->irc_Base.ic_Index),
                   CTX_WAKE);
 }
-//-
-//+ ohci_IRContext_PacketPerBuffer_InitDMABuffers
+
 static ULONG ohci_IRContext_PacketPerBuffer_InitDMABuffers(OHCI1394IRCtx *ctx, ULONG buf_size)
 {
     OHCI1394Unit *unit = ctx->irc_Base.ic_Context.ctx_Unit;
@@ -1889,8 +1837,7 @@ static ULONG ohci_IRContext_PacketPerBuffer_InitDMABuffers(OHCI1394IRCtx *ctx, U
 
     return cmd_ptr;
 }
-//-
-//+ ohci_IRContext_PacketPerBufferCallback
+
 static void ohci_IRContext_PacketPerBufferCallback(OHCI1394Context *_ctx)
 {
     OHCI1394IRCtx *ctx = (OHCI1394IRCtx *)_ctx;
@@ -2000,9 +1947,8 @@ static void ohci_IRContext_PacketPerBufferCallback(OHCI1394Context *_ctx)
     }
     UNLOCK_CTX(ctx);
 }
-//-
 
-//+ ohci_ITContext_Run
+
 static void ohci_ITContext_Run(OHCI1394ITCtx *ctx)
 {
     _INFO_ITDMA_CTX(ctx, "[%u]: run (CmdPtr=$%08x)\n", ctx->itc_Base.ic_Index,
@@ -2012,16 +1958,14 @@ static void ohci_ITContext_Run(OHCI1394ITCtx *ctx)
                   OHCI1394_REG_IXMIT_CONTEXT_CONTROL_SET(ctx->itc_Base.ic_Index),
                   CTX_RUN);
 }
-//-
-//+ ohci_ITContext_Wake
+
 static void ohci_ITContext_Wake(OHCI1394ITCtx *ctx)
 {
     ohci_RegWrite(ctx->itc_Base.ic_Context.ctx_Unit,
                   OHCI1394_REG_IXMIT_CONTEXT_CONTROL_SET(ctx->itc_Base.ic_Index),
                   CTX_WAKE);
 }
-//-
-//+ ohci_ITContext_Stop
+
 static BOOL ohci_ITContext_Stop(OHCI1394ITCtx *ctx)
 {
     OHCI1394Unit *unit = ctx->itc_Base.ic_Context.ctx_Unit;
@@ -2054,8 +1998,7 @@ static BOOL ohci_ITContext_Stop(OHCI1394ITCtx *ctx)
 
     return FALSE;
 }
-//-
-//+ ohci_IRContext_Append
+
 static void ohci_IRContext_Append(OHCI1394IRCtx *ctx, ULONG cmd_ptr)
 {
     OHCI1394Unit *unit = ctx->irc_Base.ic_Context.ctx_Unit;
@@ -2076,9 +2019,8 @@ static void ohci_IRContext_Append(OHCI1394IRCtx *ctx, ULONG cmd_ptr)
     }
     UNLOCK_REGION(unit);
 }
-//-
 
-//+ ohci_AllocIsoCtx
+
 static LONG ohci_AllocIsoCtx(OHCI1394Unit *unit, ULONG type, LONG index)
 {
     LONG max;
@@ -2144,8 +2086,7 @@ static LONG ohci_AllocIsoCtx(OHCI1394Unit *unit, ULONG type, LONG index)
 
     return index;
 }
-//-
-//+ ohci_FreeIsoCtx
+
 static void ohci_FreeIsoCtx(OHCI1394Unit *unit, ULONG type, ULONG index)
 {
     LOCK_REGION(unit);
@@ -2159,16 +2100,14 @@ static void ohci_FreeIsoCtx(OHCI1394Unit *unit, ULONG type, ULONG index)
     }
     UNLOCK_REGION(unit);
 }
-//-
-//+ ohci_IsoCtx_Remove
+
 static void ohci_IsoCtx_Remove(OHCI1394Context *ctx)
 {
     LOCK_REGION(ctx->ctx_Unit);
     REMOVE(ctx);
     UNLOCK_REGION(ctx->ctx_Unit);
 }
-//-
-//+ ohci_IsoCtx_StopAll
+
 static void ohci_IsoCtx_StopAll(OHCI1394Unit *unit)
 {
     LOCK_REGION_SHARED(unit);
@@ -2184,8 +2123,7 @@ static void ohci_IsoCtx_StopAll(OHCI1394Unit *unit)
     }
     UNLOCK_REGION_SHARED(unit);
 }
-//-
-//+ ohci_CheckAndScheduleIsoList
+
 static void ohci_CheckAndScheduleIsoList(struct MinList *list, ULONG events)
 {
     OHCI1394IsoCtxBase *ctx;
@@ -2197,11 +2135,10 @@ static void ohci_CheckAndScheduleIsoList(struct MinList *list, ULONG events)
             Helios_SignalSubTask(ctx->ic_Context.ctx_SubTask, ctx->ic_Context.ctx_Signal);
     }
 }
-//-
+
 
 /*--- BusReset API and handler ---*/
 
-//+ ohci_HandleSelfIDComplete
 static void ohci_HandleSelfIDComplete(OHCI1394Unit *unit)
 {
     QUADLET q;
@@ -2399,8 +2336,7 @@ busreset: /* Error => Short reset */
         ohci_OnUnrecoverableError(unit, "Cannot raise a bus reset!");
     }           
 }
-//-
-//+ ohci_BusResetTask
+
 static void ohci_BusResetTask(HeliosSubTask *self, struct TagItem *tags)
 {
     OHCI1394Unit *unit;
@@ -2457,8 +2393,7 @@ static void ohci_BusResetTask(HeliosSubTask *self, struct TagItem *tags)
 out:
     FreeSignal(signal);
 }
-//-
-//+ ohci_SoftReset
+
 static BOOL ohci_SoftReset(OHCI1394Unit *unit)
 {
     ULONG loop = MAXLOOP;
@@ -2481,8 +2416,7 @@ static BOOL ohci_SoftReset(OHCI1394Unit *unit)
 
     return TRUE;
 }
-//-
-//+ ohci_EnableInterrupts
+
 static void ohci_EnableInterrupts(OHCI1394Unit *unit)
 {
     _INFO_UNIT(unit, "Enabling interrupts...\n");
@@ -2511,8 +2445,7 @@ static void ohci_EnableInterrupts(OHCI1394Unit *unit)
                   | OHCI1394_INTF_ISOCHTX
                   | OHCI1394_INTF_ISOCHRX);
 }
-//-
-//+ ohci_SplitTimeoutTask
+
 static void ohci_SplitTimeoutTask(HeliosSubTask *self, struct TagItem *tags)
 {
     OHCI1394Unit *unit;
@@ -2591,8 +2524,7 @@ out:
     Helios_CloseTimer(unit->hu_SplitTimeoutIOReq);
     DeleteMsgPort(unit->hu_TimerPort);
 }
-//-
-//+ ohci_remove_devices
+
 static void ohci_remove_devices(OHCI1394Unit *unit)
 {
     HeliosDevice *dev, *next;
@@ -2600,19 +2532,17 @@ static void ohci_remove_devices(OHCI1394Unit *unit)
     ForeachNodeSafe(&unit->hu_Devices, dev, next)
         Helios_RemoveDevice(dev);
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- EXPORTED CODE SECTION --------------------------------------------------*/
 
-//+ ohci_GetTimeStamp
 /* atomic */
 UWORD ohci_GetTimeStamp(OHCI1394Unit *unit)
 {
     return ohci_RegRead(unit, OHCI1394_REG_ISOCHRONOUS_CYCLE_TIMER) >> 12;
 }
-//-
-//+ ohci_UpTime
+
 /* atomic (only if the task is not delayed more than 1 seconds per register read) */
 UQUAD ohci_UpTime(OHCI1394Unit *unit)
 {
@@ -2636,8 +2566,7 @@ UQUAD ohci_UpTime(OHCI1394Unit *unit)
 
     return (((UQUAD)seconds_1) << 32) | cycle_time;
 }
-//-
-//+ ohci_RaiseBusReset
+
 BOOL ohci_RaiseBusReset(OHCI1394Unit *unit, BOOL shortreset)
 {
     if (shortreset)
@@ -2651,8 +2580,7 @@ BOOL ohci_RaiseBusReset(OHCI1394Unit *unit, BOOL shortreset)
         return ohci_WritePHY(unit, 1, 0, PHYF_BUS_RESET);
     }
 }
-//-
-//+ ohci_ComputeResponseTimeStamp
+
 UWORD ohci_ComputeResponseTimeStamp(UWORD req_timestamp, UWORD offset)
 {
     UWORD timestamp;
@@ -2668,8 +2596,7 @@ UWORD ohci_ComputeResponseTimeStamp(UWORD req_timestamp, UWORD offset)
         timestamp += (req_timestamp & ~0x1fff);
     return timestamp;
 }
-//-
-//+ ohci_ATContext_Send
+
 /* Put an ohci raw packet on the given AT ctx.
  * optional parameters:
  * timestamp: (resp. packet only) indicate the packet timeout.
@@ -2937,8 +2864,7 @@ LONG ohci_ATContext_Send(OHCI1394ATCtx *ctx, UBYTE generation, QUADLET *p,
 
     return err;
 }
-//-
-//+ ohci_SendPHYPacket
+
 LONG ohci_SendPHYPacket(OHCI1394Unit *unit, HeliosSpeed speed, QUADLET phy_data,
                         OHCI1394ATPacketData *pdata)
 {
@@ -2951,8 +2877,7 @@ LONG ohci_SendPHYPacket(OHCI1394Unit *unit, HeliosSpeed speed, QUADLET phy_data,
 
     return ohci_ATContext_Send(&unit->hu_ATRequestCtx, 0, p, NULL, pdata, 0, 0);
 }
-//-
-//+ ohci_HandleLocalRequest
+
 /* This function supposes that response headers are a copy of req headers.
  * WARNING: must be called with locked unit */
 void ohci_HandleLocalRequest(OHCI1394Unit *unit,
@@ -3035,8 +2960,7 @@ void ohci_HandleLocalRequest(OHCI1394Unit *unit,
             resp->RCode = HELIOS_RCODE_TYPE_ERROR;
     }
 }
-//-
-//+ ohci_CancelATPacket
+
 void ohci_CancelATPacket(OHCI1394Unit *unit, OHCI1394ATPacketData *pdata)
 {
     LOCK_REGION(unit);
@@ -3050,15 +2974,13 @@ void ohci_CancelATPacket(OHCI1394Unit *unit, OHCI1394ATPacketData *pdata)
     }
     UNLOCK_REGION(unit);
 }
-//-
-//+ ohci_GenerationOK
+
 LONG ohci_GenerationOK(OHCI1394Unit *unit, UBYTE generation)
 {
     return (generation == unit->hu_OHCI_LastGeneration) &&
            (0 == (OHCI1394_INTF_BUSRESET & ohci_RegRead(unit, OHCI1394_REG_INT_EVENT_CLEAR)));
 }
-//-
-//+ ohci_SetROM
+
 LONG ohci_SetROM(OHCI1394Unit *unit, QUADLET *data)
 {
     QUADLET *next_rom;
@@ -3099,9 +3021,8 @@ LONG ohci_SetROM(OHCI1394Unit *unit, QUADLET *data)
 
     return err;
 }
-//-
 
-//+ ohci_IRContext_Destroy
+
 void ohci_IRContext_Destroy(OHCI1394IRCtx *ctx)
 {
     OHCI1394Unit *unit = ctx->irc_Base.ic_Context.ctx_Unit;
@@ -3115,8 +3036,7 @@ void ohci_IRContext_Destroy(OHCI1394IRCtx *ctx)
     FreeVecDMA(ctx->irc_DMABuffer);
     FreePooled(unit->hu_MemPool, ctx, sizeof(*ctx));
 }
-//-
-//+ ohci_IRContext_Create
+
 OHCI1394IRCtx *ohci_IRContext_Create(OHCI1394Unit *     unit,
                                      LONG               index,
                                      UWORD              ibuf_size,
@@ -3202,8 +3122,7 @@ OHCI1394IRCtx *ohci_IRContext_Create(OHCI1394Unit *     unit,
 
     return NULL;
 }
-//-
-//+ ohci_IRContext_Start
+
 void ohci_IRContext_Start(OHCI1394IRCtx *ctx, ULONG channel, ULONG tags)
 {
     LOCK_CTX(ctx);
@@ -3233,8 +3152,7 @@ void ohci_IRContext_Start(OHCI1394IRCtx *ctx, ULONG channel, ULONG tags)
     }
     UNLOCK_CTX(ctx);
 }
-//-
-//+ ohci_IRContext_Stop
+
 BOOL ohci_IRContext_Stop(OHCI1394IRCtx *ctx)
 {
     OHCI1394Unit *unit = ctx->irc_Base.ic_Context.ctx_Unit;
@@ -3276,10 +3194,9 @@ BOOL ohci_IRContext_Stop(OHCI1394IRCtx *ctx)
 out:
     return res;
 }
-//-
+
 
 /* link layer */
-//+ ohci_ScanPCI
 LONG ohci_ScanPCI(OHCI1394Device *base)
 {
     APTR board = NULL;
@@ -3334,8 +3251,7 @@ LONG ohci_ScanPCI(OHCI1394Device *base)
 
     return TRUE;
 }
-//-
-//+ ohci_OpenUnit
+
 /* This function is called each time we need to open the device/unit
  * ATTENTION: not concurential accesses protected.
  */
@@ -3387,8 +3303,7 @@ LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index)
     _INFO("-\n");
     return err;
 }
-//-
-//+ ohci_CloseUnit
+
 void ohci_CloseUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq)
 {
     OHCI1394Unit *unit = (OHCI1394Unit *) ioreq->iohh_Req.io_Unit;
@@ -3400,8 +3315,7 @@ void ohci_CloseUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq)
         unit->hu_Flags.Initialized = FALSE;
     }
 }
-//-
-//+ ohci_Init
+
 LONG ohci_Init(OHCI1394Unit *unit)
 {
     LONG ret = FALSE;
@@ -3667,8 +3581,7 @@ end:
     _INFO_UNIT(unit, "- ret=%ld\n", ret);
     return ret;
 }
-//-
-//+ ohci_Term
+
 void ohci_Term(OHCI1394Unit *unit)
 {
     APTR iso_ctx, next;
@@ -3715,8 +3628,7 @@ void ohci_Term(OHCI1394Unit *unit)
 
     _INFO("-\n");
 }
-//-
-//+ ohci_Enable
+
 LONG ohci_Enable(OHCI1394Unit *unit)
 {
     LONG ret = FALSE;
@@ -3752,8 +3664,7 @@ LONG ohci_Enable(OHCI1394Unit *unit)
     _INFO_UNIT(unit, "-\n");
     return ret;
 }
-//-
-//+ ohci_Disable
+
 void ohci_Disable(OHCI1394Unit *unit)
 {
     _INFO_UNIT(unit, "+\n");
@@ -3774,10 +3685,9 @@ void ohci_Disable(OHCI1394Unit *unit)
 
     _INFO_UNIT(unit, "-\n");
 }
-//-
+
 
 #if 0
-//+ ohci_HandleDeadContexts
 void ohci_HandleDeadContexts(_HELIOS_Bus *bus)
 {
     _OHCI1394_Chipset *ohci = (APTR) bus;
@@ -3806,8 +3716,7 @@ void ohci_HandleDeadContexts(_HELIOS_Bus *bus)
     }
     UNLOCK_REGION(ohci);
 }
-//-
-//+ Helios_DumpOHCI
+
 void Helios_DumpOHCI(HeliosBus *_bus)
 {
     int i;
@@ -3923,5 +3832,5 @@ void Helios_DumpOHCI(HeliosBus *_bus)
 
     kprintf("Done ===========================\n");
 }
-//-
+
 #endif /* 0 */

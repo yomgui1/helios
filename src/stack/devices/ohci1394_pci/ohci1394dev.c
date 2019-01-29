@@ -39,7 +39,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 /*----------------------------------------------------------------------------*/
 /*--- PUBLIC CODE SECTION ----------------------------------------------------*/
 
-//+ dev_OnNewNode
 void dev_OnNewNode(OHCI1394Unit *unit, HeliosNode *node)
 {
     HeliosDevice *dev;
@@ -54,8 +53,7 @@ void dev_OnNewNode(OHCI1394Unit *unit, HeliosNode *node)
 
     Helios_ScanDevice(dev);
 }
-//-
-//+ dev_OnRemovedNode
+
 void dev_OnRemovedNode(OHCI1394Unit *unit, HeliosNode *node)
 {
     HeliosDevice *dev;
@@ -72,8 +70,7 @@ void dev_OnRemovedNode(OHCI1394Unit *unit, HeliosNode *node)
     Helios_RemoveDevice(dev);
     node->n_Device = NULL;
 }
-//-
-//+ dev_OnUpdatedNode
+
 void dev_OnUpdatedNode(OHCI1394Unit *unit, HeliosNode *node)
 {
     HeliosDevice *dev;
@@ -92,4 +89,4 @@ void dev_OnUpdatedNode(OHCI1394Unit *unit, HeliosNode *node)
     if (0 == dev->hd_GUID.q)
         Helios_ScanDevice(dev);
 }
-//-
+

@@ -41,7 +41,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #define SysBase (unit->u_SBP2ClassBase->hc_SysBase)
 
 #ifndef NDEBUG
-//+ scsi_cmd_names
 static const STRPTR scsi_cmd_names[256] =
 {
     [0x00]="TEST_UNIT_READY",
@@ -301,13 +300,12 @@ static const STRPTR scsi_cmd_names[256] =
     [0xfe]="$fe",
     [0xff]="$ff"
 };
-//-
+
 #endif
 
 /*----------------------------------------------------------------------------*/
 /*--- LOCAL CODE SECTION -----------------------------------------------------*/
 
-//+ sbp2_scsi_getmodepage
 static LONG sbp2_scsi_getmodepage(SBP2Unit *unit, UBYTE page)
 {
     UBYTE cmd10[10];
@@ -374,8 +372,7 @@ static LONG sbp2_scsi_getmodepage(SBP2Unit *unit, UBYTE page)
 
     return 0;
 }
-//-
-//+ sbp2_fakegeometry
+
 static void sbp2_fakegeometry(SBP2Unit *unit)
 {
     _INFO("Faking geometry...\n");
@@ -384,12 +381,11 @@ static void sbp2_fakegeometry(SBP2Unit *unit)
     unit->u_Geometry.dg_CylSectors = 1;
     unit->u_Geometry.dg_Cylinders = unit->u_Geometry.dg_TotalSectors;
 }
-//-
+
 
 /*----------------------------------------------------------------------------*/
 /*--- PUBLIC CODE SECTION ----------------------------------------------------*/
 
-//+ sbp2_iocmd_scsi
 LONG sbp2_iocmd_scsi(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     UBYTE cmd10[10];
@@ -602,8 +598,7 @@ out:
     ioreq->io_Error = ioerr;
     return ioerr;
 }
-//-
-//+ sbp2_iocmd_start_stop
+
 LONG sbp2_iocmd_start_stop(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     UBYTE cmd6[6];
@@ -645,8 +640,7 @@ LONG sbp2_iocmd_start_stop(SBP2Unit *unit, struct IOStdReq *ioreq)
     ioreq->io_Error = sbp2_do_scsi_cmd(unit, &scsicmd, ORB_TIMEOUT);
     return ioreq->io_Error;
 }
-//-
-//+ sbp2_iocmd_read64
+
 LONG sbp2_iocmd_read64(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     UBYTE cmd10[10];
@@ -806,8 +800,7 @@ out:
     ioreq->io_Actual = dataoffset;
     return ioreq->io_Error;
 }
-//-
-//+ sbp2_iocmd_write64
+
 LONG sbp2_iocmd_write64(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     UBYTE cmd10[10];
@@ -970,8 +963,7 @@ out:
     ioreq->io_Actual = dataoffset;
     return ioreq->io_Error;
 }
-//-
-//+ sbp2_iocmd_get_geometry
+
 LONG sbp2_iocmd_get_geometry(SBP2Unit *unit, struct IOStdReq *ioreq)
 {
     struct DriveGeometry *dg;
@@ -1154,6 +1146,6 @@ geo_ok:
 
     return ioreq->io_Error;
 }
-//-
+
 
 /* EOF */

@@ -61,7 +61,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 /*----------------------------------------------------------------------------*/
 /*--- STRUCTURES SECTION -----------------------------------------------------*/
 
-//+ OHCI1394Device
 typedef struct OHCI1394Device
 {
     struct Library          hd_Library;       /* standard */
@@ -72,7 +71,7 @@ typedef struct OHCI1394Device
     ULONG                   hd_UnitCount;     /* Number of units found */
     struct MinList          hd_Units;         /* List of units */
 } OHCI1394Device;
-//-
+
 
 struct OHCI1394Unit; /* ohci1394core.h */
 

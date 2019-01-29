@@ -307,7 +307,7 @@ static BPTR devClose(void)
               FindTask(NULL)->tc_Node.ln_Name, sbp2_unit,
               base->dv_Library.lib_OpenCnt);
 
-    return NULL;
+    return 0;
 }
 //- 
 //+ devBeginIO

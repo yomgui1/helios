@@ -218,6 +218,7 @@ static LONG sbp2_do_write_block(SBP2ClassLib *base,
 //+ dump_agent_state
 static void dump_agent_state(SBP2Unit *unit)
 {
+#ifdef NDEBUG
     HeliosOffset offset=unit->u_ORBLoginResponse.command_agent+SBP2_AGENT_STATE;
     QUADLET status=0;
     LONG err;
@@ -239,6 +240,7 @@ static void dump_agent_state(SBP2Unit *unit)
     }
     else
         _ERR_1394("DEV[$%p] Can't fetch AGENT_STATE register offset %llx, err=%ld\n", unit, offset, err);
+#endif
 }
 //-
 #else
@@ -800,8 +802,8 @@ static BOOL sbp2_scsi_setup(SBP2Unit *unit, SBP2SCSICmdReq *req)
     }
     else
     {
-        orb->desc_hi = NULL;
-        orb->desc_lo = NULL;
+        orb->desc_hi = 0;
+        orb->desc_lo = 0;
         orb->datalen = 0;
     }
 
@@ -1122,9 +1124,9 @@ try_inquiry:
     _INFO("INQUIRY: done, %lu bytes\n", inquirydata[4]+4);
 
     /* Read ASCII VendorID, ProductID and ProductVersion fields  */
-    sbp2_read_ascii_field(&inquirydata[8], unit->u_VendorID, SBP2_VENDORID_LEN+1);
-    sbp2_read_ascii_field(&inquirydata[16], unit->u_ProductID, SBP2_PRODUCTID_LEN+1);
-    sbp2_read_ascii_field(&inquirydata[32], unit->u_ProductVersion, SBP2_PRODUCTVERSION_LEN+1);
+    sbp2_read_ascii_field((STRPTR)&inquirydata[8], (STRPTR)unit->u_VendorID, SBP2_VENDORID_LEN+1);
+    sbp2_read_ascii_field((STRPTR)&inquirydata[16], (STRPTR)unit->u_ProductID, SBP2_PRODUCTID_LEN+1);
+    sbp2_read_ascii_field((STRPTR)&inquirydata[32], (STRPTR)unit->u_ProductVersion, SBP2_PRODUCTVERSION_LEN+1);
 
     Helios_ReportMsg(HRMB_INFO, "SBP2", "Unit #%u: Vendor: %s, Product: %s, Version: %s",
                      unit->u_UnitNo, unit->u_VendorID, unit->u_ProductID, unit->u_ProductVersion);
@@ -1274,7 +1276,7 @@ static void sbp2_read_unit_name(SBP2Unit *unit, const QUADLET *dir)
     UBYTE buf[60];
     LONG len;
 
-    len = Helios_ReadTextualDescriptor(dir, buf, sizeof(buf));
+    len = Helios_ReadTextualDescriptor(dir, (STRPTR)buf, sizeof(buf));
     if (len > 0)
     {
         STRPTR name;
@@ -1755,7 +1757,7 @@ static void sbp2_driver_task(SBP2ClassLib *base, SBP2Unit *unit)
     unit->u_Flags.AutoMountCD = 1;
 
     {
-        ULONG value;
+        LONG value;
         char buf[60];
 
         unit->u_AutoReconnect = 0;

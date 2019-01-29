@@ -236,7 +236,7 @@ LONG Helios_ReadROM(HeliosDevice *dev, QUADLET *storage, ULONG *length)
     IOHeliosHWSendRequest ioreq;
     struct MsgPort port;
     HeliosAPacket *p;
-    ULONG remains, max_payload, loop, info_len, crc_len, tgen, tgen2;
+    ULONG remains, loop, info_len, crc_len, tgen, tgen2;
     UWORD crc, rom_crc_value;
     LONG err, i;
     HeliosOffset offset;
@@ -346,7 +346,7 @@ LONG Helios_ReadROM(HeliosDevice *dev, QUADLET *storage, ULONG *length)
     rom_crc_value = storage[0] & 0xffff;
     _INFO_1394("$%04x: CRC len=%u, CRC value=%04x\n", dev->hd_NodeID, crc_len, rom_crc_value);
 
-    max_payload = 1ul << (dev->hd_NodeInfo.n_MaxSpeed+9);
+    //ULONG max_payload = 1ul << (dev->hd_NodeInfo.n_MaxSpeed+9);
 
     /* My first implementation used 2 passes, one using a block read
      * then many quadlet reads if the first pass failed.

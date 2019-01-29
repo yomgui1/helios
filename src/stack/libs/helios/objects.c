@@ -589,7 +589,7 @@ static void helios_read_dev_name(HeliosDevice *dev, const QUADLET *dir)
     UBYTE buf[61];
     LONG len;
 
-    len = Helios_ReadTextualDescriptor(dir, buf, sizeof(buf)-1);
+    len = Helios_ReadTextualDescriptor(dir, (STRPTR)buf, sizeof(buf)-1);
     if (len >= 0)
     {
         if (len)

@@ -375,18 +375,18 @@ static void ohci_RegWrite(OHCI1394Unit * const unit, LONG offset, QUADLET value)
 //+ ohci_DumpRegisters
 void ohci_DumpRegisters(OHCI1394Unit *unit)
 {
+#ifndef NDEBUG
     ULONG i;
 
     DB_Raw("\n\tOHCI Reg 0x%08x ========\n", unit->hu_PCI_RegBase);
     for (i=0; i < ARRAY_SIZE(ohci_reg_names); i++)
     {
-        QUADLET q;
         ULONG offset = ohci_reg_names[i].offset;
-
-        q = ohci_RegRead(unit, offset);
+        QUADLET q = ohci_RegRead(unit, offset);
         DB_Raw("$%03x - %25s : 0x%08x\n", offset, ohci_reg_names[i].label, q);
     }
     DB_Raw("\n");
+#endif
 }
 //-
 //+ ohci_OnUnrecoverableError
@@ -544,7 +544,7 @@ static ULONG ohci_PCI_IrqHandler(APTR data)
 
         value = ohci_RegRead(unit, OHCI1394_REG_ISOCHRONOUS_CYCLE_TIMER);
         if (0 == (value & 0x80000000))
-            ATOMIC_ADD(&unit->hu_BusSeconds, 1);
+            ATOMIC_ADD((LONG*)&unit->hu_BusSeconds, 1);
     }
 
     return 0;
@@ -621,7 +621,7 @@ static LONG ohci_PCI_OpenUnit(OHCI1394Unit *unit)
             else
                 _ERR_UNIT(unit, "OHCI registers space is too small! Only %u byte(s) found, should be >= %u\n", size, OHCI1394_REGISTERS_SPACE_SIZE);
 
-            PCIXSetBoardAttr(board, PCIXTAG_OWNER, NULL);
+            PCIXSetBoardAttr(board, PCIXTAG_OWNER, 0);
         }
         else
             _ERR_UNIT(unit, "OHCI1394 device %p already owned by '%s' (%p)\n", board, owner, owner);
@@ -648,7 +648,7 @@ static void ohci_PCI_CloseUnit(OHCI1394Unit *unit)
     PCIXWriteConfigWord(board, 0x54, PCIXReadConfigWord(board, 0x54) & ~3);
 
     /* Remove the PCI board owning */
-    PCIXSetBoardAttr(board, PCIXTAG_OWNER, NULL);
+    PCIXSetBoardAttr(board, PCIXTAG_OWNER, 0);
 
     PCIXReleaseBoard(board);
 }
@@ -2621,10 +2621,10 @@ UQUAD ohci_UpTime(OHCI1394Unit *unit)
     /* Reading BusSecond twice to be sure it has not changed during CycleTimer reg read.
      * If not, the cycle_time value doesn't correspond to the first seconds read.
      */
-    seconds_0 = ATOMIC_FETCH(&unit->hu_BusSeconds);
+    seconds_0 = ATOMIC_FETCH((LONG*)&unit->hu_BusSeconds);
     cycle_time = ohci_RegRead(unit, OHCI1394_REG_ISOCHRONOUS_CYCLE_TIMER);
     /* BusSeconds may has changed here */
-    seconds_1 = ATOMIC_FETCH(&unit->hu_BusSeconds);
+    seconds_1 = ATOMIC_FETCH((LONG*)&unit->hu_BusSeconds);
 
     if (seconds_0 != seconds_1)
     {

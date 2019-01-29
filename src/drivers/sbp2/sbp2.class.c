@@ -108,7 +108,7 @@ static ULONG LibExpunge(SBP2ClassLib *base)
     if (base->hc_DevBase->dv_Library.lib_OpenCnt > 0)
     {
         base->hc_Lib.lib_Flags |= LIBF_DELEXP;
-        return NULL;
+        return 0;
     }
 
     devCleanup(base->hc_DevBase);

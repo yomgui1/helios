@@ -101,7 +101,7 @@ static inline LONG _ATOMIC_NCMPXCHG(volatile LONG *ptr, LONG old, LONG new)
 
 struct safe_buf
 {
-    UBYTE *buf;
+    STRPTR buf;
     ULONG size;
 };
 

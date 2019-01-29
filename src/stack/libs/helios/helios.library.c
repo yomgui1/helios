@@ -103,7 +103,7 @@ static ULONG LibExpunge(struct HeliosBase *base)
     {
         _INFO("Set LIBF_DELEXP\n");
         base->hb_Lib.lib_Flags |= LIBF_DELEXP;
-        return NULL;
+        return 0;
     }
 
     MySegment = base->hb_SegList;
@@ -245,12 +245,12 @@ struct Library* LIB_Open(void)
                 static struct EasyStruct panic = {
                     sizeof(struct EasyStruct),
                     0,
-                    "helios.library",
+                    (UBYTE*)"helios.library",
                     0,
-                    "Abort"
+                    (UBYTE*)"Abort"
                 };
                 
-                panic.es_TextFormat = msg;
+                panic.es_TextFormat = (UBYTE*)msg;
                 EasyRequestArgs(NULL, &panic, NULL, NULL);
                 
                 CloseLibrary((struct Library *) IntuitionBase);

@@ -1,0 +1,9 @@
+--suffix=none
+--style=bsd
+--indent=spaces=4
+--convert-tabs
+--lineend=linux
+--indent-switches
+--min-conditional-indent=0
+--max-continuation-indent=120
+--keep-one-line-statements

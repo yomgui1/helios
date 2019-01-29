@@ -200,6 +200,9 @@ else
 release: rel-tbz
 endif
 
+astyle:
+	astyle --options=$(PRJROOT)/.astylerc -RQ $(PRJROOT)/src/*.c $(PRJROOT)/src/*.h $(PRJROOT)/include/*.h
+
 #--- Dependencies section ---
 
 # ALL_SRCS : user defined, all .c files

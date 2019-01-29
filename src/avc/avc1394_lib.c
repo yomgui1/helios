@@ -206,11 +206,16 @@ static ULONG LibExpunge(struct AVC1394Library *AVC1394Library)
 
 /*------------------ LIBRARY CODE SECTION -------------------------*/
 
-// The lib execute init protection which simply returns
 LONG NoExecute(void)
 {
     return -1;
 }
+
+const struct NoExecute
+{
+    LONG (*NoExecuteFunc)(void);
+} NoExecuteRef __attribute__((section (".rodata"))) = { &NoExecute };
+
 
 struct Library* LIB_Init(struct AVC1394Library * MyLibBase,
                          BPTR                SegList,

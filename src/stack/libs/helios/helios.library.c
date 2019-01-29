@@ -128,14 +128,17 @@ static ULONG LibExpunge(struct HeliosBase *base)
     return (ULONG)MySegment;
 }
 
-
 /*------------------ LIBRARY CODE SECTION -------------------------*/
 
-// The lib execute init protection which simply returns
 LONG NoExecute(void)
 {
     return -1;
 }
+
+const struct NoExecute
+{
+    LONG (*NoExecuteFunc)(void);
+} NoExecuteRef __attribute__((section (".rodata"))) = { &NoExecute };
 
 struct Library* LIB_Init(struct HeliosBase * base,
                          BPTR                SegList,

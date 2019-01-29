@@ -432,3 +432,14 @@ static void dev_AbortIO(void)
     }
 }
 
+/*------------------ LIBRARY CODE SECTION -------------------------*/
+
+LONG NoExecute(void)
+{
+    return -1;
+}
+
+const struct NoExecute
+{
+    LONG (*NoExecuteFunc)(void);
+} NoExecuteRef __attribute__((section (".rodata"))) = { &NoExecute };

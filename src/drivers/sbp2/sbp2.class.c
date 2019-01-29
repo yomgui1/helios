@@ -139,11 +139,16 @@ static ULONG LibExpunge(SBP2ClassLib *base)
 
 /*------------------ LIBRARY CODE SECTION -------------------------*/
 
-// The lib execute init protection which simply returns
 LONG NoExecute(void)
 {
     return -1;
 }
+
+const struct NoExecute
+{
+    LONG (*NoExecuteFunc)(void);
+} NoExecuteRef __attribute__((section (".rodata"))) = { &NoExecute };
+
 
 struct Library* LIB_Init(SBP2ClassLib *base,
                          BPTR SegList,

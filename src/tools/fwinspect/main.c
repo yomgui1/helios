@@ -1326,8 +1326,9 @@ int main(int argc, char **argv)
 
                             if (NULL != tmp)
                             {
-                                    /* Create a new HexEdit object first before destroying any old one */
-                                // *INDENT-OFF*
+                                /* Create a new HexEdit object first before destroying any old one */
+
+/* *INDENT-OFF* */
                                 obj = HexEditObject,
                                         VirtualFrame,
                                             MUIA_HexEdit_LowBound,          tmp,
@@ -1337,8 +1338,9 @@ int main(int argc, char **argv)
                                             MUIA_HexEdit_PropObject,        new_rom_prop = ScrollbarObject,
                                             MUIA_Prop_UseWinBorder,         MUIV_Prop_UseWinBorder_Right,
                                         End,
-                            End;
-                        // *INDENT-ON*
+                                    End;
+
+/* *INDENT-ON* */
 
                                 if ((NULL != obj) && (NULL != new_rom_prop))
                                 {

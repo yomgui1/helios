@@ -32,16 +32,14 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
    - better handling of dead DMA programs
 */
 
-#define NDEBUG
-
-#ifndef NDEBUG
 //#define DEBUG_CTX
 //#define DEBUG_AT_DMA_CTX
 //#define DEBUG_AR_DMA_CTX
-#define DEBUG_IR_DMA_CTX
-#define DEBUG_IT_DMA_CTX
+//#define DEBUG_IR_DMA_CTX
+//#define DEBUG_IT_DMA_CTX
 //#define DEBUG_MEM
-#endif
+//#define DEBUG_ROM_REQ
+//#define DEBUG_IRQ_EVENTS
 
 #include "ohci1394core.h"
 #include "ohci1394topo.h"
@@ -116,6 +114,16 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 #else
 #define _INFO_CTX(c, fmt, args...)
 #define _ERR_CTX(c, fmt, args...)
+#endif
+
+#ifdef DEBUG_ROM_REQ
+#define _INFO_UNIT_REQ(u, fmt, args...) ({ OHCI1394Context *_c = (OHCI1394Context *)(c); \
+    _INFO("[unit %u] " fmt, _c->ctx_Unit->hu_UnitNo ,##args); })
+#define _ERR_UNIT_REQ(u, fmt, args...) ({ OHCI1394Context *_c = (OHCI1394Context *)(c); \
+    _ERR("[unit %u] " fmt, _c->ctx_Unit->hu_UnitNo ,##args); })
+#else
+#define _INFO_UNIT_REQ(c, fmt, args...)
+#define _ERR_UNIT_REQ(c, fmt, args...)
 #endif
 
 #define SELF_ID_BUF_SIZE 0x800
@@ -265,6 +273,7 @@ static void log_IrqEvents(QUADLET events)
 {
     /* CAUTION: called from IRQ context */
 
+#ifdef DEBUG_IRQ_EVENTS
     IRQDB("%08x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n", events,
           events & OHCI1394_INTF_SELFIDCOMPLETE     ? " SelfID"            : "",
           events & OHCI1394_INTF_SELFIDCOMPLETE2    ? " SelfID2"           : "",
@@ -294,6 +303,7 @@ static void log_IrqEvents(QUADLET events)
                      | OHCI1394_INTF_REGACCESSFAIL
                      | OHCI1394_INTF_BUSRESET
                      | OHCI1394_INTF_UNRECOVERABLEERROR)  ? " ?"             : "");
+#endif /* DEBUG_IRQ_EVENTS */
 }
 
 static void log_IrqIsoRecvEvents(QUADLET events)
@@ -698,7 +708,7 @@ static UBYTE ohci_HandleLocalROM(OHCI1394Unit *unit,
     ULONG i = csr - CSR_CONFIG_ROM_OFFSET;
     UBYTE rcode;
 
-    _INFO_UNIT(unit, "payload=%p, length=%lu\n", req->Payload, req->PayloadLength);
+    _INFO_UNIT_REQ(unit, "payload=%p, length=%lu\n", req->Payload, req->PayloadLength);
 
     if (csr > CSR_CONFIG_ROM_END)
     {
@@ -726,8 +736,8 @@ static UBYTE ohci_HandleLocalROM(OHCI1394Unit *unit,
         }
     }
 
-    _INFO_UNIT(unit, "Local ROM response: index=%u, rcode=%ld, payload=%p, length=%u\n",
-               i, rcode, resp->Payload, resp->PayloadLength);
+    _INFO_UNIT_REQ(unit, "Local ROM response: index=%u, rcode=%ld, payload=%p, length=%u\n",
+                   i, rcode, resp->Payload, resp->PayloadLength);
 
     return rcode;
 }
@@ -812,13 +822,13 @@ static void ohci_Context_SubTask(HeliosSubTask *self, struct TagItem *tags)
     taskport = (APTR) GetTagData(HA_MsgPort, 0, tags);
     ctx = (APTR) GetTagData(HA_UserData, 0, tags);
 
-    _INFO("taskport: %p, ctx: %p\n", taskport, ctx);
-
     if ((NULL == taskport) || (NULL == ctx))
     {
-        _ERR("Badly called\n");
+        _ERR("Invalid parameters (msgport=%p, ctx=%p)\n", taskport, ctx);
         return;
     }
+
+    _INFO_CTX(ctx, "MsgPort @ %p\n", taskport);
 
     signal = AllocSignal(-1);
     if (~0U == signal)
@@ -1071,13 +1081,11 @@ static BOOL ohci_ATContext_Init(OHCI1394Unit *        unit,
     static const ULONG cnt = AT_DMA_BUFFER_SIZE / sizeof(OHCI1394ATBuffer);
     static const ULONG size = cnt * sizeof(OHCI1394ATBuffer);
 
-    _INFO_UNIT(unit, "AT context $%X: DMA buffer size=%lu bytes\n", regoffset, size);
-
     /* Allocate DMA buffers space, 16-bytes aligned */
     ctx->atc_AllocDMABuffers = AllocVecDMA(size + 15, MEMF_PUBLIC | MEMF_CLEAR);
     if (NULL == ctx->atc_AllocDMABuffers)
     {
-        _ERR_UNIT(unit, "AT-DMA buffer allocation failed\n");
+        _ERR_UNIT(unit, "AT-DMA[%X] buffer allocation failed for %lu bytes\n", regoffset, size);
         return FALSE;
     }
 
@@ -1085,9 +1093,10 @@ static BOOL ohci_ATContext_Init(OHCI1394Unit *        unit,
 
     ctx->atc_CpuDMABuffers = (APTR)(16 + (((ULONG)ctx->atc_AllocDMABuffers - 1) & ~15));
     ctx->atc_PhyDMABuffers = (ULONG)PCIXDMAGetPhysical(unit->hu_PCI_BoardObject, ctx->atc_CpuDMABuffers);
-    _INFO_UNIT(unit, "AT-DMA buffers: cpu@%p, phy@%p\n", ctx->atc_CpuDMABuffers, ctx->atc_PhyDMABuffers);
+    _INFO_UNIT(unit, "AT-DMA[%X] buffers: phy=%p, cpu=%p\n",
+               regoffset, ctx->atc_PhyDMABuffers, ctx->atc_CpuDMABuffers);
 
-    /* Init. all AT buffers */
+    /* Init. all AT DMA buffers */
     ohci_ATContext_InitDMABuffers(ctx);
 
     if (!ohci_Context_Init(unit, &ctx->atc_Context, regoffset,
@@ -1118,12 +1127,12 @@ static BOOL ohci_ATContexts_Init(OHCI1394Unit *unit)
                             OHCI1394_REG_AREQT_CONTEXT_CONTROL,
                             "["DEVNAME"] AT Requests Handler"))
     {
-        _INFO_UNIT(unit, "AT request context %p created!\n", &unit->hu_ATRequestCtx);
+        _INFO_UNIT(unit, "AT request context @ %p\n", &unit->hu_ATRequestCtx);
         if (ohci_ATContext_Init(unit, &unit->hu_ATResponseCtx,
                                 OHCI1394_REG_AREST_CONTEXT_CONTROL,
                                 "["DEVNAME"] AT Responses Handler"))
         {
-            _INFO_UNIT(unit, "AT response context %p created!\n", &unit->hu_ATResponseCtx);
+            _INFO_UNIT(unit, "AT response context @ %p\n", &unit->hu_ATResponseCtx);
             return TRUE;
         }
         else
@@ -1587,31 +1596,31 @@ static BOOL ohci_ARContext_Init(OHCI1394Unit *        unit,
     static const ULONG blocksize = ARBUFFER_PAGE_COUNT * sizeof(OHCI1394ARBuffer);
     static const ULONG pagessize = ARBUFFER_PAGE_COUNT * ARBUFFER_PAGE_SIZE;
 
-    _INFO_UNIT(unit, "AR context $%X: DMA buffers size=%lu bytes, Pages buffer size=%lu bytes\n",
-               regoffset, blocksize, pagessize);
-
     /* Allocate DMA buffers space, 16-bytes aligned */
     ctx->arc_AllocDMABuffers = AllocVecDMA(blocksize + 15, MEMF_PUBLIC);
     if (NULL == ctx->arc_AllocDMABuffers)
     {
-        _ERR_UNIT(unit, "AT-DMA buffer allocation failed\n");
+        _ERR_UNIT(unit, "AT-DMA[%X] buffer allocation failed for %lu bytes\n",
+                  regoffset, blocksize);
         return FALSE;
     }
 
     ctx->arc_CpuDMABuffers = (APTR)(16 + (((ULONG)ctx->arc_AllocDMABuffers - 1) & ~15));
     ctx->arc_PhyDMABuffers = (ULONG)PCIXDMAGetPhysical(unit->hu_PCI_BoardObject, ctx->arc_CpuDMABuffers);
-    _INFO_UNIT(unit, "AR-DMA buffers: cpu@%p, phy@%p\n", ctx->arc_CpuDMABuffers, ctx->arc_PhyDMABuffers);
+    _INFO_UNIT(unit, "AR-DMA[%X] buffers: phy=%p, cpu=%p\n", regoffset,
+               ctx->arc_PhyDMABuffers, ctx->arc_CpuDMABuffers);
 
     /* Alloc pages buffer */
     ctx->arc_Pages = AllocVecDMA(pagessize, MEMF_PUBLIC);
     if (NULL == ctx->arc_Pages)
     {
-        _ERR_UNIT(unit, "AT-DMA pages allocation failed\n");
+        _ERR_UNIT(unit, "AT-DMA[%X] %lu bytes for pages allocation failed\n",
+                  regoffset, pagessize);
         FreeVecDMA(ctx->arc_AllocDMABuffers);
         return FALSE;
     }
 
-    _INFO_UNIT(unit, "AR-DMA pages buffer: %p\n", ctx->arc_Pages);
+    _INFO_UNIT(unit, "AR-DMA[%X] pages: %p\n", regoffset, ctx->arc_Pages);
 
     if (!ohci_Context_Init(unit, &ctx->arc_Context, regoffset,
                            task_name, ohci_ARContext_PktHandler,
@@ -1670,12 +1679,12 @@ static BOOL ohci_ARContexts_Init(OHCI1394Unit *unit)
                             OHCI1394_REG_AREQR_CONTEXT_CONTROL,
                             "["DEVNAME"] AR Requests Handler"))
     {
-        _INFO_UNIT(unit, "AR request context %p created!\n", &unit->hu_ARRequestCtx);
+        _INFO_UNIT(unit, "AR request context @ %p\n", &unit->hu_ARRequestCtx);
         if (ohci_ARContext_Init(unit, &unit->hu_ARResponseCtx,
                                 OHCI1394_REG_ARESR_CONTEXT_CONTROL,
                                 "["DEVNAME"] AR Responses Handler"))
         {
-            _INFO_UNIT(unit, "AR response context %p created!\n", &unit->hu_ARResponseCtx);
+            _INFO_UNIT(unit, "AR response context @ %p\n", &unit->hu_ARResponseCtx);
             return TRUE;
         }
         else
@@ -2514,13 +2523,13 @@ static void ohci_BusResetTask(HeliosSubTask *self, struct TagItem *tags)
     taskport = (APTR) GetTagData(HA_MsgPort, 0, tags);
     unit = (APTR) GetTagData(HA_UserData, 0, tags);
 
-    _INFO("taskport: %p, unit: %p\n", taskport, unit);
-
     if ((NULL == taskport) || (NULL == unit))
     {
-        _ERR("Badly called\n");
+        _ERR("Invalid parameters (msgport=%p, unit=%p)\n", taskport, unit);
         return;
     }
+
+    _INFO_UNIT(unit, "MsgPort @ %p\n", taskport);
 
     signal = AllocSignal(-1);
     if (~0U == signal)
@@ -2627,13 +2636,13 @@ static void ohci_SplitTimeoutTask(HeliosSubTask *self, struct TagItem *tags)
     taskport = (APTR) GetTagData(HA_MsgPort, 0, tags);
     unit = (APTR) GetTagData(HA_UserData, 0, tags);
 
-    _INFO("taskport: %p, unit: %p\n", taskport, unit);
-
     if ((NULL == taskport) || (NULL == unit))
     {
-        _ERR("Badly called\n");
+        _ERR("Invalid parameters (msgport=%p, unit=%p)\n", taskport, unit);
         return;
     }
+
+    _INFO_UNIT(unit, "MsgPort @ %p\n", taskport);
 
     unit->hu_TimerPort = CreateMsgPort();
     if (NULL == unit->hu_TimerPort)
@@ -3085,8 +3094,8 @@ void ohci_HandleLocalRequest(OHCI1394Unit *unit,
                              HeliosAPacket *req,
                              HeliosAPacket *resp)
 {
-    _INFO_UNIT(unit, "Req=%p, Resp=%p, TC=$%X, TL=%u, payload=%p, length=%lu\n",
-               req, resp, req->TCode, req->TLabel, req->Payload, req->PayloadLength);
+    _INFO_UNIT_REQ(unit, "Req=%p, Resp=%p, TC=$%X, TL=%u, payload=%p, length=%lu\n",
+                   req, resp, req->TCode, req->TLabel, req->Payload, req->PayloadLength);
 
     req->TimeStamp = ohci_GetTimeStamp(unit);
     resp->TLabel = req->TLabel;
@@ -3102,7 +3111,7 @@ void ohci_HandleLocalRequest(OHCI1394Unit *unit,
             resp->HeaderLength = 4;
 
         case TCODE_READ_QUADLET_REQUEST:
-            _INFO_UNIT(unit, "offset=$%012llx\n", req->Offset);
+            _INFO_UNIT_REQ(unit, "offset=$%012llx\n", req->Offset);
 
             resp->HeaderLength += 12;
 
@@ -3127,7 +3136,7 @@ void ohci_HandleLocalRequest(OHCI1394Unit *unit,
             {
                 ULONG csr = (ULONG)(req->Offset - CSR_BASE_LO);
 
-                _INFO_UNIT(unit, "csr=$%lx\n", csr);
+                _INFO_UNIT_REQ(unit, "csr=$%lx\n", csr);
 
                 /* CSR offset not in ROM area ? */
                 if ((csr < CSR_CONFIG_ROM_OFFSET) || (csr > CSR_CONFIG_ROM_END))
@@ -3161,11 +3170,11 @@ void ohci_HandleLocalRequest(OHCI1394Unit *unit,
             resp->Header[1] = (AT_GET_HEADER_DEST_ID(req->Header[0]) << 16) | (resp->RCode << 12);
             resp->TimeStamp = ohci_ComputeResponseTimeStamp(ohci_GetTimeStamp(unit), 4000);
 
-            _INFO_UNIT(unit, "RCode: %u\n", resp->RCode);
+            _INFO_UNIT_REQ(unit, "RCode: %u\n", resp->RCode);
             break;
 
         default:
-            _ERR_UNIT(unit, "Unsupported TCode ($%X)\n", req->TCode);
+            _ERR_UNIT_REQ(unit, "Unsupported TCode ($%X)\n", req->TCode);
             resp->RCode = HELIOS_RCODE_TYPE_ERROR;
     }
 }
@@ -3174,7 +3183,7 @@ void ohci_CancelATPacket(OHCI1394Unit *unit, OHCI1394ATPacketData *pdata)
 {
     LOCK_REGION(unit);
     {
-        _INFO_UNIT(unit, "pdata=%p, AT buf=%p\n", pdata, pdata->pd_Buffer);
+        _INFO_UNIT_REQ(unit, "pdata=%p, AT buf=%p\n", pdata, pdata->pd_Buffer);
         if (NULL != pdata->pd_Buffer)
         {
             pdata->pd_Buffer->atb_PacketData = NULL;
@@ -3470,7 +3479,6 @@ LONG ohci_ScanPCI(OHCI1394Device *base)
     while (NULL != board);
 
     _INFO("%u FW boards found on PCI\n", base->hd_UnitCount);
-
     return TRUE;
 }
 
@@ -3481,8 +3489,6 @@ LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index)
 {
     OHCI1394Unit *unit;
     LONG err = IOERR_OPENFAIL;
-
-    _INFO("+\n");
 
     /* Search if the unit in the units list filled by the PCI scan */
     unit = (OHCI1394Unit *) base->hd_Units.mlh_Head;
@@ -3498,7 +3504,7 @@ LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index)
 
     if (((struct Node *) unit)->ln_Succ)
     {
-        _INFO("Using unit #%lu @ %p\n", index, unit);
+        _INFO_UNIT(unit, "Node: %p\n", unit);
 
         /* HW/SW Init at first open */
         if (!unit->hu_Flags.Initialized)
@@ -3519,7 +3525,7 @@ LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index)
         }
         else
         {
-            _INFO("Unit %lu already initialized.\n", index);
+            _INFO_UNIT(unit, "Already initialized.\n");
             err = IOERR_UNITBUSY;
         }
     }
@@ -3528,7 +3534,6 @@ LONG ohci_OpenUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq, ULONG index)
         _ERR("Unit %lu does not exist!\n", index);
     }
 
-    _INFO("-\n");
     return err;
 }
 
@@ -3538,7 +3543,7 @@ void ohci_CloseUnit(OHCI1394Device *base, IOHeliosHWReq *ioreq)
 
     if (unit->hu_Flags.Initialized)
     {
-        _INFO("Closing unit #%lu @ %p\n", unit->hu_UnitNo, unit);
+        _INFO_UNIT(unit, "Closing unit @ %p\n", unit);
         ohci_Term(unit);
         unit->hu_Flags.Initialized = FALSE;
     }
@@ -3548,8 +3553,6 @@ LONG ohci_Init(OHCI1394Unit *unit)
 {
     LONG ret = FALSE;
     QUADLET q;
-
-    _INFO_UNIT(unit, "+ BoardObject: %p\n", unit->hu_PCI_BoardObject);
 
     NEWLIST(&unit->hu_Devices);
     NEWLIST(&unit->hu_Listeners);
@@ -3624,10 +3627,10 @@ LONG ohci_Init(OHCI1394Unit *unit)
                                 unit->hu_SelfIdBufferCpu = (APTR) GET_ALIGNED2(unit->hu_SelfIdBufferAlloc, SELF_ID_BUF_SIZE);
                                 unit->hu_SelfIdBufferPhy = PCIXDMAGetPhysical(unit->hu_PCI_BoardObject, unit->hu_SelfIdBufferCpu);
 
-                                _INFO_UNIT(unit, "SelfID buffers: raw=%p, cpu=%p, phy=%p\n",
-                                           unit->hu_SelfIdBufferAlloc,
+                                _INFO_UNIT(unit, "SelfID buffers: phy=%p, cpu=%p (alloc=%p)\n",
+                                           unit->hu_SelfIdBufferPhy,
                                            unit->hu_SelfIdBufferCpu,
-                                           unit->hu_SelfIdBufferPhy);
+                                           unit->hu_SelfIdBufferAlloc);
 
                                 /* Use this special dma buffer now */
                                 ohci_RegWrite(unit, OHCI1394_REG_SELFID_BUFFER, (ULONG)unit->hu_SelfIdBufferPhy);
@@ -3752,7 +3755,6 @@ LONG ohci_Init(OHCI1394Unit *unit)
 
                                                             _INFO_UNIT(unit, "HCC: 0x%08x\n", ohci_RegRead(unit, OHCI1394_REG_HC_CONTROL_SET));
 
-                                                            _INFO_UNIT(unit, "Init done\n");
                                                             ret = TRUE;
                                                             goto end;
                                                         }
@@ -3826,7 +3828,6 @@ LONG ohci_Init(OHCI1394Unit *unit)
     }
 
 end:
-    _INFO_UNIT(unit, "- ret=%ld\n", ret);
     return ret;
 }
 
@@ -3834,7 +3835,7 @@ void ohci_Term(OHCI1394Unit *unit)
 {
     APTR iso_ctx, next;
 
-    _INFO("unit=%p\n", unit);
+    _INFO_UNIT(unit, "terminating...\n");
 
     ohci_Disable(unit);
     ohci_remove_devices(unit);
@@ -3854,7 +3855,7 @@ void ohci_Term(OHCI1394Unit *unit)
     ohci_ATContexts_Term(unit);
     ohci_ARContexts_Term(unit);
 
-    _INFO("Kill bus reset task\n");
+    _INFO_UNIT(unit, "Kill bus reset task\n");
     Helios_KillSubTask(unit->hu_BusResetTask);
 
     ohci_FreeTopology(unit);
@@ -3864,7 +3865,7 @@ void ohci_Term(OHCI1394Unit *unit)
         Helios_FreeROM(unit->hu_MemPool, unit->hu_NextROMData);
     }
 
-    _INFO("Kill split-timeout task\n");
+    _INFO_UNIT(unit, "Kill split-timeout task\n");
     Helios_KillSubTask(unit->hu_SplitTimeoutTask);
 
     FreeVecDMA(unit->hu_SelfIdBufferAlloc);
@@ -3878,14 +3879,12 @@ void ohci_Term(OHCI1394Unit *unit)
     memset(&unit->hu_MemPool, 0, sizeof(*unit) - offsetof(OHCI1394Unit, hu_MemPool));
     unit->hu_LocalNodeId = 0;
 
-    _INFO("-\n");
+    _INFO_UNIT(unit, "terminated\n");
 }
 
 LONG ohci_Enable(OHCI1394Unit *unit)
 {
     LONG ret = FALSE;
-
-    _INFO_UNIT(unit, "+\n");
 
     if (unit->hu_Flags.Enabled)
     {
@@ -3920,14 +3919,12 @@ LONG ohci_Enable(OHCI1394Unit *unit)
         unit->hu_Flags.Enabled = TRUE;
     }
 
-    _INFO_UNIT(unit, "-\n");
+    _INFO_UNIT(unit, "Enabled\n");
     return ret;
 }
 
 void ohci_Disable(OHCI1394Unit *unit)
 {
-    _INFO_UNIT(unit, "+\n");
-
     if (!unit->hu_Flags.Enabled)
     {
         return;
@@ -3945,7 +3942,7 @@ void ohci_Disable(OHCI1394Unit *unit)
     /* Disable interrupts at OHCI and PCI level */
     ohci_PCI_RemoveIRQ(unit);
 
-    _INFO_UNIT(unit, "-\n");
+    _INFO_UNIT(unit, "Disabled\n");
 }
 
 

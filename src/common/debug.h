@@ -33,7 +33,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef NDEBUG
 
-#define XDBFN(h, x, a...) kprintf(h"["DBNAME"-%-28s:%4lu] "x,__FUNCTION__,__LINE__ ,##a)
+#define XDBFN(h, x, a...) kprintf(h"[%6s-%-28s:%4lu] "x,DBNAME,__FUNCTION__,__LINE__ ,##a)
 
 #define DB(x, a...) kprintf("OHCI1394: "x , ##a)
 #define IRQDB(x, a...) kprintf("{IRQ} "x , ##a)

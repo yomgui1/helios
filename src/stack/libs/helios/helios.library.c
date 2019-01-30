@@ -56,8 +56,6 @@ static ULONG LibExpunge(struct HeliosBase *base)
 {
     BPTR MySegment;
 
-    _INFO("Base %p, OpenCount %ld\n",base, base->hb_Lib.lib_OpenCnt);
-
     if (base->hb_Lib.lib_OpenCnt)
     {
         _INFO("Set LIBF_DELEXP\n");
@@ -95,7 +93,7 @@ struct Library* LIB_Init(struct HeliosBase * base,
                          BPTR                SegList,
                          struct ExecBase *   sBase)
 {
-    _INFO("+ Base %p, SegList %lx, SysBase %p\n", base, SegList, sBase);
+    _INFO("base=%lx, seglist=%lx, sysbase=%lx\n", base, SegList, sBase);
 
     HeliosBase = base;
     base->hb_SegList = SegList;
@@ -118,7 +116,6 @@ struct Library* LIB_Init(struct HeliosBase * base,
                 NEWLIST(&base->hb_Classes);
                 NEWLIST(&base->hb_ReportList);
 
-                _INFO("- OK\n");
                 return &base->hb_Lib;
 
                 CloseLibrary(UtilityBase);
@@ -145,7 +142,6 @@ struct Library* LIB_Init(struct HeliosBase * base,
     FreeMem((APTR)((ULONG)(base) - (ULONG)(base->hb_Lib.lib_NegSize)),
             base->hb_Lib.lib_NegSize + base->hb_Lib.lib_PosSize);
 
-    _INFO("- Failed\n");
     return NULL;
 }
 
@@ -158,8 +154,6 @@ struct Library* LIB_Open(void)
 {
     struct HeliosBase *base = (struct HeliosBase *)REG_A6;
     struct Library *ret;
-
-    _INFO("+ Base: %p, OpenCount %ld\n", base, base->hb_Lib.lib_OpenCnt);
 
     if (0 == base->hb_Lib.lib_OpenCnt)
     {
@@ -230,15 +224,12 @@ struct Library* LIB_Open(void)
     }
 
 out:
-    _INFO("- ret=%p, OpenCnt=%ld\n", ret, base->hb_Lib.lib_OpenCnt);
     return ret;
 }
 
 ULONG LIB_Close(void)
 {
     struct HeliosBase *base = (struct HeliosBase *) REG_A6;
-
-    _INFO("+Base %p, OpenCount %ld\n", base, base->hb_Lib.lib_OpenCnt);
 
     if ((--base->hb_Lib.lib_OpenCnt) > 0)
     {
@@ -265,7 +256,6 @@ ULONG LIB_Close(void)
         }
     }
 
-    _INFO("-Base %p, OpenCount %ld\n", base, base->hb_Lib.lib_OpenCnt);
     return 0;
 }
 

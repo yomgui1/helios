@@ -77,7 +77,7 @@ static OHCI1394Device *DEV_Init(OHCI1394Device *base,
                         /* Scan the PCI bus and generate units nodes */
                         if (ohci_ScanPCI(base))
                         {
-							_INFO("%d unit(s) found\n", base->hd_UnitCount);
+                            _INFO("%d unit(s) found\n", base->hd_UnitCount);
                             return base;
                         }
                         else
@@ -153,6 +153,7 @@ OHCI1394Device *DEV_Open(void)
 end:
     --base->hd_Library.lib_OpenCnt;
     ioreq->iohh_Req.io_Error = err;
+    _INFO("[unit %u] returned %p, io_Error=%ld\n", unit, ret, err);
 
     return ret;
 }

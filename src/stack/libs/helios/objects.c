@@ -468,7 +468,6 @@ static void helios_hardware_task(HeliosSubTask *self, struct TagItem *tags)
         goto error;
     }
 
-    _INFO("+ unit: %ld\n", unit);
     if (OpenDevice(name, unit, (struct IORequest *)iobase, 0))
     {
         _ERR("<%s,%ld>: OpenDevice failed\n", name, unit);
@@ -1193,10 +1192,6 @@ HeliosHardware *Helios_AddHardware(STRPTR name, LONG unit)
             _ERR("Task '%s' not ready\n", buf);
             Helios_KillSubTask(task);
             hw = NULL;
-        }
-        else
-        {
-            _INFO("Hardware %p: task %p\n", hw, task);
         }
     }
     else

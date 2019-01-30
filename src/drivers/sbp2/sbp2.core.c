@@ -23,11 +23,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 **
 */
 
-//#define NDEBUG
 //#define DEBUG_MEM
 //#define DEBUG_1394
 //#define DEBUG_ORB
-#define DEBUG_SCSI
+//#define DEBUG_SCSI
 
 /* Define it when SCSI data address shall be 4-bytes aligned */
 //#define ERROR_ON_BAD_ALIGNMENT

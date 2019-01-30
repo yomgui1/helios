@@ -608,7 +608,7 @@ LONG Helios_VReportMsg(ULONG type, CONST_STRPTR label, CONST_STRPTR fmt, va_list
 
         LOCK_REGION(HeliosBase);
         {
-            kprintf("RptMsg: [%s] %s\n", msg->hrm_Label, msg->hrm_Msg);
+            //kprintf("RptMsg: [%s] %s\n", msg->hrm_Label, msg->hrm_Msg);
             ADDHEAD(&HeliosBase->hb_ReportList, msg);
         }
         UNLOCK_REGION(HeliosBase);

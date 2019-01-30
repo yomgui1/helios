@@ -430,7 +430,7 @@ BOOL ohci_UpdateTopologyMapping(OHCI1394Unit *unit, UBYTE gen, UBYTE local_phyid
         return FALSE;
     }
 
-    _INFO("New topo: %p\n", topo);
+    _INFO_UNIT(unit, "Starting new topology\n");
 
     topo->ht_LocalNodeID = topo->ht_IRMNodeID = topo->ht_RootNodeID = -1;
 

@@ -31,7 +31,7 @@ LIBRARY_SRCS = \
 	$(PRJROOT)/src/common/utils.c
 include $(PRJROOT)/common.mk
 
-DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"HC_SBP2"'
+DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"SBP2"'
 
 all: $(CLS_DIR)/$(LIBNAME)
 

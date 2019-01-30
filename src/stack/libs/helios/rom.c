@@ -26,9 +26,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 **
 */
 
-//#define NDEBUG
-//#define DEBUG_1394
-
 #include "private.h"
 #include "clib/helios_protos.h"
 
@@ -113,8 +110,6 @@ void rom_SetDefault(QUADLET *rom, UQUAD guid, QUADLET opts, QUADLET vendor_comp_
     UWORD crc;
     ULONG i, j, length;
 
-    _INFO("ROM: %p (GUID=%016llX, Opts=%08lX)\n", rom, guid, opts);
-
     options.value = opts;
     options.r.IsoRsrcMgr = 0;
     options.r.CycleMaster = 1;
@@ -143,7 +138,6 @@ void rom_SetDefault(QUADLET *rom, UQUAD guid, QUADLET opts, QUADLET vendor_comp_
 
     /* BIB crc */
     crc = utils_GetBlockCRC16(&rom[1], 4);
-    _INFO("CRC=$%04X\n", crc);
     rom[0] = BIB_INFO_LENGTH(4) | BIB_CRC_LENGTH(4) | BIB_CRC(crc);
 
     /*--- Root Directory ---*/

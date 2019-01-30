@@ -22,7 +22,14 @@
 
 PRJROOT = ../../../..
 LIBNAME = helios.library
-LIBRARY_SRCS = $(wildcards *.c) $(PRJROOT)/src/common/utils.c
+LIBRARY_SRCS = \
+	helios.library.c \
+	helios_functable.library.c \
+	misc.c \
+	rom.c \
+	objects.c \
+	classes.c \
+	$(PRJROOT)/src/common/utils.c
 include $(PRJROOT)/common.mk
 
 GLUELIB = $(PRJROOT)/lib/libhelios.a

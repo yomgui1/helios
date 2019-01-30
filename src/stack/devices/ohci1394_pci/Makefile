@@ -22,7 +22,14 @@
 
 PRJROOT = ../../../..
 LIBNAME = ohci1394_pci.device
-LIBRARY_SRCS = $(wildcards *.c) $(PRJROOT)/src/common/utils.c
+LIBRARY_SRCS = \
+	ohci1394.device.c \
+	ohci1394cmd.c \
+	ohci1394core.c \
+	ohci1394topo.c \
+	ohci1394trans.c \
+	ohci1394dev.c \
+	$(PRJROOT)/src/common/utils.c
 include $(PRJROOT)/common.mk
 
 SDK_INC_FILES = $(PRJROOT)/include/devices/helios/ohci1394.h

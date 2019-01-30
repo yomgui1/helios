@@ -73,7 +73,7 @@ DEFINES := $(CCDEFINES) \
 	-DAROS_ALMOST_COMPATIBLE \
 	-DSCM_REV='"$(SCM_REV)"' \
 	-DBUILD_DATE='"$(shell /bin/date +%d.%m.%y)"'
-CCWARNS = -Wall
+CCWARNS = -Wall -Wextra -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-unused-function
 
 CFLAGS = -noixemul -g
 CPPFLAGS = $(CFLAGS) $(OPT) $(CCWARNS) $(INCDIRS:%=-I%) $(DEFINES)

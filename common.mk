@@ -79,8 +79,8 @@ CFLAGS = -noixemul -g
 CPPFLAGS = $(CFLAGS) $(OPT) $(CCWARNS) $(INCDIRS:%=-I%) $(DEFINES)
 LIBS = -L$(PRJROOT)/lib -lhelios -ldebug -lauto
 
-CCLDFLAGS = -noixemul -g -Wl,--traditional-format -Wl,--cref -Wl,--stats -Wl,-Map=$@.map -L$(PRJROOT)/lib -L/usr/lib -L/usr/local/lib
-LDFLAGS = --traditional-format --cref --stats -fl libnix -Map=mapfile.txt -L$(PRJROOT)/lib -L/usr/lib -L/usr/local/lib
+CCLDFLAGS = -noixemul -g -Wl,--traditional-format -Wl,--cref -Wl,--stats -Wl,-Map=$@.map -L$(PRJROOT)/lib
+LDFLAGS = --traditional-format --cref --stats -fl libnix -Map=mapfile.txt -L$(PRJROOT)/lib
 LDLIBS = -labox -ldebug -lc
 
 ifneq ("$(OS)", "MorphOS")

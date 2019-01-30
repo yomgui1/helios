@@ -111,8 +111,8 @@ endif
 #--- Build help targets ---
 
 .DEFAULT: all
-.PHONY: all clean distclean common-clean common-distclean
-.PHONY: local-clean local-distclean local-release mkdeps
+.PHONY: all clean distclean common-clean common-distclean mkdeps
+.PHONY: local-clean local-distclean local-release
 
 .SUFFIXES:
 .SUFFIXES: .c .h .s .o .a .d .db .device .library .class .sym
@@ -121,7 +121,7 @@ all: mkdeps
 
 debug:;
 
-mkdeps: $(ALL_SRCS:.c=.d)
+sdk:
 
 $(addsuffix -%,$(SUBDIRS)):
 	$(MAKE) -C $(patsubst %-$*,%,$@) $*
@@ -143,6 +143,8 @@ distclean: clean common-distclean local-distclean
 		$(ECHO) $(COLOR_BOLD)"++ "$(COLOR_HIGHLIGHT1)"Distclean in"$(COLOR_BOLD)": "$(COLOR_HIGHLIGHT2)"$$dir"$(COLOR_NORMAL); \
 		(cd $$dir && $(MAKE) $(MFLAGS) --no-print-directory distclean); \
 	done;
+
+mkdeps: sdk $(ALL_SRCS:.c=.d)
 
 .c.o:
 	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
@@ -204,7 +206,7 @@ astyle:
 # ALL_SRCS : user defined, all .c files
 ifneq ("$(strip $(ALL_SRCS))", "")
 ifeq ("$(NODEPS)", "")
-ifeq ("$(test -f $(PRJROOT)/include/ppcinline/heliosclsbase.h && echo yes)", "yes")
+ifeq ("$(shell test -f $(PRJROOT)/include/proto/helios.h && echo -n yes)","yes")
 -include $(patsubst %.c, %.d, $(filter %.c, $(ALL_SRCS)))
 endif
 endif

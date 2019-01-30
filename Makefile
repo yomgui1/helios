@@ -32,6 +32,9 @@ EXAMPLES := $(shell ls src/examples/*.c)
 all:
 	$(MAKE) -C src all
 
+sdk:
+	$(MAKE) -C src/stack/libs/helios sdk
+
 local-release: docs/release/README docs/release/FAQ src/examples
 	-rm -rvf $(RELARC_DIR)
 	mkdir -p $(RELARC_DIR) $(RELARC_DIR)/SDK/Examples $(RELARC_C)

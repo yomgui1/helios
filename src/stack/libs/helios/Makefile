@@ -55,8 +55,6 @@ include $(PRJROOT)/common.mk
 
 DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"HELIOS"'
 
-.PHONY: sdk
-
 all: sdk $(LIBS_DIR)/$(LIBNAME)
 
 local-clean:

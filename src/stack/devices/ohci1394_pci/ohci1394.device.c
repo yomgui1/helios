@@ -128,7 +128,7 @@ OHCI1394Device *DEV_Open(void)
         goto end;
     }
 
-    if ((unit < 0) || (unit > base->hd_UnitCount))
+    if ((unit < 0) || (unit >= base->hd_UnitCount))
     {
         err = IOERR_OPENFAIL;
         _ERR("Invalid unit number: %ld\n", unit);

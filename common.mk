@@ -90,6 +90,12 @@ endif
 # Other build stuff
 CVINCLUDE := cvinclude.pl
 
+# Automatic variables
+ifneq ("$LIBRARY_OBJS", "")
+LIBRARY_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(LIBRARY_SRCS)))
+ALL_SRCS += $(LIBRARY_SRCS)
+endif
+
 #--- Echo beautifull stuff ---
 
 COLOR_EMPHASIZE  = "\033[37m"

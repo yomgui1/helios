@@ -20,48 +20,32 @@
 ## Makefile for building the Helios library.
 ##
 
-PRJROOT := ../../../..
-LIBNAME := helios.library
+PRJROOT = ../../../..
+LIBNAME = helios.library
+LIBRARY_SRCS = $(wildcards *.c) $(PRJROOT)/src/common/utils.c
+include $(PRJROOT)/common.mk
 
-LIBRARY_SRCS := \
-	helios.library.c \
-	helios_functable.library.c \
-	misc.c \
-	rom.c \
-	objects.c \
-	classes.c \
-	$(PRJROOT)/src/common/utils.c
-
-LIBRARY_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(LIBRARY_SRCS)))
-
-ALL_SRCS := $(LIBRARY_SRCS)
-
-GEN_INCLUDES = \
+GLUELIB = $(PRJROOT)/lib/libhelios.a
+GENERATED_INCLUDES = \
 	$(PRJROOT)/include/proto/helios.h \
 	$(PRJROOT)/include/ppcinline/helios.h \
 	$(PRJROOT)/include/inline/helios.h \
 	$(PRJROOT)/include/proto/heliosclsbase.h \
 	$(PRJROOT)/include/ppcinline/heliosclsbase.h \
 	$(PRJROOT)/include/inline/heliosclsbase.h
-
-GLUELIB = $(PRJROOT)/lib/libhelios.a
-
-SDK_INC_FILES := \
+SDK_INC_FILES = \
 	$(PRJROOT)/include/fd/helios_lib.fd \
 	$(PRJROOT)/include/fd/heliosclsbase_lib.fd \
 	$(PRJROOT)/include/clib/helios_protos.h \
 	$(PRJROOT)/include/clib/heliosclsbase_protos.h \
 	$(PRJROOT)/include/libraries/helios.h \
 	$(GEN_INCLUDES)
-
-include $(PRJROOT)/common.mk
-
 DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"HELIOS"'
 
-all: sdk $(LIBS_DIR)/$(LIBNAME)
+all: $(LIBS_DIR)/$(LIBNAME)
 
 local-clean:
-	rm -vf $(LIBS_DIR)/$(LIBNAME)* $(GLUELIB) $(GEN_INCLUDES)
+	rm -vf $(LIBS_DIR)/$(LIBNAME)* $(GLUELIB) $(GENERATED_INCLUDES)
 
 local-release: $(LIBS_DIR)/$(LIBNAME) sdk
 	mkdir -p $(RELARC_DIR)/Libs $(RELARC_DIR)/SDK/lib
@@ -71,9 +55,9 @@ local-release: $(LIBS_DIR)/$(LIBNAME) sdk
 	for file in $(subst $(PRJROOT)/,,$(SDK_INC_FILES)); do \
 		$(CP) $(PRJROOT)/$$file $(RELARC_DIR)/SDK/$$file; done
 
-sdk: $(GEN_INCLUDES) $(GLUELIB)
+sdk: $(GENERATED_INCLUDES) $(GLUELIB)
 
-$(GEN_INCLUDES): \
+$(GENERATED_INCLUDES): \
 		$(PRJROOT)/include/fd/helios_lib.fd $(PRJROOT)/include/clib/helios_protos.h \
 		$(PRJROOT)/include/fd/heliosclsbase_lib.fd $(PRJROOT)/include/clib/heliosclsbase_protos.h
 	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"Making includes..."$(COLOR_NORMAL)

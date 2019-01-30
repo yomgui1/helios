@@ -20,21 +20,9 @@
 ## Makefile for building the SBP2 driver.
 ##
 
-PRJROOT := ../../..
-LIBNAME := sbp2.class
-
-LIBRARY_SRCS := \
-	sbp2.class.c \
-	sbp2_functable.library.c \
-	sbp2.core.c \
-	sbp2.device.c \
-	sbp2.iocmd.c \
-	$(PRJROOT)/src/common/utils.c
-
-LIBRARY_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(LIBRARY_SRCS)))
-
-ALL_SRCS := $(LIBRARY_SRCS)
-
+PRJROOT = ../../..
+LIBNAME = sbp2.class
+LIBRARY_SRCS = $(wildcards *.c) $(PRJROOT)/src/common/utils.c
 include $(PRJROOT)/common.mk
 
 DEFINES += -DLIBNAME='"$(LIBNAME)"' -DDBNAME='"HC_SBP2"'

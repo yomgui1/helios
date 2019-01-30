@@ -17,9 +17,7 @@
 ##
 
 ##
-##
 ## Makefile for building all Helios stuff.
-##
 ##
 
 PRJROOT := .

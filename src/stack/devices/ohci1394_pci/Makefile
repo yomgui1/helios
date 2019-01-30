@@ -17,9 +17,7 @@
 ##
 
 ##
-##
 ## Makefile for building the ohci1394 Helios device.
-##
 ##
 
 PRJROOT := ../../../..

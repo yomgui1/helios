@@ -16,10 +16,6 @@
 ## along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 ##
 
-##
-##
-##
-
 PRJROOT := ../..
 
 # Declare here all projects directories

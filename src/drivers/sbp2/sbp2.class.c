@@ -18,13 +18,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** SBP2 Class core file.
-**
 */
-
-//#define NDEBUG
-#define DEBUG_LIB
 
 #include "private.h"
 #include "sbp2.class.h"

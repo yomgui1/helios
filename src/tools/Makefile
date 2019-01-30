@@ -17,9 +17,7 @@
 ##
 
 ##
-##
 ## Tools top Makefile
-##
 ##
 
 PRJROOT := ../..

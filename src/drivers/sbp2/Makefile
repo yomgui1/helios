@@ -17,9 +17,7 @@
 ##
 
 ##
-##
 ## Makefile for building the SBP2 driver.
-##
 ##
 
 PRJROOT := ../../..

@@ -18,13 +18,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** Provide API to handle external helios classes.
-**
 */
-
-//#define NDEBUG
-//#define DEBUG_REFCNT
 
 #include "private.h"
 

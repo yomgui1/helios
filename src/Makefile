@@ -17,9 +17,7 @@
 ##
 
 ##
-##
 ## Projects top Makefile
-##
 ##
 
 PRJROOT := ..

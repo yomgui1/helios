@@ -18,18 +18,13 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** Provide an API to handle various internal structures.
-**
 */
 
 /* General note:
  * HeliosBase lock is used to protect objects changes (hw/dev/unit).
  * DOC: call Helios_ReleaseXXX ouside of locked regions.
  */
-
-//#define NDEBUG
-//#define DEBUG_REFCNT
 
 #include "private.h"
 #include "clib/helios_protos.h"

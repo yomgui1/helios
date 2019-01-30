@@ -18,9 +18,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** SBP2 class private API header file.
-**
 */
 
 #ifndef SBP2_PRIVATE_H

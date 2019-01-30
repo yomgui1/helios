@@ -18,12 +18,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** MorphOS OHCI-1394 device interface implemention.
-**
 */
-
-#define NDEBUG
 
 #include "ohci1394.device.h"
 #include "ohci1394core.h"

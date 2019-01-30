@@ -18,9 +18,7 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
 ** Helios AV/C 1394 Library core file.
-**
 */
 
 #include <avc1394_version.h>

@@ -18,12 +18,8 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
-**
-** Helios Library core file.
-**
+** Helios Library core file
 */
-
-//#define NDEBUG
 
 #include "private.h"
 #include "libutils.h"

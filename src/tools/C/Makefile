@@ -17,9 +17,7 @@
 ##
 
 ##
-##
 ## C tools Makefile
-##
 ##
 
 PRJROOT := ../../..

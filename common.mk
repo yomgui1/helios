@@ -75,10 +75,6 @@ DEFINES := $(CCDEFINES) \
 	-DBUILD_DATE='"$(shell /bin/date +%d.%m.%y)"'
 CCWARNS = -Wall
 
-ifeq ("$(shell $(CC) -dumpversion | cut -d. -f1)", "4")
-CCWARNS += -Wno-pointer-sign
-endif
-
 CFLAGS = -noixemul -g
 CPPFLAGS = $(CFLAGS) $(OPT) $(CCWARNS) $(INCDIRS:%=-I%) $(DEFINES)
 LIBS = -L$(PRJROOT)/lib -lhelios -ldebug -lauto

@@ -52,7 +52,7 @@ static OHCI1394Device *DEV_Init(OHCI1394Device *base,
                                 BPTR seglist,
                                 struct ExecBase *sysbase)
 {
-    _INFO("+ base=%lx, seglist=%lx, sysbase=%lx\n", base, seglist, sysbase);
+    _INFO("base=%lx, seglist=%lx, sysbase=%lx\n", base, seglist, sysbase);
 
     SysBase = sysbase;
 
@@ -77,7 +77,7 @@ static OHCI1394Device *DEV_Init(OHCI1394Device *base,
                         /* Scan the PCI bus and generate units nodes */
                         if (ohci_ScanPCI(base))
                         {
-                            _INFO("- dev.OpenCnt=%ld\n", base->hd_Library.lib_OpenCnt);
+							_INFO("%d unit(s) found\n", base->hd_UnitCount);
                             return base;
                         }
                         else
@@ -106,7 +106,6 @@ static OHCI1394Device *DEV_Init(OHCI1394Device *base,
     else
         _ERR("OpenLibrary(\"helios.library\", 50) failed!\n");
 
-    _INFO("- Failed\n");
     return NULL;
 }
 
@@ -118,12 +117,8 @@ OHCI1394Device *DEV_Open(void)
     OHCI1394Device *ret = NULL;
     LONG err;
 
-    _INFO("+ ioreq=%lx, base=%lx\n", ioreq, base);
-
     ++base->hd_Library.lib_OpenCnt;
     base->hd_Library.lib_Flags &= ~LIBF_DELEXP;
-
-    _INFO("dev.OpenCnt=%ld\n", base->hd_Library.lib_OpenCnt);
 
     /* Sanity checks */
     if (ioreq->iohh_Req.io_Message.mn_Length < sizeof(IOHeliosHWReq))
@@ -144,7 +139,7 @@ OHCI1394Device *DEV_Open(void)
     err = ohci_OpenUnit(base, ioreq, unit);
     if (err)
     {
-        _ERR("ohci_OpenUnit() failed, err=%ld\n", err);
+        _ERR("ohci_OpenUnit(%ld) failed, err=%ld\n", unit, err);
         goto end;
     }
 
@@ -159,15 +154,12 @@ end:
     --base->hd_Library.lib_OpenCnt;
     ioreq->iohh_Req.io_Error = err;
 
-    _INFO("- ret=%p, err=%ld, dev.OpenCnt=%ld\n", ret, err, base->hd_Library.lib_OpenCnt);
     return ret;
 }
 
 static BPTR internalExpunge(OHCI1394Device *base)
 {
     BPTR ret = 0;
-
-    _INFO("+ base=%lx\n", base);
 
     base->hd_Library.lib_Flags |= LIBF_DELEXP;
     if (base->hd_Library.lib_OpenCnt == 0)
@@ -177,8 +169,6 @@ static BPTR internalExpunge(OHCI1394Device *base)
         FreeMem((char *)base - base->hd_Library.lib_NegSize,
                 base->hd_Library.lib_NegSize + base->hd_Library.lib_PosSize);
     }
-
-    _INFO("-\n");
 
     return ret;
 }
@@ -194,8 +184,6 @@ static BPTR DEV_Close(void)
     IOHeliosHWReq *ioreq = (APTR) REG_A1;
     OHCI1394Device *base = (APTR) REG_A6;
     BPTR ret = 0;
-
-    _INFO("+ ioreq=%lx, base=%lx, dev.OpenCnt=%ld\n", ioreq, base, base->hd_Library.lib_OpenCnt);
 
     ohci_CloseUnit(base, ioreq);
 
@@ -214,9 +202,10 @@ static BPTR DEV_Close(void)
 
         if (base->hd_Library.lib_Flags & LIBF_DELEXP)
             ret = internalExpunge(base);
+
+        _INFO("Bye\n");
     }
 
-    _INFO("- dev.OpenCnt=%ld\n", base->hd_Library.lib_OpenCnt);
     return ret;
 }
 
@@ -227,11 +216,7 @@ static void DEV_BeginIO(void)
     OHCI1394Unit *unit;
     ULONG ret;
 
-    _INFO("+ base=%lx, ioreq=%lx\n", base, ioreq);
-
     unit = (APTR) ioreq->iohh_Req.io_Unit;
-
-    _INFO("unit: %p, IO Quick: %d\n", unit, ioreq->iohh_Req.io_Flags & IOF_QUICK);
 
     ioreq->iohh_Req.io_Message.mn_Node.ln_Type = NT_MESSAGE;
     ioreq->iohh_Req.io_Error = 0;
@@ -319,8 +304,6 @@ static void DEV_BeginIO(void)
         ioreq->iohh_Req.io_Flags &= ~IOF_QUICK;
     else if (!(ioreq->iohh_Req.io_Flags & IOF_QUICK))
         ReplyMsg(&ioreq->iohh_Req.io_Message);
-
-    _INFO("- ret=%lu\n", ret);
 }
 
 static void DEV_AbortIO(void)
@@ -329,8 +312,6 @@ static void DEV_AbortIO(void)
     OHCI1394Device *base = (APTR) REG_A6;
     OHCI1394Unit *unit = (OHCI1394Unit *)ioreq->iohh_Req.io_Unit;
     LONG cancelled;
-
-    _INFO("+ base=%lx, ioreq=%lx\n", base, ioreq);
 
     switch(ioreq->iohh_Req.io_Command)
     {
@@ -346,8 +327,6 @@ static void DEV_AbortIO(void)
 
     if (cancelled)
         ioreq->iohh_Req.io_Error = IOERR_ABORTED;
-
-    _INFO("-\n");
 }
 
 /*------------------ SYSTEM DEVICE SECTION ------------------------*/

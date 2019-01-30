@@ -22,16 +22,21 @@
 ##
 ##
 
-PRJROOT  	:= ../../../..
-LIBNAME  	:= helios.library
+PRJROOT := ../../../..
+LIBNAME := helios.library
 
-HELIOS_SRCS := $(PRJROOT)/src/common/utils.c misc.c rom.c objects.c classes.c
-HELIOS_OBJS := $(HELIOS_SRCS:.c=.o)
+LIBRARY_SRCS := \
+	helios.library.c \
+	helios_functable.library.c \
+	misc.c \
+	rom.c \
+	objects.c \
+	classes.c \
+	$(PRJROOT)/src/common/utils.c
 
-LIBRARY_SRCS := helios.library.c helios_functable.library.c
 LIBRARY_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(LIBRARY_SRCS)))
 
-ALL_SRCS	:= $(LIBRARY_SRCS) $(HELIOS_SRCS)
+ALL_SRCS := $(LIBRARY_SRCS)
 
 GEN_INCLUDES = \
 	$(PRJROOT)/include/proto/helios.h \
@@ -67,12 +72,6 @@ local-release: $(LIBS_DIR)/$(LIBNAME) sdk
 	$(CP) $(GLUELIB) $(RELARC_DIR)/SDK/lib/
 	for file in $(subst $(PRJROOT)/,,$(SDK_INC_FILES)); do \
 		$(CP) $(PRJROOT)/$$file $(RELARC_DIR)/SDK/$$file; done
-
-$(LIBS_DIR)/$(LIBNAME): $(LIBS_DIR)/$(LIBNAME).sym
-
-$(LIBS_DIR)/$(LIBNAME).db: $(LIBRARY_OBJS) $(HELIOS_OBJS)
-	@$(ECHO) $(COLOR_BOLD)">> " $(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 sdk: $(GEN_INCLUDES) $(GLUELIB)
 

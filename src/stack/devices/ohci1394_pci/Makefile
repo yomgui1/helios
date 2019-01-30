@@ -22,40 +22,38 @@
 ##
 ##
 
-PRJROOT  	:= ../../../..
-DEVNAME  	:= ohci1394_pci.device
+PRJROOT := ../../../..
+LIBNAME := ohci1394_pci.device
 
-OHCI1394_SRCS := ohci1394cmd.c ohci1394core.c ohci1394topo.c \
-	ohci1394trans.c ohci1394dev.c $(PRJROOT)/src/common/utils.c
-OHCI1394_OBJS := $(OHCI1394_SRCS:.c=.o)
+LIBRARY_SRCS := \
+	ohci1394.device.c \
+	ohci1394cmd.c \
+	ohci1394core.c \
+	ohci1394topo.c \
+	ohci1394trans.c \
+	ohci1394dev.c \
+	$(PRJROOT)/src/common/utils.c
 
-DEVICE_SRCS := ohci1394.device.c
-DEVICE_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(DEVICE_SRCS)))
+LIBRARY_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(LIBRARY_SRCS)))
 
-ALL_SRCS	:= $(DEVICE_SRCS) $(OHCI1394_SRCS)
+ALL_SRCS := $(LIBRARY_SRCS)
 
 SDK_INC_FILES := \
 	$(PRJROOT)/include/devices/helios/ohci1394.h
 
 include $(PRJROOT)/common.mk
 
-DEFINES += -DDEVNAME='"$(DEVNAME)"' -DDBNAME='"OHCI"'
+DEFINES += -DDEVNAME='"$(LIBNAME)"' -DDBNAME='"OHCI"'
 
-all: $(DEVS_DIR)/Helios/$(DEVNAME)
+all: $(DEVS_DIR)/Helios/$(LIBNAME)
 
 local-clean:
-	rm -vf $(DEVS_DIR)/Helios/$(DEVNAME)*
+	rm -vf $(DEVS_DIR)/Helios/$(LIBNAME)*
 
-local-release: $(DEVS_DIR)/Helios/$(DEVNAME)
+local-release: $(DEVS_DIR)/Helios/$(LIBNAME)
 	mkdir -p $(RELARC_DIR)/Devs/Helios
 	for dir in $(subst $(PRJROOT)/,,$(dir $(SDK_INC_FILES))); do mkdir -p $(RELARC_DIR)/SDK/$$dir; done
-	$(CP) $(DEVS_DIR)/Helios/$(DEVNAME) $(RELARC_DIR)/Devs/Helios/$(DEVNAME)
+	$(CP) $(DEVS_DIR)/Helios/$(LIBNAME) $(RELARC_DIR)/Devs/Helios/$(LIBNAME)
 	for file in $(subst $(PRJROOT)/,,$(SDK_INC_FILES)); do \
 		$(CP) $(PRJROOT)/$$file $(RELARC_DIR)/SDK/$$file; done
-
-$(DEVS_DIR)/Helios/$(DEVNAME): $(DEVS_DIR)/Helios/$(DEVNAME).sym
-
-$(DEVS_DIR)/Helios/$(DEVNAME).db: $(DEVICE_OBJS) $(OHCI1394_OBJS)
-	@$(ECHO) $(COLOR_BOLD)">> " $(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 

@@ -154,6 +154,11 @@ mkdeps: sdk $(ALL_SRCS:.c=.d)
 	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
 	$(SHELL) -ec '$(CC) -MM $(CPPFLAGS) $< | sed -e '\''s%\($(notdir $*)\)\.o[ :]*%\1.o $@ : %g'\'' > $@; [ -s $@ ] || rm -fv $@'
 
+%.db: $(LIBRARY_OBJS)
+	@$(ECHO) $(COLOR_BOLD)">> Linking: "$(COLOR_HIGHLIGHT2)"$@"$(COLOR_NORMAL)
+	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
+	$(NM) -n $^ > $@.sym
+
 %.library: %.library.db
 	@$(ECHO) $(COLOR_BOLD)">> Making library: "$(COLOR_HIGHLIGHT2)"$(@F)"$(COLOR_NORMAL)
 	$(STRIP) -R.comment -o $@ $<
@@ -168,9 +173,6 @@ mkdeps: sdk $(ALL_SRCS:.c=.d)
 	@$(ECHO) $(COLOR_BOLD)">> Making class: "$(COLOR_HIGHLIGHT2)"$(@F)"$(COLOR_NORMAL)
 	$(STRIP) -R.comment -o $@ $<
 	-$(FLUSH) $(notdir $@)
-
-%.sym: %.db
-	$(NM) -n $^ >$@
 
 #--- Archive and Release help targets ---
 

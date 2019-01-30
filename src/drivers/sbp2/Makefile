@@ -22,17 +22,20 @@
 ##
 ##
 
-PRJROOT  	:= ../../..
-LIBNAME  	:= sbp2.class
+PRJROOT := ../../..
+LIBNAME := sbp2.class
 
-SBP2_SRCS := $(PRJROOT)/src/common/utils.c \
-	sbp2.core.c sbp2.device.c sbp2.iocmd.c
-SBP2_OBJS := $(SBP2_SRCS:.c=.o)
+LIBRARY_SRCS := \
+	sbp2.class.c \
+	sbp2_functable.library.c \
+	sbp2.core.c \
+	sbp2.device.c \
+	sbp2.iocmd.c \
+	$(PRJROOT)/src/common/utils.c
 
-LIBRARY_SRCS := sbp2.class.c sbp2_functable.library.c
 LIBRARY_OBJS := $(patsubst %.s, %.o, $(patsubst %.c, %.o, $(LIBRARY_SRCS)))
 
-ALL_SRCS	:= $(LIBRARY_SRCS) $(SBP2_SRCS)
+ALL_SRCS := $(LIBRARY_SRCS)
 
 include $(PRJROOT)/common.mk
 
@@ -46,9 +49,3 @@ local-clean:
 local-release: $(CLS_DIR)/$(LIBNAME)
 	mkdir -p $(RELARC_CLS_DIR)
 	$(CP) $(CLS_DIR)/$(LIBNAME) $(RELARC_CLS_DIR)/$(LIBNAME)
-
-$(CLS_DIR)/$(LIBNAME): $(CLS_DIR)/$(LIBNAME).sym
-
-$(CLS_DIR)/$(LIBNAME).db: $(LIBRARY_OBJS) $(SBP2_OBJS)
-	@$(ECHO) $(COLOR_BOLD)">> " $(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)

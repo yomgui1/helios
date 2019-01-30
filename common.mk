@@ -155,17 +155,17 @@ mkdeps: sdk $(ALL_SRCS:.c=.d)
 	$(SHELL) -ec '$(CC) -MM $(CPPFLAGS) $< | sed -e '\''s%\($(notdir $*)\)\.o[ :]*%\1.o $@ : %g'\'' > $@; [ -s $@ ] || rm -fv $@'
 
 %.library: %.library.db
-	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
+	@$(ECHO) $(COLOR_BOLD)">> Making library: "$(COLOR_HIGHLIGHT2)"$(@F)"$(COLOR_NORMAL)
 	$(STRIP) -R.comment -o $@ $<
 	-$(FLUSH) $(notdir $@)
 
 %.device: %.device.db
-	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
+	@$(ECHO) $(COLOR_BOLD)">> Making device: "$(COLOR_HIGHLIGHT2)"$(@F)"$(COLOR_NORMAL)
 	$(STRIP) -R.comment -o $@ $<
 	-$(FLUSH) $(notdir $@)
 
 %.class: %.class.db
-	@$(ECHO) $(COLOR_BOLD)">> "$(COLOR_HIGHLIGHT1)"$@"$(COLOR_NORMAL)
+	@$(ECHO) $(COLOR_BOLD)">> Making class: "$(COLOR_HIGHLIGHT2)"$(@F)"$(COLOR_NORMAL)
 	$(STRIP) -R.comment -o $@ $<
 	-$(FLUSH) $(notdir $@)
 

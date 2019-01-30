@@ -27,5 +27,5 @@ include $(PRJROOT)/common.mk
 all local-release local-clean local-distclean :
 	@for dir in $(SUBDIRS); do \
 		$(ECHO) $(COLOR_BOLD)"-> Enter in"$(COLOR_BOLD)": "$(COLOR_HIGHLIGHT2)"$$dir"$(COLOR_NORMAL); \
-		$(MAKE) -C $$dir $(MFLAGS) $@; \
+		$(MAKE) -C $$dir $(MFLAGS) $@ || exit 1; \
 	done;

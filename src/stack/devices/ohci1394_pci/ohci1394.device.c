@@ -111,7 +111,7 @@ static OHCI1394Device *DEV_Init(OHCI1394Device *base,
 
 OHCI1394Device *DEV_Open(void)
 {
-    LONG unit = REG_D0;
+    ULONG unit = REG_D0;
     IOHeliosHWReq  *ioreq = (APTR) REG_A1;
     OHCI1394Device *base = (APTR) REG_A6;
     OHCI1394Device *ret = NULL;
@@ -128,10 +128,10 @@ OHCI1394Device *DEV_Open(void)
         goto end;
     }
 
-    if ((unit < 0) || (unit >= base->hd_UnitCount))
+    if (unit >= base->hd_UnitCount)
     {
         err = IOERR_OPENFAIL;
-        _ERR("Invalid unit number: %ld\n", unit);
+        _ERR("Invalid unit number: %u\n", unit);
         goto end;
     }
 

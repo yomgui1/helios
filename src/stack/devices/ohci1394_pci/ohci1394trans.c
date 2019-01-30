@@ -55,7 +55,7 @@ extern char *evt_strings;
 static HeliosResponse bad_address_response =
 {
     {RCode : HELIOS_RCODE_ADDRESS_ERROR},
-    NULL, 0, 0
+    NULL, 0, 0, 0
 };
 
 /*----------------------------------------------------------------------------*/
@@ -66,7 +66,7 @@ LONG tl_SearchNextTLabel(OHCI1394Unit *unit)
     LONG tlabel;
 
     /* fully busy ? */
-    if (-1 == unit->hu_TLabelMap)
+    if (~0U == unit->hu_TLabelMap)
     {
         return -1;
     }

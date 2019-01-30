@@ -205,7 +205,7 @@ static LONG sbp2_io_remchangeint(SBP2Device *base, SBP2Unit *unit, struct IOStdR
 
 SBP2Device *devOpen(void)
 {
-    LONG unitno = REG_D0;
+    ULONG unitno = REG_D0;
     LONG flags = REG_D1;
     struct IORequest  *ioreq = (APTR) REG_A1;
     SBP2Device *base = (APTR) REG_A6;
@@ -213,7 +213,7 @@ SBP2Device *devOpen(void)
     SBP2Unit *sbp2_unit;
     LONG err;
 
-    _INFO_LIB("Task '%s' requests unit #%ld, (OpenCnt=%ld)\n",
+    _INFO_LIB("Task '%s' requests unit #%u, (OpenCnt=%ld)\n",
               FindTask(NULL)->tc_Node.ln_Name, unitno,
               base->dv_Library.lib_OpenCnt);
 

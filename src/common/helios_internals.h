@@ -105,7 +105,7 @@ struct HeliosDevice
 
 #define HELIOS_HW_HEAD                                                  \
     struct Unit             hu_Unit;    /* It's a system device unit */ \
-    LONG                    hu_UnitNo;  /* Logical unit # */            \
+    ULONG                   hu_UnitNo;  /* Logical unit # */            \
     struct Device *         hu_Device;  /* up link */                   \
     LOCK_VARIABLE; /* General RW access protection */                   \
     LONG                    hso_RefCnt; /* Keep this field as in _SHO_HEAD */ \

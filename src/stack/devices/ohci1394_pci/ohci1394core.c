@@ -171,6 +171,7 @@ typedef struct
     const STRPTR label;
 } OHCI1394RegDescription;
 
+#ifndef NDEBUG
 static const OHCI1394RegDescription ohci_reg_names[] =
 {
     { OHCI1394_REG_VERSION,                    "version" },
@@ -221,6 +222,8 @@ static const OHCI1394RegDescription ohci_reg_names[] =
     { OHCI1394_REG_ARESR_CONTEXT_CONTROL,       "aresr context control" },
     { OHCI1394_REG_ARESR_COMMAND_PTR,           "aresr command ptr" },
 };
+#endif /* NDEBUG */
+
 const char *evt_strings[] =
 {
     [0x00] = "evt_no_status",   [0x01] = "-reserved-",
@@ -818,7 +821,7 @@ static void ohci_Context_SubTask(HeliosSubTask *self, struct TagItem *tags)
     }
 
     signal = AllocSignal(-1);
-    if (-1 == signal)
+    if (~0U == signal)
     {
         _ERR("AllocSignal(-1) failed\n");
         return;
@@ -929,7 +932,7 @@ static BOOL ohci_Context_Stop(OHCI1394Context *ctx)
 /* WARNING: All AT context functions shall be locked before calling */
 static void ohci_ATContext_InitDMABuffers(OHCI1394ATCtx *ctx)
 {
-    const static ULONG cnt = AT_DMA_BUFFER_SIZE / sizeof(OHCI1394ATBuffer);
+    static const ULONG cnt = AT_DMA_BUFFER_SIZE / sizeof(OHCI1394ATBuffer);
     ULONG i;
 
     NEWLIST((struct List *)&ctx->atc_BufferList);
@@ -1065,8 +1068,8 @@ static BOOL ohci_ATContext_Init(OHCI1394Unit *        unit,
                                 ULONG                 regoffset,
                                 STRPTR                task_name)
 {
-    const static ULONG cnt = AT_DMA_BUFFER_SIZE / sizeof(OHCI1394ATBuffer);
-    const static ULONG size = cnt * sizeof(OHCI1394ATBuffer);
+    static const ULONG cnt = AT_DMA_BUFFER_SIZE / sizeof(OHCI1394ATBuffer);
+    static const ULONG size = cnt * sizeof(OHCI1394ATBuffer);
 
     _INFO_UNIT(unit, "AT context $%X: DMA buffer size=%lu bytes\n", regoffset, size);
 
@@ -1581,8 +1584,8 @@ static BOOL ohci_ARContext_Init(OHCI1394Unit *        unit,
                                 ULONG                 regoffset,
                                 STRPTR                task_name)
 {
-    const static ULONG blocksize = ARBUFFER_PAGE_COUNT * sizeof(OHCI1394ARBuffer);
-    const static ULONG pagessize = ARBUFFER_PAGE_COUNT * ARBUFFER_PAGE_SIZE;
+    static const ULONG blocksize = ARBUFFER_PAGE_COUNT * sizeof(OHCI1394ARBuffer);
+    static const ULONG pagessize = ARBUFFER_PAGE_COUNT * ARBUFFER_PAGE_SIZE;
 
     _INFO_UNIT(unit, "AR context $%X: DMA buffers size=%lu bytes, Pages buffer size=%lu bytes\n",
                regoffset, blocksize, pagessize);
@@ -2520,7 +2523,7 @@ static void ohci_BusResetTask(HeliosSubTask *self, struct TagItem *tags)
     }
 
     signal = AllocSignal(-1);
-    if (-1 == signal)
+    if (~0U == signal)
     {
         _ERR("AllocSignal(-1) failed\n");
         return;

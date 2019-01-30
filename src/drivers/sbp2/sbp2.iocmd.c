@@ -345,7 +345,7 @@ static LONG sbp2_scsi_getmodepage(SBP2Unit *unit, UBYTE page)
 
     res = unit->u_ModePageBuf;
     /* check total amount of data */
-    if ((scsicmd.scsi_Actual < 10) || (scsicmd.scsi_Actual < (((UWORD *)res)[0]+2)))
+    if ((scsicmd.scsi_Actual < 10) || (scsicmd.scsi_Actual < (((UWORD *)res)[0]+2U)))
     {
         _ERR("SCSI_MODE_SENSE($%02x) failed: not enought data (get %lu, need %lu)\n",
              page, scsicmd.scsi_Actual, ((UWORD *)res)[0]+2);
@@ -364,7 +364,7 @@ static LONG sbp2_scsi_getmodepage(SBP2Unit *unit, UBYTE page)
     }
 
     /* check page length */
-    if (scsicmd.scsi_Actual < res[1]+2)
+    if (scsicmd.scsi_Actual < res[1]+2U)
     {
         _ERR("SCSI_MODE_SENSE($%02x) failed: incomplete page\n", page);
         return -1;
@@ -449,10 +449,12 @@ send_cmd:
                   cmd->scsi_Command[0], scsi_cmd_names[cmd->scsi_Command[0]],
                   ioerr, ioreq->io_Actual, cmd->scsi_Status, cmd->scsi_Actual);
         if (cmd->scsi_SenseActual > 13)
+        {
             _ERR_SCSI("SCSI[$%02x-%s] Failed, SenseLen=%u, SenseData=[key=$%x, asc/ascq=$%02x/$%02x]\n",
                       cmd->scsi_Command[0], scsi_cmd_names[cmd->scsi_Command[0]],
                       cmd->scsi_SenseActual, cmd->scsi_SenseData[2] & SK_MASK,
                       cmd->scsi_SenseData[12], cmd->scsi_SenseData[13]);
+        }
         switch (cmd->scsi_CmdLength)
         {
             case 6:

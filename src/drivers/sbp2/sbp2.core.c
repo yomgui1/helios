@@ -171,7 +171,7 @@ static LONG sbp2_do_read_block(SBP2ClassLib *base,
     Helios_FillReadBlockPacket(p, speed, offset, length);
 
     err = Helios_DoIO(HGA_DEVICE, dev, &ioreq.iohhe_Req);
-    if ((HHIOERR_NO_ERROR == err) && (ioreq.iohhe_Req.iohh_Actual == length))
+    if ((HHIOERR_NO_ERROR == err) && (ioreq.iohhe_Req.iohh_Actual == (LONG)length))
     {
         return 0;
     }
@@ -207,7 +207,7 @@ static LONG sbp2_do_write_block(SBP2ClassLib *base,
     Helios_FillWriteBlockPacket(p, speed, offset, buf, length);
 
     err = Helios_DoIO(HGA_DEVICE, dev, &ioreq.iohhe_Req);
-    if ((HHIOERR_NO_ERROR == err) && (ioreq.iohhe_Req.iohh_Actual == length))
+    if ((HHIOERR_NO_ERROR == err) && (ioreq.iohhe_Req.iohh_Actual == (LONG)length))
     {
         return 0;
     }

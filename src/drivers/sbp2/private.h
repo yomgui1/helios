@@ -274,7 +274,7 @@ typedef struct SBP2Unit
 
     /* Management data */
     LOCK_VARIABLE;
-    LONG                 u_UnitNo;
+    ULONG                u_UnitNo;
     SBP2Flags            u_Flags;
     SBP2ClassLib *       u_SBP2ClassBase;
     struct Task *        u_DriverTask;

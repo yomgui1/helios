@@ -165,6 +165,7 @@ mkdeps: sdk $(ALL_SRCS:.c=.d)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 	$(NM) -n $^ > $@.sym
 
+.PRECIOUS: %.db
 %.library: %.library.db
 	@$(ECHO) $(COLOR_BOLD)">> Making library: "$(COLOR_HIGHLIGHT2)"$(@F)"$(COLOR_NORMAL)
 	$(STRIP) -R.comment -o $@ $<

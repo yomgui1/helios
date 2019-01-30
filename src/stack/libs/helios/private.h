@@ -51,6 +51,10 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #define HeliosClassBase (hc->hc_Base)
 
+#define __NOLIBBASE__
+#include "proto/heliosclsbase.h"
+#undef __NOLIBBASE__
+
 #if defined(USE_INLINE_STDARG) && !defined(__STRICT_ANSI__)
 #include <stdarg.h>
 #define Helios_SetAttrs(__p0, __p1, ...) \

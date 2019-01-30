@@ -23,9 +23,6 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "private.h"
 
-#include "clib/helios_protos.h"
-#include "ppcinline/heliosclsbase.h"
-
 /*============================================================================*/
 /*--- LIBRARY CODE SECTION ---------------------------------------------------*/
 

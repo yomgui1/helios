@@ -27,17 +27,12 @@ along with Helios.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "private.h"
-#include "clib/helios_protos.h"
-#include "ppcinline/heliosclsbase.h"
 
 #include <utility/pack.h>
 #include <clib/macros.h>
 #include <hardware/byteswap.h>
 
-#include <proto/exec.h>
-#include <proto/dos.h>
 #include <proto/alib.h>
-#include <proto/utility.h>
 #include <proto/timer.h>
 
 #include <string.h>
